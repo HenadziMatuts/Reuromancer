@@ -79,51 +79,27 @@ static int decode_imh(uint8_t *_src, uint32_t len, uint8_t *_dst)
 
 int decompress_anh(uint8_t *src, uint8_t *dst)
 {
-	uint8_t anh[64000];
-	decomp_t comp;
-	uint32_t len = 0;
-
-	memset(&comp, 0, sizeof(decomp_t));
-	comp.stream = src;
-
-	return asm_decompress(&comp, dst);
+	return huffman_decompress(src, dst);
 }
 
 int decompress_bih(uint8_t *src, uint8_t *dst)
 {
-	uint8_t bih[64000];
-	decomp_t comp;
-	uint32_t len = 0;
-
-	memset(&comp, 0, sizeof(decomp_t));
-	comp.stream = src;
-
-	return asm_decompress(&comp, dst);
+	return huffman_decompress(src, dst);
 }
 
 int decompress_imh(uint8_t *src, uint8_t *dst)
 {
 	uint8_t imh[64000];
-	decomp_t comp;
-	uint32_t len = 0;
+	uint32_t len = huffman_decompress(src, imh);
 
-	memset(&comp, 0, sizeof(decomp_t));
-	comp.stream = src;
-
-	len = asm_decompress(&comp, imh);
 	return decode_imh(imh, len, dst);
 }
 
 int decompress_pic(uint8_t *src, uint8_t *dst)
 {
 	uint8_t pic[64000];
-	decomp_t comp;
-	uint32_t len = 0;
 
-	memset(&comp, 0, sizeof(decomp_t));
-	comp.stream = src;
-
-	asm_decompress(&comp, pic);
+	huffman_decompress(src, pic);
 	decode_rle(pic, 152 * 112, dst);
 	xor_rows(dst, 152, 112);
 

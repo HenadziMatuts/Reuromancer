@@ -117,9 +117,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <MASM Include="asm_audio.asm" />
-    <MASM Include="asm_decompression.asm">
-      <FileType>Document</FileType>
-    </MASM>
     <None Include="asm_seg7.asm">
       <FileType>Document</FileType>
     </None>
@@ -130,6 +127,7 @@
     <ClCompile Include="decompression.c" />
     <ClCompile Include="dialog.c" />
     <ClCompile Include="drawing.c" />
+    <ClCompile Include="huffman_decompression.c" />
     <ClCompile Include="resources_lists.c" />
   </ItemGroup>
   <ItemGroup>

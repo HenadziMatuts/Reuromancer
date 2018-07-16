@@ -36,6 +36,9 @@
     <ClCompile Include="audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="huffman_decompression.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="neuro_routines.h">
@@ -44,9 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <MASM Include="asm_audio.asm">
-      <Filter>Asm</Filter>
-    </MASM>
-    <MASM Include="asm_decompression.asm">
       <Filter>Asm</Filter>
     </MASM>
   </ItemGroup>

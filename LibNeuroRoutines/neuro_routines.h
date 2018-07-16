@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2018 Henadzi Matuts
+ */
+
 #ifndef _NEURO_ROUTINES_H
 #define _NEURO_ROUTINES_H
 
@@ -15,19 +19,6 @@ extern "C" {
 #endif
 
 #pragma pack(push, 2)
-typedef struct decomp_t {
-	uint8_t *stream;
-
-	uint16_t a;
-	uint16_t b;
-	uint64_t c;
-	uint16_t d;
-	uint16_t e;
-
-	uint8_t area_1[1024];
-	uint8_t area_2[1024];
-	uint8_t area_3[3072];
-} decomp_t;
 
 typedef struct imh_hdr_t {
 	uint16_t dx;
@@ -147,7 +138,8 @@ LIBNEUROAPI int decompress_pic(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decompress_bih(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decompress_anh(uint8_t *src, uint8_t *dst);
 
-LIBNEUROAPI int asm_decompress(decomp_t *imh, uint8_t *dst);
+//LIBNEUROAPI int asm_decompress(decomp_t *imh, uint8_t *dst);
+LIBNEUROAPI int huffman_decompress(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decode_rle(uint8_t *src, uint32_t len, uint8_t *dst);
 
 /*
