@@ -23,7 +23,7 @@ In future it plan to replace all _MASM_ with the similar _C_-code. And after thi
 ## How to Build
 
 1. Get the sources (from this repo), extract it somewhere;
-2. Get [_CSFML build_][2] (Visual C++ / GCC - 64-bit), extract it to the directory named _"External"_ that is inside the _Reuromancer_ root folder;
+2. Get [_CSFML build_][2] (Visual C++ / GCC - 64-bit), extract it to the directory named _"External"_ (create it) that is inside the _Reuromancer_ root folder;
 3. Open _Reuromancer.sln_ in your _Visual Studio_ (I use 2015, it also should work on 2013 and 2017, can't say about the others);
 4. Set build configuration to x64 Debug and build it!
 
