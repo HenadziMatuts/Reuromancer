@@ -39,11 +39,16 @@ In future it is planned to replace all _MASM_ with the similar _C_-code. Followi
 
 * Reverse and implement dialog system.
 
+_ResourceBrowser_:
+* divide _DlgFilterPage_ logic into separate classes corresponding to each data type;
+* rewrite audio player using _WinApi_ only to remove _CSFML_ dependency. 
+
 ## Development blog (RU):
 
 * [Part 1][4]
 * [Part 2][5]
 * [Part 3][6]
+* Part 4 (in progress)
 
 [1]:https://en.wikipedia.org/wiki/Neuromancer_(video_game)
 [2]:https://www.sfml-dev.org/download/csfml/
