@@ -18,12 +18,8 @@ static int getbits(int numbits)
 
 	for (i = 0; i < numbits; i++)
 	{
-		if (g_mask == 0)
-		{
-			if ((g_byte = *g_src++) == EOF)
-			{
-				return EOF;
-			}
+		if (g_mask == 0) {
+			g_byte = *g_src++;
 			g_mask = 0x80;
 		}
 		bits <<= 1;
@@ -88,17 +84,13 @@ int huffman_decompress(uint8_t *src, uint8_t *dst)
 	length = fgetl_le();
 	node = root = build_tree();
 
-	while(i < length)
+	while (i < length)
 	{
-		if((bit = getbits(1)) != EOF) {
-			node = bit ? node->left : node->right;
-			if(!node->left) {
-				dst[i++] = node->value;
-				node = root;
-			}
+		node = getbits(1) ? node->left : node->right;
+		if (!node->left) {
+			dst[i++] = node->value;
+			node = root;
 		}
-		else
-			break;
 	}
 
 	destroy_tree(&root);
@@ -107,5 +99,5 @@ int huffman_decompress(uint8_t *src, uint8_t *dst)
 	g_mask = 0;
 	g_byte = 0;
 
-	return i;
+	return length;
 }
