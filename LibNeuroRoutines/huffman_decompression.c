@@ -69,29 +69,13 @@ void destroy_tree(node_t **root)
 {
 	node_t *node = *root;
 
-	if (node->left)
-	{
+	if (!node->value) {
 		destroy_tree(&node->left);
-	}
-	else if (node->right)
-	{
-		destroy_tree(&node->right);
-	}
-	else
-	{
-		free(node);
-		*root = NULL;
-		return;
-	}
-
-	if (node->right)
-	{
 		destroy_tree(&node->right);
 	}
 
 	free(node);
 	*root = NULL;
-	return;
 }
 
 int huffman_decompress(uint8_t *src, uint8_t *dst)
