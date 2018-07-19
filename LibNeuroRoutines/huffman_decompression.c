@@ -76,7 +76,7 @@ void destroy_tree(node_t **root)
 
 int huffman_decompress(uint8_t *src, uint8_t *dst)
 {
-	int length, bit, i = 0;
+	int length, i = 0;
 	node_t *root, *node;
 
 	g_src = src;
