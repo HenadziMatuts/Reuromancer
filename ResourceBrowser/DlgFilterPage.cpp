@@ -216,27 +216,27 @@ DWORD WINAPI AnhThreadProc(_In_ LPVOID lpParameter)
     CBitmap bpp8;
     CBitmap bpp32;
     bg_animation_control_table_t anim_ctl[8];
-    uint8_t bits[64000];
+    uint8_t bits[152 * 112 * 2], pic[152 * 112];
 
     uint32_t animations = AnimCtlInitTables(data.m_item->m_anh, anim_ctl, 8);
+    memmove(pic, data.m_item->m_pic, 152 * 112);
 
     while (true)
     {
-        AnimCtlUpdateBg(data.m_item->m_pic, animations, anim_ctl);
+        AnimCtlUpdateBg(pic, animations, anim_ctl);
 
         for (uint32_t u = 0, k = 0; u < 152 * 112; u++)
         {
-            bits[k++] = data.m_item->m_pic[u] >> 4;
-            bits[k++] = data.m_item->m_pic[u] & 0x0F;
+            bits[k++] = pic[u] >> 4;
+            bits[k++] = pic[u] & 0x0F;
         }
         bpp8.CreateBitmap(304, 112, 1, 8, bits);
         Convert8bppTo32bpp(&bpp8, DosPal, &bpp32);
         data.m_preview->SetBitmap(bpp32);
-
-        Sleep(55);
-
         bpp8.DeleteObject();
         bpp32.DeleteObject();
+
+        Sleep(55);
     }
 
     return 0;
