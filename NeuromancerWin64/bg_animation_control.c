@@ -26,10 +26,10 @@ void bg_animation_control_init_tables(uint8_t *decompd_anh)
 	for (uint32_t u = 0; u < g_animations; u++)
 	{
 		g_animation_control[u].total_frames = entry_hdr->total_frames;
-		g_animation_control[u].first_sleep_offt = (uint8_t*)&entry_hdr->first_frame_sleep;
+		g_animation_control[u].first_sleep_offt = (uint8_t*)entry_hdr + sizeof(anh_entry_hdr_t);
 		g_animation_control[u].first_frame_offt =
 			g_animation_control[u].first_sleep_offt + (g_animation_control[u].total_frames << 2);
-		g_animation_control[u].sleep = entry_hdr->first_frame_sleep;
+		g_animation_control[u].sleep = *(uint16_t*)(g_animation_control[u].first_sleep_offt);
 		g_animation_control[u].curr_frame = 0;
 
 		p += (entry_hdr->entry_size + 2);

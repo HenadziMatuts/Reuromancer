@@ -152,10 +152,10 @@ static uint32_t AnimCtlInitTables(uint8_t *decompdAnh,
     for (uint32_t u = 0; u < animations; u++)
     {
         tables[u].total_frames = entry_hdr->total_frames;
-        tables[u].first_sleep_offt = (uint8_t*)&entry_hdr->first_frame_sleep;
+        tables[u].first_sleep_offt = (uint8_t*)entry_hdr + sizeof(anh_entry_hdr_t);
         tables[u].first_frame_offt =
             tables[u].first_sleep_offt + (tables[u].total_frames << 2);
-        tables[u].sleep = entry_hdr->first_frame_sleep;
+        tables[u].sleep = *(uint16_t*)(tables[u].first_sleep_offt);
         tables[u].curr_frame = 0;
 
         p += (entry_hdr->entry_size + 2);

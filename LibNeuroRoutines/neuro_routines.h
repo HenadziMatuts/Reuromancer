@@ -112,10 +112,15 @@ typedef struct anh_hdr_t {
 typedef struct anh_entry_hdr_t {
 	uint16_t entry_size;
 	uint16_t total_frames;
-	uint16_t first_frame_sleep;
-	/* another frames sleep values */
-	/* followed by animation frames itself */
+	/* anh_frame_data_t first_frame_data */
+	/* another frames data */
+	/* packed frames itself */
 } anh_entry_hdr_t;
+
+typedef struct anh_frame_data_t {
+	uint16_t frame_sleep;
+	uint16_t frame_offset;
+} anh_frame_data_t;
 
 /*
  * Resource tables.
