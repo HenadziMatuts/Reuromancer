@@ -152,10 +152,10 @@ static uint32_t AnimCtlInitTables(uint8_t *decompdAnh,
     for (uint32_t u = 0; u < animations; u++)
     {
         tables[u].total_frames = entry_hdr->total_frames;
-        tables[u].first_sleep_offt = (uint8_t*)entry_hdr + sizeof(anh_entry_hdr_t);
-        tables[u].first_frame_offt =
-            tables[u].first_sleep_offt + (tables[u].total_frames << 2);
-        tables[u].sleep = *(uint16_t*)(tables[u].first_sleep_offt);
+        tables[u].first_frame_data = (uint8_t*)entry_hdr + sizeof(anh_entry_hdr_t);
+        tables[u].first_frame_bytes =
+            tables[u].first_frame_data + (tables[u].total_frames << 2);
+        tables[u].sleep = *(uint16_t*)(tables[u].first_frame_data);
         tables[u].curr_frame = 0;
 
         p += (entry_hdr->entry_size + 2);
@@ -176,20 +176,22 @@ void AnimCtlUpdateBg(uint8_t *bg, uint32_t animations_amount,
 
         if (anim->sleep-- == 0)
         {
-            uint16_t frame_offt = *(uint16_t*)(anim->first_sleep_offt + (anim->curr_frame * 4) + 2);
-            uint8_t *frame = anim->first_frame_offt + frame_offt;
+            anh_frame_data_t *data = (anh_frame_data_t*)(anim->first_frame_data +
+                (anim->curr_frame * sizeof(anh_frame_data_t)));
+            uint8_t *frame = anim->first_frame_bytes + data->frame_offset;
+            anh_frame_hdr *hdr = (anh_frame_hdr*)frame;
 
-            uint16_t frame_len = frame[2] * frame[3];
-            decode_rle(frame + 4, frame_len, anim_bytes);
+            uint16_t frame_len = hdr->frame_width * hdr->frame_height;
+            decode_rle(frame + sizeof(anh_frame_hdr), frame_len, anim_bytes);
 
-            uint16_t bg_offt = (frame[1] * 152) + frame[0] + 0xFB4E;
-            uint16_t bg_skip = -1 * (frame[2] - 152);
+            uint16_t bg_offt = (hdr->bg_y_offt * 152) + hdr->bg_x_offt + 0xFB4E;
+            uint16_t bg_skip = 152 - hdr->frame_width;
 
             uint8_t *p1 = anim_bytes, *p2 = bg + bg_offt - 18;
 
-            for (uint16_t i = frame[3]; i != 0; i--)
+            for (uint16_t i = hdr->frame_height; i != 0; i--)
             {
-                for (uint16_t j = frame[2]; j != 0; j--)
+                for (uint16_t j = hdr->frame_width; j != 0; j--)
                 {
                     *p2++ ^= *p1++;
                 }
@@ -200,9 +202,14 @@ void AnimCtlUpdateBg(uint8_t *bg, uint32_t animations_amount,
             if (++anim->curr_frame == anim->total_frames)
             {
                 anim->curr_frame = 0;
+                data = (anh_frame_data_t*)(anim->first_frame_data);
+            }
+            else
+            {
+                data++;
             }
 
-            anim->sleep = *(uint16_t*)(anim->first_sleep_offt + (anim->curr_frame * 4));
+            anim->sleep = data->frame_sleep;
         }
     }
 }

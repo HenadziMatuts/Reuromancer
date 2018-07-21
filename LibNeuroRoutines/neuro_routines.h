@@ -98,8 +98,8 @@ typedef struct bih_hdr_t {
 
 typedef struct bg_animation_control_table_t {
 	uint16_t total_frames;
-	uint8_t *first_sleep_offt;
-	uint8_t *first_frame_offt;
+	uint8_t *first_frame_data;
+	uint8_t *first_frame_bytes;
 	uint16_t sleep;
 	uint16_t curr_frame;
 } bg_animation_control_table_t;
@@ -114,13 +114,22 @@ typedef struct anh_entry_hdr_t {
 	uint16_t total_frames;
 	/* anh_frame_data_t first_frame_data */
 	/* another frames data */
-	/* packed frames itself */
+	/* anh_frame_hdr first_frame_hdr */
+	/* another frames */
 } anh_entry_hdr_t;
 
 typedef struct anh_frame_data_t {
 	uint16_t frame_sleep;
 	uint16_t frame_offset;
 } anh_frame_data_t;
+
+typedef struct anh_frame_hdr {
+	uint8_t bg_x_offt;
+	uint8_t bg_y_offt;
+	uint8_t frame_width;
+	uint8_t frame_height;
+	/* rle encoded frame bytes */
+} anh_frame_hdr;
 
 /*
  * Resource tables.
