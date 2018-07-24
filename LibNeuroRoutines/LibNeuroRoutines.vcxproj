@@ -126,7 +126,6 @@
     <ClCompile Include="cp437.c" />
     <ClCompile Include="decompression.c" />
     <ClCompile Include="dialog.c" />
-    <ClCompile Include="drawing.c" />
     <ClCompile Include="huffman_decompression.c" />
     <ClCompile Include="resources_lists.c" />
   </ItemGroup>

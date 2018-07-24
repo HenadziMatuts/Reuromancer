@@ -27,9 +27,6 @@
     <ClCompile Include="cp437.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="drawing.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="dialog.c">
       <Filter>Source Files</Filter>
     </ClCompile>

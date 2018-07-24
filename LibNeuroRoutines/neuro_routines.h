@@ -152,7 +152,6 @@ LIBNEUROAPI int decompress_pic(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decompress_bih(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decompress_anh(uint8_t *src, uint8_t *dst);
 
-//LIBNEUROAPI int asm_decompress(decomp_t *imh, uint8_t *dst);
 LIBNEUROAPI int huffman_decompress(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decode_rle(uint8_t *src, uint32_t len, uint8_t *dst);
 
@@ -162,11 +161,6 @@ LIBNEUROAPI int decode_rle(uint8_t *src, uint32_t len, uint8_t *dst);
 LIBNEUROAPI void build_character(char c, uint8_t *dst);
 LIBNEUROAPI void build_string(char *string, uint32_t w, uint32_t h,
 		uint32_t l, uint32_t t, uint8_t *dst);
-
-/*
- * Drawing routines.
- */
-LIBNEUROAPI void build_text_frame(uint32_t h, uint32_t w, imh_hdr_t *dst);
 
 /*
  * Dialog box control.
