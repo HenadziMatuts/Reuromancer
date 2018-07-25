@@ -48,7 +48,7 @@ _ResourceBrowser_:
 * [Part 1][4]
 * [Part 2][5]
 * [Part 3][6]
-* Part 4 (in progress)
+* [Part 4][7]
 
 [1]:https://en.wikipedia.org/wiki/Neuromancer_(video_game)
 [2]:https://www.sfml-dev.org/download/csfml/
@@ -56,3 +56,4 @@ _ResourceBrowser_:
 [4]:https://habr.com/post/352050/
 [5]:https://habr.com/post/357972/
 [6]:https://habr.com/post/415555/
+[7]:https://habr.com/post/417639/
