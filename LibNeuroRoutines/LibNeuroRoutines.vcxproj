@@ -123,6 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.c" />
+    <ClCompile Include="animation.c" />
     <ClCompile Include="cp437.c" />
     <ClCompile Include="decompression.c" />
     <ClCompile Include="dialog.c" />

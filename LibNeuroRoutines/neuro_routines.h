@@ -182,9 +182,17 @@ LIBNEUROAPI void select_dialog_item(neuro_dialog_t *_dialog,
 LIBNEUROAPI void unselect_dialog_items(neuro_dialog_t *dialog);
 
 /*
-* Sound stuff.
-*/
+ * Sound stuff.
+ */
 LIBNEUROAPI int build_track_waveform(int track_num, uint8_t *waveform, int len);
+
+/*
+ * Background animation.
+ */
+LIBNEUROAPI int bg_animation_init_tables(bg_animation_control_table_t *tables,
+					uint8_t *decompd_anh);
+LIBNEUROAPI void bg_animation_update(bg_animation_control_table_t *tables,
+					uint16_t animations, uint8_t *working_area, uint8_t *bg_pixels);
 
 #ifdef __cplusplus
 }

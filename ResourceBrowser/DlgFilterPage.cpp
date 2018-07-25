@@ -131,89 +131,6 @@ static BOOL Convert8bppTo32bpp(CBitmap *src, uint8_t *pal, CBitmap *dst)
     return TRUE;
 }
 
-static uint32_t AnimCtlInitTables(uint8_t *decompdAnh,
-    bg_animation_control_table_t *tables, uint32_t tables_amount)
-{
-    if (!decompdAnh)
-    {
-        return 0;
-    }
-
-    uint8_t *p = decompdAnh;
-    anh_hdr_t *hdr = (anh_hdr_t*)p;
-    anh_entry_hdr_t *entry_hdr;
-
-    p += sizeof(anh_hdr_t);
-    entry_hdr = (anh_entry_hdr_t*)p;
-
-    memset(tables, 0, sizeof(bg_animation_control_table_t) * tables_amount);
-    uint32_t animations = hdr->anh_entries;
-
-    for (uint32_t u = 0; u < animations; u++)
-    {
-        tables[u].total_frames = entry_hdr->total_frames;
-        tables[u].first_frame_data = (uint8_t*)entry_hdr + sizeof(anh_entry_hdr_t);
-        tables[u].first_frame_bytes =
-            tables[u].first_frame_data + (tables[u].total_frames << 2);
-        tables[u].sleep = *(uint16_t*)(tables[u].first_frame_data);
-        tables[u].curr_frame = 0;
-
-        p += (entry_hdr->entry_size + 2);
-        entry_hdr = (anh_entry_hdr_t*)p;
-    }
-
-    return animations;
-}
-
-void AnimCtlUpdateBg(uint8_t *bg, uint32_t animations_amount,
-    bg_animation_control_table_t *tables)
-{
-    uint8_t anim_bytes[8192];
-
-    for (uint32_t u = 0; u < animations_amount; u++)
-    {
-        bg_animation_control_table_t *anim = &tables[u];
-
-        if (anim->sleep-- == 0)
-        {
-            anh_frame_data_t *data = (anh_frame_data_t*)(anim->first_frame_data +
-                (anim->curr_frame * sizeof(anh_frame_data_t)));
-            uint8_t *frame = anim->first_frame_bytes + data->frame_offset;
-            anh_frame_hdr *hdr = (anh_frame_hdr*)frame;
-
-            uint16_t frame_len = hdr->frame_width * hdr->frame_height;
-            decode_rle(frame + sizeof(anh_frame_hdr), frame_len, anim_bytes);
-
-            uint16_t bg_offt = (hdr->bg_y_offt * 152) + hdr->bg_x_offt + 0xFB4E;
-            uint16_t bg_skip = 152 - hdr->frame_width;
-
-            uint8_t *p1 = anim_bytes, *p2 = bg + bg_offt - 18;
-
-            for (uint16_t i = hdr->frame_height; i != 0; i--)
-            {
-                for (uint16_t j = hdr->frame_width; j != 0; j--)
-                {
-                    *p2++ ^= *p1++;
-                }
-
-                p2 += bg_skip;
-            }
-
-            if (++anim->curr_frame == anim->total_frames)
-            {
-                anim->curr_frame = 0;
-                data = (anh_frame_data_t*)(anim->first_frame_data);
-            }
-            else
-            {
-                data++;
-            }
-
-            anim->sleep = data->frame_sleep;
-        }
-    }
-}
-
 DWORD WINAPI AnhThreadProc(_In_ LPVOID lpParameter)
 {
     AnhThreadData data;
@@ -224,13 +141,14 @@ DWORD WINAPI AnhThreadProc(_In_ LPVOID lpParameter)
     CBitmap bpp32;
     bg_animation_control_table_t anim_ctl[8];
     uint8_t bits[152 * 112 * 2], pic[152 * 112];
+    uint8_t anim_bytes[8192];
 
-    uint32_t animations = AnimCtlInitTables(data.m_item->m_anh, anim_ctl, 8);
+    uint16_t animations = bg_animation_init_tables(anim_ctl, data.m_item->m_anh);
     memmove(pic, data.m_item->m_pic, 152 * 112);
 
     while (true)
     {
-        AnimCtlUpdateBg(pic, animations, anim_ctl);
+        bg_animation_update(anim_ctl, animations, anim_bytes, pic);
 
         for (uint32_t u = 0, k = 0; u < 152 * 112; u++)
         {

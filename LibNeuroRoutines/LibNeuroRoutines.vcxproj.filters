@@ -36,6 +36,9 @@
     <ClCompile Include="huffman_decompression.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="animation.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="neuro_routines.h">
