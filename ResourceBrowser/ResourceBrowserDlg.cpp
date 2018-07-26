@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "ResourceBrowser.h"
 #include "ResourceBrowserDlg.h"
+#include "AnhFilterPage.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -138,7 +139,15 @@ BOOL CResourceBrowserDlg::OnInitDialog()
 
     for (int i = 0; i < TAB_TOTAL; i++)
     {
-        m_Page[i] = new CDlgFilterPage();
+        if (i == TAB_ANH)
+        {
+            m_Page[i] = new CAnhFilterPage();
+        }
+        else
+        {
+            m_Page[i] = new CDlgFilterPage();
+        }
+
         m_Page[i]->Create(IDD_FILTERPAGE, m_FilterTab.GetWindow(IDD_FILTERPAGE));
         m_Page[i]->MoveWindow(&rcClient);
         m_Page[i]->BuildTree(fNeuroDat, i);

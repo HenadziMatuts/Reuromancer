@@ -188,6 +188,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AnhFilterPage.h" />
     <ClInclude Include="DlgFilterPage.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceBrowser.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnhFilterPage.cpp" />
     <ClCompile Include="DlgFilterPage.cpp" />
     <ClCompile Include="ResourceBrowser.cpp" />
     <ClCompile Include="ResourceBrowserDlg.cpp" />

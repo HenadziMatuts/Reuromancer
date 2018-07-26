@@ -5,7 +5,6 @@
 #include "ResourceBrowser.h"
 #include "DlgFilterPage.h"
 #include "afxdialogex.h"
-#include <neuro_routines.h>
 #include <errno.h>
 
 #pragma pack(2)
@@ -43,7 +42,7 @@ typedef struct wav_header_t {
     int data_bytes;
 } wav_header_t;
 
-static uint8_t DosPal[1024] = {
+uint8_t DosPal[1024] = {
     0x00, 0x00, 0x00, 0x00, // black
     0x80, 0x00, 0x00, 0x00, // blue
     0x00, 0x80, 0x00, 0x00, // green
@@ -63,12 +62,36 @@ static uint8_t DosPal[1024] = {
     0x00,
 };
 
-typedef struct AnhThreadData {
-    AnhItemData *m_item;
-    CStatic *m_preview;
-} AnhThreadData;
+BOOL Convert8bppTo32bpp(CBitmap *src, uint8_t *pal, CBitmap *dst)
+{
+    BITMAP bm8bpp;
+    uint8_t bpp8bits[64000] = { 0, }, *bpp32bits = NULL, *p8 = bpp8bits, *p32 = NULL;
+    int bpp8size = 0;
 
-static int DecompressResource(FILE *f, resource_t *src, uint8_t *dst)
+    src->GetBitmap(&bm8bpp);
+    bpp8size = bm8bpp.bmWidth * bm8bpp.bmHeight;
+    assert(bpp32bits = new uint8_t[bpp8size * 4]);
+    if (!bpp32bits)
+    {
+        return 0;
+    }
+    src->GetBitmapBits(bpp8size, bpp8bits);
+
+    p32 = bpp32bits;
+    for (int i = 0; i < bpp8size; i++)
+    {
+        int c = *p8++;
+        memmove(p32, &pal[c * 4], 4);
+        p32 += 4;
+    }
+
+    dst->CreateBitmap(bm8bpp.bmWidth, bm8bpp.bmHeight, 1, 32, bpp32bits);
+    delete[] bpp32bits;
+
+    return TRUE;
+}
+
+int CDlgFilterPage::DecompressResource(FILE *f, resource_t *src, uint8_t *dst)
 {
     uint8_t compd[64000];
 
@@ -102,71 +125,6 @@ static int DecompressResource(FILE *f, resource_t *src, uint8_t *dst)
     }
 }
 
-static BOOL Convert8bppTo32bpp(CBitmap *src, uint8_t *pal, CBitmap *dst)
-{
-    BITMAP bm8bpp;
-    uint8_t bpp8bits[64000] = { 0, }, *bpp32bits = NULL, *p8 = bpp8bits, *p32 = NULL;
-    int bpp8size = 0;
-
-    src->GetBitmap(&bm8bpp);
-    bpp8size = bm8bpp.bmWidth * bm8bpp.bmHeight;
-    assert(bpp32bits = new uint8_t[bpp8size * 4]);
-    if (!bpp32bits)
-    {
-        return 0;
-    }
-    src->GetBitmapBits(bpp8size, bpp8bits);
-
-    p32 = bpp32bits;
-    for (int i = 0; i < bpp8size; i++)
-    {
-        int c = *p8++;
-        memmove(p32, &pal[c * 4], 4);
-        p32 += 4;
-    }
-
-    dst->CreateBitmap(bm8bpp.bmWidth, bm8bpp.bmHeight, 1, 32, bpp32bits);
-    delete[] bpp32bits;
-
-    return TRUE;
-}
-
-DWORD WINAPI AnhThreadProc(_In_ LPVOID lpParameter)
-{
-    AnhThreadData data;
-    memmove(&data, lpParameter, sizeof(AnhThreadData));
-    delete (AnhThreadData*)lpParameter;
-
-    CBitmap bpp8;
-    CBitmap bpp32;
-    bg_animation_control_table_t anim_ctl[8];
-    uint8_t bits[152 * 112 * 2], pic[152 * 112];
-    uint8_t anim_bytes[8192];
-
-    uint16_t animations = bg_animation_init_tables(anim_ctl, data.m_item->m_anh);
-    memmove(pic, data.m_item->m_pic, 152 * 112);
-
-    while (true)
-    {
-        bg_animation_update(anim_ctl, animations, anim_bytes, pic);
-
-        for (uint32_t u = 0, k = 0; u < 152 * 112; u++)
-        {
-            bits[k++] = pic[u] >> 4;
-            bits[k++] = pic[u] & 0x0F;
-        }
-        bpp8.CreateBitmap(304, 112, 1, 8, bits);
-        Convert8bppTo32bpp(&bpp8, DosPal, &bpp32);
-        data.m_preview->SetBitmap(bpp32);
-        bpp8.DeleteObject();
-        bpp32.DeleteObject();
-
-        Sleep(55);
-    }
-
-    return 0;
-}
-
 // CDlgFilterPage dialog
 
 IMPLEMENT_DYNAMIC(CDlgFilterPage, CDialogEx)
@@ -174,7 +132,6 @@ IMPLEMENT_DYNAMIC(CDlgFilterPage, CDialogEx)
 CDlgFilterPage::CDlgFilterPage(CWnd* pParent /*=NULL*/)
     : CDialogEx(IDD_FILTERPAGE, pParent)
 {
-    m_hAnhThread = 0;
 }
 
 CDlgFilterPage::~CDlgFilterPage()
@@ -197,22 +154,6 @@ CDlgFilterPage::~CDlgFilterPage()
         }
 
         m_AudioWaveforms.clear();
-    }
-    if (!m_Anhs.empty())
-    {
-        for (int i = 0; i < m_Anhs.size(); i++)
-        {
-            free(m_Anhs[i]->m_anh);
-            free(m_Anhs[i]->m_pic);
-            delete m_Anhs[i];
-        }
-
-        m_Anhs.clear();
-    }
-
-    if (m_hAnhThread)
-    {
-        TerminateThread(m_hAnhThread, 0);
     }
 }
 
@@ -246,11 +187,6 @@ void CDlgFilterPage::OnTvnSelchangedFiltertree(NMHDR *pNMHDR, LRESULT *pResult)
     this->GetParent()->GetDlgItem(IDC_BUTTON_STOP)->ShowWindow(SW_HIDE);
     this->GetParent()->GetDlgItem(IDC_STATIC_TRACKPOS)->ShowWindow(SW_HIDE);
     this->GetParent()->GetDlgItem(IDC_STATIC_TRACKLEN)->ShowWindow(SW_HIDE);
-
-    if (m_hAnhThread)
-    {
-        TerminateThread(m_hAnhThread, 0);
-    }
 
     if (!itemData)
     {
@@ -292,16 +228,6 @@ void CDlgFilterPage::OnTvnSelchangedFiltertree(NMHDR *pNMHDR, LRESULT *pResult)
 
         CSliderCtrl *slider = (CSliderCtrl*)this->GetParent()->GetDlgItem(IDC_SLIDER_TRACKDUR);
         slider->SetPos(0);
-    }
-    else if (m_FilterTree.GetItemText(hSelected).Find(L".ANH") != -1)
-    {
-        AnhItemData *itemData = (AnhItemData*)m_FilterTree.GetItemData(hSelected);
-        AnhThreadData *threadData;
-        assert(threadData = new AnhThreadData);
-        threadData->m_item = itemData;
-        threadData->m_preview = (CStatic*)this->GetParent()->GetDlgItem(IDC_PREVIEWFRAME);
-
-        m_hAnhThread = CreateThread(NULL, 0, AnhThreadProc, threadData, 0, NULL);
     }
 
     *pResult = 0;
@@ -430,50 +356,6 @@ void CDlgFilterPage::BuildBMPTree(FILE *fNeuroDat[2], int tab)
     m_FilterTree.Expand(hRootNeuro[1], TVE_EXPAND);
 }
 
-void CDlgFilterPage::BuildANHTree(FILE *fNeuroDat[2])
-{
-    int i = 0, len = 0;
-    HTREEITEM hRootNeuro[2], hItem;
-    wchar_t wName[32] = { 0, };
-    char name[32] = { 0, };
-    uint8_t rsc[64000];
-
-    hRootNeuro[0] = m_FilterTree.InsertItem(L"NEURO1.DAT");
-    hRootNeuro[1] = m_FilterTree.InsertItem(L"NEURO2.DAT");
-    m_FilterTree.SetItemData(hRootNeuro[0], (DWORD_PTR)0);
-    m_FilterTree.SetItemData(hRootNeuro[1], (DWORD_PTR)0);
-
-    while (g_res_anh[i].file != -1)
-    {
-        AnhItemData *itemData;
-        assert(itemData = new AnhItemData);
-
-        int len = DecompressResource(fNeuroDat[g_res_anh[i].file], &g_res_anh[i], rsc);
-        assert(itemData->m_anh = (uint8_t*)calloc(1, len));
-        memmove(itemData->m_anh, rsc, len);
-
-        int n, j = 0;
-        char pic[32] = { 0, };
-        sscanf_s(g_res_anh[i].name, "R%d.ANH", &n);
-        sprintf(pic, "R%d.PIC", n);
-        if (strcmp(pic, g_res_pic[j].name))
-        {
-            while (strcmp(pic, g_res_pic[++j].name));
-        }
-        len = DecompressResource(fNeuroDat[g_res_pic[j].file], &g_res_pic[j], rsc);
-        assert(itemData->m_pic = (uint8_t*)calloc(1, len));
-        memmove(itemData->m_pic, rsc, len);
-        
-        MultiByteToWideChar(CP_UTF8, 0, g_res_anh[i].name, -1, wName, 32);
-        hItem = m_FilterTree.InsertItem(wName, hRootNeuro[g_res_anh[i++].file]);
-        m_FilterTree.SetItemData(hItem, (DWORD_PTR)itemData);
-        m_Anhs.push_back(itemData);
-    }
-
-    m_FilterTree.Expand(hRootNeuro[0], TVE_EXPAND);
-    m_FilterTree.Expand(hRootNeuro[1], TVE_EXPAND);
-}
-
 void CDlgFilterPage::BuildSoundTree()
 {
     uint8_t *waveform = NULL;
@@ -523,10 +405,6 @@ void CDlgFilterPage::BuildTree(FILE *fNeuroDat[2], int tab)
         BuildBMPTree(fNeuroDat, tab);
         break;
 
-    case TAB_ANH:
-        BuildANHTree(fNeuroDat);
-        break;
-
     case TAB_SOUND:
         BuildSoundTree();
         break;
@@ -553,11 +431,6 @@ uint8_t* CDlgFilterPage::GetWaveform()
 
 void CDlgFilterPage::ChangePageCleanUp()
 {
-    if (m_hAnhThread)
-    {
-        TerminateThread(m_hAnhThread, 0);
-        m_hAnhThread = 0;
-    }
 
     this->GetParent()->GetDlgItem(IDC_SLIDER_TRACKDUR)->ShowWindow(SW_HIDE);
     this->GetParent()->GetDlgItem(IDC_BUTTON_PLAY)->ShowWindow(SW_HIDE);
