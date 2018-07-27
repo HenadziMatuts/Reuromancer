@@ -36,7 +36,6 @@ public:
 private:
     std::vector<CBitmap*> m_Bitmaps;
 
-    void InsertIMHItems(HTREEITEM parent, char *name, uint8_t *bytes, uint32_t len);
     void InsertBitmapItem(HTREEITEM parent, wchar_t *name, uint8_t *bytes, uint32_t w, uint32_t h);
     
     void StoreBitmap(HTREEITEM item);

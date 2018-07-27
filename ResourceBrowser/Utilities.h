@@ -38,7 +38,11 @@ typedef struct wav_header_t {
 } wav_header_t;
 
 extern uint8_t DosPal[1024];
+extern bmp_hdr_t BmpHdrTemplate;
 extern wav_header_t WavHdrTemplate;
 
 BOOL Convert8bppTo32bpp(CBitmap *src, uint8_t *pal, CBitmap *dst);
 int DecompressResource(FILE *f, resource_t *src, uint8_t *dst);
+
+void StoreWaveAsFile(uint8_t *bytes, CString filename);
+void StoreBitmapAsFile(CBitmap *bitmap, CString filename);

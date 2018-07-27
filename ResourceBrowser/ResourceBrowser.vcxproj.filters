@@ -42,6 +42,9 @@
     <ClInclude Include="SoundFilterPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ImhFilterPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ResourceBrowser.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SoundFilterPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ImhFilterPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -22,6 +22,14 @@ uint8_t DosPal[1024] = {
     0x00,
 };
 
+bmp_hdr_t BmpHdrTemplate = {
+    0x4D42,
+    0, 0,
+    0x0436, 40, 0, 0,
+    1, 8, 0, 0, 0,
+    256, 256
+};
+
 wav_header_t WavHdrTemplate = {
     {'R', 'I', 'F', 'F'},
     0,
@@ -91,4 +99,64 @@ int DecompressResource(FILE *f, resource_t *src, uint8_t *dst)
     {
         return decompress_anh(compd, dst);
     }
+}
+
+void StoreWaveAsFile(uint8_t *bytes, CString filename)
+{
+    CFileDialog saveDlg(FALSE, NULL, filename, OFN_OVERWRITEPROMPT, NULL);
+    wav_header_t *hdr = (wav_header_t*)bytes;
+
+    if (saveDlg.DoModal() == IDOK)
+    {
+        FILE *f = NULL;
+        char path[2048];
+        CT2A fileName(saveDlg.GetFileName(), CP_UTF8);
+        CT2A filePath(saveDlg.GetFolderPath(), CP_UTF8);
+
+        sprintf(path, "%s\\%s", filePath.m_psz, fileName.m_psz);
+
+        assert(f = fopen(path, "wb"));
+        fwrite(bytes, 1, sizeof(wav_header_t) + hdr->data_bytes, f);
+        fclose(f);
+    }
+}
+
+void StoreBitmapAsFile(CBitmap *bitmap, CString filename)
+{
+    BITMAP bm;
+    bmp_hdr_t hdr;
+    uint8_t *bits = NULL;
+    CFileDialog saveDlg(FALSE, NULL, filename, OFN_OVERWRITEPROMPT, NULL);
+
+    bitmap->GetBitmap(&bm);
+    assert(bits = new uint8_t[bm.bmWidth * bm.bmHeight]);
+
+    memmove(&hdr, &BmpHdrTemplate, sizeof(bmp_hdr_t));
+    hdr.size = (sizeof(bmp_hdr_t) + 1024 + (bm.bmWidth * bm.bmHeight));
+    hdr.width = bm.bmWidth;
+    hdr.height = bm.bmHeight;
+    hdr.size_image = bm.bmWidth * bm.bmHeight;
+
+    if (saveDlg.DoModal() == IDOK)
+    {
+        FILE *f = NULL;
+        char path[2048];
+        CT2A fileName(saveDlg.GetFileName(), CP_UTF8);
+        CT2A filePath(saveDlg.GetFolderPath(), CP_UTF8);
+
+        sprintf(path, "%s\\%s", filePath.m_psz, fileName.m_psz);
+        bitmap->GetBitmapBits(bm.bmWidth * bm.bmHeight, bits);
+
+        assert(f = fopen(path, "wb"));
+        fwrite(&hdr, 1, sizeof(bmp_hdr_t), f);
+        fwrite(DosPal, 1, 1024, f);
+
+        for (int i = bm.bmHeight - 1; i >= 0; i--)
+        {
+            fwrite(&bits[i * bm.bmWidth], 1, bm.bmWidth, f);
+        }
+        fclose(f);
+    }
+
+    delete[] bits;
 }

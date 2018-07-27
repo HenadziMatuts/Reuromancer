@@ -64,23 +64,9 @@ void CSoundFilterPage::OnTvnSelchangedSound(NMHDR *pNMHDR, LRESULT *pResult)
 void CSoundFilterPage::OnExportSound()
 {
     HTREEITEM item = m_FilterTree.GetSelectedItem();
-    CFileDialog saveDlg(FALSE, NULL, m_FilterTree.GetItemText(item), OFN_OVERWRITEPROMPT, NULL);
     uint8_t *wf = (uint8_t*)m_FilterTree.GetItemData(item);
-    wav_header_t *hdr = (wav_header_t*)wf;
 
-    if (saveDlg.DoModal() == IDOK)
-    {
-        FILE *f = NULL;
-        char path[2048];
-        CT2A fileName(saveDlg.GetFileName(), CP_UTF8);
-        CT2A filePath(saveDlg.GetFolderPath(), CP_UTF8);
-
-        sprintf(path, "%s\\%s", filePath.m_psz, fileName.m_psz);
-
-        assert(f = fopen(path, "wb"));
-        fwrite(wf, 1, sizeof(wav_header_t) + hdr->data_bytes, f);
-        fclose(f);
-    }
+    StoreWaveAsFile(wf, m_FilterTree.GetItemText(item));
 }
 
 void CSoundFilterPage::BuildTree(FILE *fNeuroDat[2], int tab)

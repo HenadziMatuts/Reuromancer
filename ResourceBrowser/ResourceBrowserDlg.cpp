@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "ResourceBrowser.h"
 #include "ResourceBrowserDlg.h"
+#include "ImhFilterPage.h"
 #include "AnhFilterPage.h"
 #include "SoundFilterPage.h"
 #include "afxdialogex.h"
@@ -140,7 +141,11 @@ BOOL CResourceBrowserDlg::OnInitDialog()
 
     for (int i = 0; i < TAB_TOTAL; i++)
     {
-        if (i == TAB_ANH)
+        if (i == TAB_IMH)
+        {
+            m_Page[i] = new CImhFilterPage();
+        }
+        else if (i == TAB_ANH)
         {
             m_Page[i] = new CAnhFilterPage();
         }
