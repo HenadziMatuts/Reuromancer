@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ResourceBrowser.h"
-#include "afxdialogex.h"
 #include "AnhFilterPage.h"
+#include "Utilities.h"
 #include <neuro_routines.h>
 
 typedef struct AnhThreadData {
@@ -75,7 +75,6 @@ CAnhFilterPage::~CAnhFilterPage()
 
 BEGIN_MESSAGE_MAP(CAnhFilterPage, CDlgFilterPage)
     ON_NOTIFY(TVN_SELCHANGED, IDC_FILTERTREE, &CAnhFilterPage::OnTvnSelchangedAnh)
-    ON_WM_SIZE()
     ON_COMMAND(ID_EXPORTSELECTED_EXPORTSELECTED, &CAnhFilterPage::OnExportAnh)
 END_MESSAGE_MAP()
 
@@ -84,19 +83,15 @@ void CAnhFilterPage::OnTvnSelchangedAnh(NMHDR *pNMHDR, LRESULT *pResult)
     HTREEITEM hSelected = m_FilterTree.GetSelectedItem();
     DWORD_PTR itemData = m_FilterTree.GetItemData(hSelected);
     
-    if (!itemData)
+    if (itemData)
     {
-        return;
-    }
+        if (m_hAnhThread)
+        {
+            TerminateThread(m_hAnhThread, 0);
+        }
 
-    if (m_hAnhThread)
-    {
-        TerminateThread(m_hAnhThread, 0);
-    }
-
-    if (m_FilterTree.GetItemText(hSelected).Find(L".ANH") != -1)
-    {
         AnhItemData *itemData = (AnhItemData*)m_FilterTree.GetItemData(hSelected);
+
         AnhThreadData *threadData;
         assert(threadData = new AnhThreadData);
         threadData->m_item = itemData;

@@ -6,6 +6,7 @@
 #include "ResourceBrowser.h"
 #include "ResourceBrowserDlg.h"
 #include "AnhFilterPage.h"
+#include "SoundFilterPage.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -143,6 +144,10 @@ BOOL CResourceBrowserDlg::OnInitDialog()
         {
             m_Page[i] = new CAnhFilterPage();
         }
+        else if (i == TAB_SOUND)
+        {
+            m_Page[i] = new CSoundFilterPage();
+        }
         else
         {
             m_Page[i] = new CDlgFilterPage();
@@ -275,7 +280,7 @@ void CResourceBrowserDlg::OnBnClickedCancel()
 
 void CResourceBrowserDlg::OnBnClickedButtonPlay()
 {
-    uint8_t *wf = m_CurrentPage->GetWaveform();
+    uint8_t *wf = ((CSoundFilterPage*)m_CurrentPage)->GetWaveform();
     if (!wf)
     {
         return;

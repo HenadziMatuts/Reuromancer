@@ -1,11 +1,7 @@
 #pragma once
-#include "afxcmn.h"
-#include "stdint.h"
+#include <afxcmn.h>
+#include <stdint.h>
 #include <vector>
-#include <neuro_routines.h>
-
-extern uint8_t DosPal[1024];
-BOOL Convert8bppTo32bpp(CBitmap *src, uint8_t *pal, CBitmap *dst);
 
 // CDlgFilterPage dialog
 
@@ -26,8 +22,6 @@ protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
     DECLARE_MESSAGE_MAP()
 
-    int DecompressResource(FILE *f, resource_t *src, uint8_t *dst);
-
 public:
     CTreeCtrl m_FilterTree;
 
@@ -39,19 +33,14 @@ public:
     virtual void BuildTree(FILE *fNeuroDat[2], int tab);
     virtual void ChangePageCleanUp();
 
-    uint8_t* GetWaveform();
-
 private:
     std::vector<CBitmap*> m_Bitmaps;
-    std::vector<uint8_t*> m_AudioWaveforms;
 
     void InsertIMHItems(HTREEITEM parent, char *name, uint8_t *bytes, uint32_t len);
     void InsertBitmapItem(HTREEITEM parent, wchar_t *name, uint8_t *bytes, uint32_t w, uint32_t h);
     
     void StoreBitmap(HTREEITEM item);
-    void StoreWave(HTREEITEM item);
 
     void BuildBMPTree(FILE *fNeuroDat[2], int tab);
-    void BuildSoundTree();
 
 };
