@@ -1,5 +1,6 @@
 #pragma once
 #include "DlgFilterPage.h"
+#include <vector>
 
 class CSoundFilterPage : public CDlgFilterPage
 {

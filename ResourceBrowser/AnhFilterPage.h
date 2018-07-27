@@ -1,5 +1,6 @@
 #pragma once
 #include "DlgFilterPage.h"
+#include <vector>
 
 typedef struct AnhItemData {
     uint8_t *m_pic;

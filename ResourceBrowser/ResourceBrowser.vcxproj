@@ -191,6 +191,7 @@
     <ClInclude Include="AnhFilterPage.h" />
     <ClInclude Include="DlgFilterPage.h" />
     <ClInclude Include="ImhFilterPage.h" />
+    <ClInclude Include="PicFilterPage.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceBrowser.h" />
     <ClInclude Include="ResourceBrowserDlg.h" />
@@ -203,6 +204,7 @@
     <ClCompile Include="AnhFilterPage.cpp" />
     <ClCompile Include="DlgFilterPage.cpp" />
     <ClCompile Include="ImhFilterPage.cpp" />
+    <ClCompile Include="PicFilterPage.cpp" />
     <ClCompile Include="ResourceBrowser.cpp" />
     <ClCompile Include="ResourceBrowserDlg.cpp" />
     <ClCompile Include="SoundFilterPage.cpp" />

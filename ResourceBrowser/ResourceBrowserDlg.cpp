@@ -6,6 +6,7 @@
 #include "ResourceBrowser.h"
 #include "ResourceBrowserDlg.h"
 #include "ImhFilterPage.h"
+#include "PicFilterPage.h"
 #include "AnhFilterPage.h"
 #include "SoundFilterPage.h"
 #include "afxdialogex.h"
@@ -104,7 +105,7 @@ BOOL CResourceBrowserDlg::OnInitDialog()
     ScreenToClient(&rcWindow);
     rcClient.OffsetRect(rcWindow.left, rcWindow.top);
 
-	// TODO: Add extra initialization here
+    // TODO: Add extra initialization here
     FILE *fNeuroDat[2] = { NULL, NULL };
 
     for (int i = 0; i < 2; i++)
@@ -145,6 +146,10 @@ BOOL CResourceBrowserDlg::OnInitDialog()
         {
             m_Page[i] = new CImhFilterPage();
         }
+        else if (i == TAB_PIC)
+        {
+            m_Page[i] = new CPicFilterPage();
+        }
         else if (i == TAB_ANH)
         {
             m_Page[i] = new CAnhFilterPage();
@@ -152,10 +157,6 @@ BOOL CResourceBrowserDlg::OnInitDialog()
         else if (i == TAB_SOUND)
         {
             m_Page[i] = new CSoundFilterPage();
-        }
-        else
-        {
-            m_Page[i] = new CDlgFilterPage();
         }
 
         m_Page[i]->Create(IDD_FILTERPAGE, m_FilterTab.GetWindow(IDD_FILTERPAGE));
@@ -174,7 +175,7 @@ BOOL CResourceBrowserDlg::OnInitDialog()
     this->GetDlgItem(IDC_STATIC_TRACKPOS)->ShowWindow(SW_HIDE);
     this->GetDlgItem(IDC_STATIC_TRACKLEN)->ShowWindow(SW_HIDE);
 
-	return TRUE;  // return TRUE  unless you set the focus to a control
+    return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
 // If you add a minimize button to your dialog, you will need the code below
@@ -259,7 +260,6 @@ void CResourceBrowserDlg::OnBnClickedOk()
 
     CDialogEx::OnOK();
 }
-
 
 void CResourceBrowserDlg::OnBnClickedCancel()
 {
