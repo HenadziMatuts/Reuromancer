@@ -92,8 +92,11 @@ typedef struct neuro_dialog_t {
 } neuro_dialog_t;
 
 typedef struct bih_hdr_t {
-	uint16_t unknown[3];
+	uint16_t cb_offt;
+	uint16_t cb_segt;
+	uint16_t ctrl_struct_addr;
 	uint16_t text_offset;
+	uint8_t unknown[32];
 } bih_hdr_t;
 
 typedef struct bg_animation_control_table_t {

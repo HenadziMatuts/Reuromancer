@@ -3,11 +3,6 @@
 
 int bg_animation_init_tables(bg_animation_control_table_t *tables, uint8_t *decompd_anh)
 {
-	if (!decompd_anh)
-	{
-		return 0;
-	}
-
 	uint8_t *p = decompd_anh;
 	anh_hdr_t *hdr = (anh_hdr_t*)p;
 	anh_entry_hdr_t *entry_hdr;
@@ -43,8 +38,7 @@ void bg_animation_update(bg_animation_control_table_t *tables,
 
 		if (anim->sleep-- == 0)
 		{
-			anh_frame_data_t *data = (anh_frame_data_t*)(anim->first_frame_data +
-				(anim->curr_frame * sizeof(anh_frame_data_t)));
+            anh_frame_data_t *data = (anh_frame_data_t*)(anim->first_frame_data) + anim->curr_frame;
 			uint8_t *frame = anim->first_frame_bytes + data->frame_offset;
 			anh_frame_hdr *hdr = (anh_frame_hdr*)frame;
 
