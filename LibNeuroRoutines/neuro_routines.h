@@ -46,7 +46,7 @@ typedef enum spite_chain_index_t {
 
 typedef struct sprite_layer_t {
 	uint8_t flags; /* 1st bit - active, 5th bit - opaque */
-	uint8_t update;
+	uint8_t update; /* =1 - update; =2 - update, then delete */
 	uint16_t left;
 	uint16_t top;
 	uint16_t new_left;
@@ -92,11 +92,13 @@ typedef struct neuro_dialog_t {
 } neuro_dialog_t;
 
 typedef struct bih_hdr_t {
-	uint16_t cb_offt;
-	uint16_t cb_segt;
-	uint16_t ctrl_struct_addr;
-	uint16_t text_offset;
-	uint8_t unknown[32];
+	uint16_t cb_offt;           // a8e8
+	uint16_t cb_segt;           // a8ea
+	uint16_t ctrl_struct_addr;  // a8ec
+	uint16_t text_offset;       // a8ee
+	uint8_t a8f0[4];            // a8f0
+	uint16_t own_cb_offsets[4]; // a8f4
+	uint8_t a8fc[20];
 } bih_hdr_t;
 
 typedef struct bg_animation_control_table_t {
