@@ -18,10 +18,17 @@ typedef enum level_state_t {
 	LS_NORMAL,
 } level_state_t;
 
-static int g_level_n = -1;
+typedef enum ui_panel_mode_t {
+	UI_PM_CASH = 0,
+	UI_PM_CON,
+	UI_PM_TIME,
+	UI_PM_DATE
+} ui_panel_mode_t;
+
+static int g_level_n = -1; // dseg:004c
+static ui_panel_mode_t g_ui_panel_mode = UI_PM_CASH; // dseg:25b4
 
 static uint8_t *g_strings = NULL;
-
 static uint8_t *g_string_ptr = NULL;
 static level_state_t g_state = LS_NORMAL;
 
@@ -155,6 +162,11 @@ typedef struct bih_wrapper_t {
 	bih_hdr_t *bih;
 } bih_wrapper_t;
 
+typedef struct x3f85_wrapper_t {
+	uint64_t *addr;
+	uint8_t *x3f85;
+} x3f85_wrapper_t;
+
 static a59e_t g_a59e = {
 	{ 0, }, { 0, }, { 0, }
 };
@@ -268,7 +280,7 @@ static x4bae_t g_4bae = {
 };
 
 static uint8_t g_3f85[1252] = {
-	0xC1, 0xFF, 0x00, 0x00, 0x24, 0x28, 0x01, 0xE9, 0xFF, 0x00, 0x00, 0x1E, 0x27, 0x02, 0x01, 0xFF,
+	0x00, 0xC1, 0xFF, 0x00, 0x00, 0x24, 0x28, 0x01, 0xE9, 0xFF, 0x00, 0x00, 0x1E, 0x27, 0x02, 0x01, 0xFF,
 	0x00, 0x00, 0x19, 0x3D, 0x02, 0x02, 0xFF, 0x00, 0x00, 0x50, 0x3E, 0x03, 0xC1, 0xFF, 0x00, 0x00,
 	0x6B, 0x33, 0x05, 0x41, 0xFF, 0x00, 0x00, 0x8C, 0x4B, 0x06, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00,
 	0x07, 0xC1, 0xFF, 0x00, 0x00, 0x1B, 0x2F, 0x08, 0x01, 0xFF, 0x00, 0x00, 0x77, 0x26, 0x09, 0xE1,
@@ -342,6 +354,14 @@ static uint8_t g_3f85[1252] = {
 	0x30, 0x35, 0x33, 0x36, 0x35, 0x36, 0x35, 0x32, 0x38, 0x0, 0x0FF, 0x0, 0x5, 0x0,
 };
 
+static uint8_t g_004e[8] = {
+	0,
+};
+
+static x3f85_wrapper_t g_3f85_wrapper = {
+	NULL, g_3f85,
+};
+
 static a8e0_t g_a8e0 = {
 	{ 0, }, { 0, }
 };
@@ -350,7 +370,38 @@ static bih_wrapper_t g_bih_wrapper = {
 	NULL, NULL, NULL
 };
 
-static int sub_105F6(uint16_t x, uint16_t y)
+static int sub_1349D(char *text)
+{
+	switch (g_c91e.c926)
+	{
+	case 0:
+		break;
+	}
+
+	return 0;
+}
+
+static int sub_106BD()
+{
+	uint16_t x = (0x80 >> (g_level_n & 7)) | 0x80;
+
+	uint16_t msb = g_level_n & 0x80;
+	uint16_t y = (g_level_n >> 3) | msb;
+
+	if ((g_004e[y] & x) == 0)
+	{
+		g_004e[y] |= x;
+		sub_1349D(g_a8e0.bih + g_bih_wrapper.bih->text_offset);
+	}
+	else
+	{
+		sub_1349D("\r");
+	}
+
+	return 0;
+}
+
+static uint64_t sub_105F6(uint16_t x, uint16_t y, uint16_t z)
 {
 	switch (x)
 	{
@@ -360,6 +411,28 @@ static int sub_105F6(uint16_t x, uint16_t y)
 		g_bih_wrapper.ctrl_struct_addr = (uint8_t*)&g_4bae;
 		// g_bih_wrapper.cb_addr = &cb;
 		break;
+
+	case 1:
+	case 3:
+	{
+		uint16_t offt = g_bih_wrapper.bih->own_cb_offsets[x];
+		// call (a8e8 + offt)
+		break;
+	}
+
+	case 4:
+	{
+		uint8_t offt = *((uint8_t*)&g_bih_wrapper.bih->text_offset + (y * 2));
+		uint8_t *p = g_a8e0.bih + offt;
+		p = g_a8e0.bih + *(p + (z * 2));
+		return (uint64_t)p;
+	}
+
+	case 5:
+	{
+		sub_106BD();
+		break;
+	}
 
 	default:
 		break;
@@ -398,6 +471,7 @@ static int sub_14B1B(uint16_t addr)
 static int sub_156D4()
 {
 	assert((g_c91e.c926 == 0) || (g_c91e.c926 > 2 && g_c91e.c926 <= 4));
+	g_c91e.c92e = 0;
 
 	sub_14B1B(0x1FA2);
 	sub_14B1B(0x1FBA);
@@ -446,6 +520,23 @@ static int sub_147EE(uint16_t x)
 	return 0;
 }
 /***************************************/
+
+static void update_ui()
+{
+	char panel_string[9];
+	uint8_t *bg_pix = g_background + sizeof(imh_hdr_t);
+
+	switch (g_ui_panel_mode)
+	{
+	case UI_PM_CASH:
+		sprintf(panel_string, "$%7d", g_4bae.money_account);
+		build_string(panel_string, 320, 200, 96, 149, bg_pix);
+		break;
+
+	default:
+		break;
+	}
+}
 
 static void init()
 {
@@ -498,9 +589,8 @@ static void init()
 		bg_animation_control_init_tables(g_roompos + 0x488) :
 		bg_animation_control_init_tables(NULL);
 
-	sub_105F6(0, g_level_n);
-	character_control_add_sprite_to_chain(156, 110, CD_DOWN);
-	/*
+	sub_105F6(0, g_level_n, 0);
+
 	uint8_t *p = g_3f85;
 	uint16_t u = 0;
 	while (1)
@@ -518,21 +608,31 @@ static void init()
 
 		if (ax != g_4bae.level_n)
 		{
-			p += 7;
-			u++;
-			continue;
+			goto next;
 		}
 
-		if (*(p + 2) != 0xFF)
+		if (*(p + 2) == 0xFF)
 		{
-			uint16_t offt = (*(p + 1) & 3) * 2;
-			g_a8e0.a8e0[offt] = u;
-			p += 7;
-			u++;
-			continue;
+			*(p + 2) = 0;
+			g_3f85_wrapper.addr = (uint64_t*)sub_105F6(4, *(p + 1) & 3, 0);
 		}
+
+		uint16_t offt = (*(p + 1) & 3) * 2;
+		uint16_t *q = (uint16_t*)&g_a8e0.a8e0[offt];
+		*q = u;
+	next:
+		p += 7;
+		u++;
 	}
-	*/
+
+	sub_105F6(1, 0, 0);
+	sub_156D4();
+	// plays level intro text
+	//sub_105F6(5, 0, 0);
+
+	update_ui();
+
+	return;
 }
 
 static void update_normal()
@@ -540,7 +640,7 @@ static void update_normal()
 	character_control_handle_input();
 	character_control_update();
 
-	/* UI */
+	update_ui();
 
 	bg_animation_control_update();
 }
