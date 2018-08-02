@@ -66,7 +66,7 @@ typedef struct dialog_item_t {
 	char letter;
 } dialog_item_t;
 
-typedef struct neuro_dialog_t {
+typedef struct neuro_menu_dialog_t {
 	uint16_t left;
 	uint16_t top;
 	uint16_t right;
@@ -89,7 +89,7 @@ typedef struct neuro_dialog_t {
 
 	uint16_t width;
 	uint8_t *pixels;
-} neuro_dialog_t;
+} neuro_menu_dialog_t;
 
 typedef struct bih_hdr_t {
 	uint16_t cb_offt;           // a8e8
@@ -100,6 +100,13 @@ typedef struct bih_hdr_t {
 	uint16_t own_cb_offsets[4]; // a8f4
 	uint8_t a8fc[20];
 } bih_hdr_t;
+
+/* wraps bih_hdr_t addresses */
+typedef struct bih_hdr_wrapper_t {
+	uint8_t *cb_addr;
+	uint8_t *ctrl_struct_addr;
+	bih_hdr_t *bih;
+} bih_hdr_wrapper_t;
 
 typedef struct bg_animation_control_table_t {
 	uint16_t total_frames;
@@ -178,24 +185,27 @@ LIBNEUROAPI void build_character(char c, uint8_t *dst);
 LIBNEUROAPI void build_string(char *string, uint32_t w, uint32_t h,
 		uint32_t l, uint32_t t, uint8_t *dst);
 
+
+LIBNEUROAPI void build_text_frame(uint32_t h, uint32_t w, imh_hdr_t *dst);
+
 /*
  * Dialog box control.
  */
-LIBNEUROAPI void build_dialog_frame(neuro_dialog_t *dialog,
+LIBNEUROAPI void build_menu_dialog_frame(neuro_menu_dialog_t *dialog,
 					uint16_t left, uint16_t top, uint16_t w, uint16_t h,
 					uint16_t flags, uint8_t *pixels);
 
-LIBNEUROAPI void build_dialog_text(neuro_dialog_t *dialog,
+LIBNEUROAPI void build_menu_dialog_text(neuro_menu_dialog_t *dialog,
 					char *text, uint16_t x_offt, uint16_t y_offt);
 
-LIBNEUROAPI void build_dialog_item(neuro_dialog_t *dialog,
+LIBNEUROAPI void build_menu_dialog_item(neuro_menu_dialog_t *dialog,
 					uint16_t x_offt, uint16_t y_offt, uint16_t w,
 					uint16_t item_num, char c);
 
-LIBNEUROAPI void select_dialog_item(neuro_dialog_t *_dialog,
+LIBNEUROAPI void select_menu_dialog_item(neuro_menu_dialog_t *_dialog,
 					dialog_item_t *item, int select);
 
-LIBNEUROAPI void unselect_dialog_items(neuro_dialog_t *dialog);
+LIBNEUROAPI void unselect_menu_dialog_items(neuro_menu_dialog_t *dialog);
 
 /*
  * Sound stuff.

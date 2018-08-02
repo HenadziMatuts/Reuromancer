@@ -38,7 +38,7 @@ static float g_scale_y = 0;
  */
 sfClock *g_timer = NULL;
 
-int cursor_dialog_item_hit_test(int item, neuro_dialog_t *dialog)
+int cursor_menu_dialog_item_hit_test(int item, neuro_menu_dialog_t *dialog)
 {
 	return (g_sprite_chain[SCI_CURSOR].left > dialog->items[item].left &&
 		g_sprite_chain[SCI_CURSOR].left < dialog->items[item].right &&

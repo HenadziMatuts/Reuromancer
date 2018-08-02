@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 static uint8_t *g_dialog = NULL;
-static neuro_dialog_t g_not_implemented_dialog;
+static neuro_menu_dialog_t g_not_implemented_dialog;
 static int16_t g_selected_dialog_item = -1;
 
 static void init()
@@ -19,10 +19,10 @@ static void init()
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
 
 	assert(g_dialog = calloc(8192, 1));
-	build_dialog_frame(&g_not_implemented_dialog, 64, 100, 192, 40, 6, g_dialog);
-	build_dialog_text(&g_not_implemented_dialog, "Not implemented yet :(", 0, 0);
-	build_dialog_text(&g_not_implemented_dialog, "Okay", 72, 16);
-	build_dialog_item(&g_not_implemented_dialog, 72, 16, 32, 0, 'k');
+	build_menu_dialog_frame(&g_not_implemented_dialog, 64, 100, 192, 40, 6, g_dialog);
+	build_menu_dialog_text(&g_not_implemented_dialog, "Not implemented yet :(", 0, 0);
+	build_menu_dialog_text(&g_not_implemented_dialog, "Okay", 72, 16);
+	build_menu_dialog_item(&g_not_implemented_dialog, 72, 16, 32, 0, 'k');
 	drawing_control_add_sprite_to_chain(SCI_DIALOG, 64, 100, g_dialog, 1);
 }
 
@@ -56,11 +56,11 @@ static neuro_scene_id_t update(sfEvent *event)
 
 		for (uint16_t i = 0; i < g_not_implemented_dialog.items_count; i++)
 		{
-			if (cursor_dialog_item_hit_test(i, &g_not_implemented_dialog))
+			if (cursor_menu_dialog_item_hit_test(i, &g_not_implemented_dialog))
 			{
 				if (g_selected_dialog_item == -1 || g_selected_dialog_item == i)
 				{
-					select_dialog_item(&g_not_implemented_dialog,
+					select_menu_dialog_item(&g_not_implemented_dialog,
 						&g_not_implemented_dialog.items[i], 1);
 					g_selected_dialog_item = i;
 					selected = 1;
@@ -70,18 +70,18 @@ static neuro_scene_id_t update(sfEvent *event)
 		}
 		if (!selected)
 		{
-			unselect_dialog_items(&g_not_implemented_dialog);
+			unselect_menu_dialog_items(&g_not_implemented_dialog);
 		}
 	}
 	else if (event->mouseButton.type == sfEvtMouseButtonReleased)
 	{
 		int selected = g_selected_dialog_item;
-		unselect_dialog_items(&g_not_implemented_dialog);
+		unselect_menu_dialog_items(&g_not_implemented_dialog);
 		g_selected_dialog_item = -1;
 
 		for (uint16_t i = 0; i < g_not_implemented_dialog.items_count; i++)
 		{
-			if (cursor_dialog_item_hit_test(i, &g_not_implemented_dialog))
+			if (cursor_menu_dialog_item_hit_test(i, &g_not_implemented_dialog))
 			{
 				if (selected == i)
 				{

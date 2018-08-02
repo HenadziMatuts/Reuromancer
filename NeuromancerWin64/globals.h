@@ -8,9 +8,11 @@
 
 extern sfClock *g_timer;
 
-int cursor_dialog_item_hit_test(int item, neuro_dialog_t *dialog);
+int cursor_menu_dialog_item_hit_test(int item, neuro_menu_dialog_t *dialog);
 void update_cursor();
 
 sfKeyCode handle_sfml_text_input(uint32_t u32_char, char *string, uint32_t size);
+
+int extract_line(char **text, char *line, int length);
 
 #endif

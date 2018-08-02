@@ -182,7 +182,7 @@ void build_string(char *string, uint32_t w, uint32_t h,
 	{
 		if (c == '\n')
 		{
-			origin = (text_origin + w * 10) * line++;
+			origin = text_origin + (w * 10 * line++);
 			continue;
 		}
 		else if (c < 0x20 || c > 0x7E)

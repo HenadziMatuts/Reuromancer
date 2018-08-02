@@ -129,6 +129,7 @@
     <ClCompile Include="not_implemented_scene.cpp" />
     <ClCompile Include="resource_manager.c" />
     <ClCompile Include="scene_control.c" />
+    <ClCompile Include="utilities.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h" />

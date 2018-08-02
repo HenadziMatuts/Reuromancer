@@ -16,7 +16,7 @@ typedef enum main_menu_state_t {
 static main_menu_state_t g_state = MMS_INITIAL;
 
 static uint8_t *g_dialog = NULL;
-static neuro_dialog_t g_menu_dialog;
+static neuro_menu_dialog_t g_menu_dialog;
 static int16_t g_selected_dialog_item = -1;
 
 static char g_name[11] = { 0, };
@@ -31,23 +31,23 @@ static neuro_scene_id_t on_menu_dialog_item(char item)
 		switch (item)
 		{
 		case 'n':
-			build_dialog_frame(&g_menu_dialog, 32, 152, 128, 40, 6, g_dialog);
-			build_dialog_text(&g_menu_dialog, "Your name?", 0, 0);
-			build_dialog_text(&g_menu_dialog, "<", 0, 16);
+			build_menu_dialog_frame(&g_menu_dialog, 32, 152, 128, 40, 6, g_dialog);
+			build_menu_dialog_text(&g_menu_dialog, "Your name?", 0, 0);
+			build_menu_dialog_text(&g_menu_dialog, "<", 0, 16);
 			drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
 			g_state = MMS_NEW;
 			break;
 
 		case 'l':
-			build_dialog_frame(&g_menu_dialog, 48, 120, 144, 64, 6, g_dialog);
-			build_dialog_text(&g_menu_dialog, "Load Game", 32, 0);
-			build_dialog_text(&g_menu_dialog, "1  2  3  4", 24, 16);
-			build_dialog_text(&g_menu_dialog, "exit", 48, 40);
-			build_dialog_item(&g_menu_dialog, 24, 16, 8, 0, '1');
-			build_dialog_item(&g_menu_dialog, 48, 16, 8, 1, '2');
-			build_dialog_item(&g_menu_dialog, 72, 16, 8, 2, '3');
-			build_dialog_item(&g_menu_dialog, 96, 16, 8, 3, '4');
-			build_dialog_item(&g_menu_dialog, 48, 40, 32, 10, 'x');
+			build_menu_dialog_frame(&g_menu_dialog, 48, 120, 144, 64, 6, g_dialog);
+			build_menu_dialog_text(&g_menu_dialog, "Load Game", 32, 0);
+			build_menu_dialog_text(&g_menu_dialog, "1  2  3  4", 24, 16);
+			build_menu_dialog_text(&g_menu_dialog, "exit", 48, 40);
+			build_menu_dialog_item(&g_menu_dialog, 24, 16, 8, 0, '1');
+			build_menu_dialog_item(&g_menu_dialog, 48, 16, 8, 1, '2');
+			build_menu_dialog_item(&g_menu_dialog, 72, 16, 8, 2, '3');
+			build_menu_dialog_item(&g_menu_dialog, 96, 16, 8, 3, '4');
+			build_menu_dialog_item(&g_menu_dialog, 48, 40, 32, 10, 'x');
 			drawing_control_add_sprite_to_chain(SCI_DIALOG, 48, 120, g_dialog, 1);
 			g_state = MMS_LOAD;
 			break;
@@ -58,10 +58,10 @@ static neuro_scene_id_t on_menu_dialog_item(char item)
 		switch (item)
 		{
 		case 'x':
-			build_dialog_frame(&g_menu_dialog, 32, 152, 96, 24, 6, g_dialog);
-			build_dialog_text(&g_menu_dialog, "New/Load", 8, 0);
-			build_dialog_item(&g_menu_dialog, 8, 0, 24, 0, 'n');
-			build_dialog_item(&g_menu_dialog, 40, 0, 32, 1, 'l');
+			build_menu_dialog_frame(&g_menu_dialog, 32, 152, 96, 24, 6, g_dialog);
+			build_menu_dialog_text(&g_menu_dialog, "New/Load", 8, 0);
+			build_menu_dialog_item(&g_menu_dialog, 8, 0, 24, 0, 'n');
+			build_menu_dialog_item(&g_menu_dialog, 40, 0, 32, 1, 'l');
 			drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
 			g_state = MMS_INITIAL;
 			break;
@@ -93,10 +93,10 @@ static void init()
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
 
 	assert(g_dialog = calloc(8192, 1));
-	build_dialog_frame(&g_menu_dialog, 32, 152, 96, 24, 6, g_dialog);
-	build_dialog_text(&g_menu_dialog, "New/Load", 8, 0);
-	build_dialog_item(&g_menu_dialog, 8, 0, 24, 0, 'n');
-	build_dialog_item(&g_menu_dialog, 40, 0, 32, 1, 'l');
+	build_menu_dialog_frame(&g_menu_dialog, 32, 152, 96, 24, 6, g_dialog);
+	build_menu_dialog_text(&g_menu_dialog, "New/Load", 8, 0);
+	build_menu_dialog_item(&g_menu_dialog, 8, 0, 24, 0, 'n');
+	build_menu_dialog_item(&g_menu_dialog, 40, 0, 32, 1, 'l');
 	drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
 }
 
@@ -113,11 +113,11 @@ static neuro_scene_id_t update(sfEvent *event)
 
 		for (uint16_t i = 0; i < g_menu_dialog.items_count; i++)
 		{
-			if (cursor_dialog_item_hit_test(i, &g_menu_dialog))
+			if (cursor_menu_dialog_item_hit_test(i, &g_menu_dialog))
 			{
 				if (g_selected_dialog_item == -1 || g_selected_dialog_item == i)
 				{
-					select_dialog_item(&g_menu_dialog, &g_menu_dialog.items[i], 1);
+					select_menu_dialog_item(&g_menu_dialog, &g_menu_dialog.items[i], 1);
 					g_selected_dialog_item = i;
 					selected = 1;
 					break;
@@ -126,18 +126,18 @@ static neuro_scene_id_t update(sfEvent *event)
 		}
 		if (!selected)
 		{
-			unselect_dialog_items(&g_menu_dialog);
+			unselect_menu_dialog_items(&g_menu_dialog);
 		}
 	}
 	else if (event->mouseButton.type == sfEvtMouseButtonReleased)
 	{
 		int selected = g_selected_dialog_item;
-		unselect_dialog_items(&g_menu_dialog);
+		unselect_menu_dialog_items(&g_menu_dialog);
 		g_selected_dialog_item = -1;
 
 		for (uint16_t i = 0; i < g_menu_dialog.items_count; i++)
 		{
-			if (cursor_dialog_item_hit_test(i, &g_menu_dialog))
+			if (cursor_menu_dialog_item_hit_test(i, &g_menu_dialog))
 			{
 				if (selected == i)
 				{
@@ -162,7 +162,7 @@ static neuro_scene_id_t update(sfEvent *event)
 		{
 			sprintf(input, "%s%s", g_name, "<");
 			memset(input + strlen(input), 0x20, 11 - strlen(input));
-			build_dialog_text(&g_menu_dialog, input, 0, 16);
+			build_menu_dialog_text(&g_menu_dialog, input, 0, 16);
 		}
 	}
 	

@@ -1,7 +1,7 @@
 #include "neuro_routines.h"
 #include <string.h>
 
-static void build_text_frame(uint32_t _h, uint32_t _w, imh_hdr_t *dst)
+void build_text_frame(uint32_t _h, uint32_t _w, imh_hdr_t *dst)
 {
 	uint8_t *p = (uint8_t*)dst + sizeof(imh_hdr_t);
 	uint32_t w = _w / 2, h = _h;
@@ -24,7 +24,7 @@ static void build_text_frame(uint32_t _h, uint32_t _w, imh_hdr_t *dst)
 	}
 }
 
-void build_dialog_frame(neuro_dialog_t *dialog,
+void build_menu_dialog_frame(neuro_menu_dialog_t *dialog,
 		uint16_t left, uint16_t top, uint16_t w, uint16_t h,
 		uint16_t flags, uint8_t *pixels)
 {
@@ -51,7 +51,7 @@ void build_dialog_frame(neuro_dialog_t *dialog,
 	build_text_frame(h, w, (imh_hdr_t*)pixels);
 }
 
-void build_dialog_text(neuro_dialog_t *dialog,
+void build_menu_dialog_text(neuro_menu_dialog_t *dialog,
 		char *text, uint16_t x_offt, uint16_t y_offt)
 {
 	uint16_t w = dialog->width * 2;
@@ -63,7 +63,7 @@ void build_dialog_text(neuro_dialog_t *dialog,
 	build_string(text, w, h, l, t, p + sizeof(imh_hdr_t));
 }
 
-void build_dialog_item(neuro_dialog_t *dialog,
+void build_menu_dialog_item(neuro_menu_dialog_t *dialog,
 		uint16_t x_offt, uint16_t y_offt, uint16_t w,
 		uint16_t item_num, char c)
 {
@@ -86,7 +86,7 @@ void build_dialog_item(neuro_dialog_t *dialog,
 	dialog->items_count++;
 }
 
-void select_dialog_item(neuro_dialog_t *_dialog,
+void select_menu_dialog_item(neuro_menu_dialog_t *_dialog,
 		dialog_item_t *item, int select)
 {
 	imh_hdr_t *dialog = (imh_hdr_t*)_dialog->pixels;
@@ -108,10 +108,10 @@ void select_dialog_item(neuro_dialog_t *_dialog,
 	}
 }
 
-void unselect_dialog_items(neuro_dialog_t *dialog)
+void unselect_menu_dialog_items(neuro_menu_dialog_t *dialog)
 {
 	for (uint16_t i = 0; i < dialog->items_count; i++)
 	{
-		select_dialog_item(dialog, &dialog->items[i], 0);
+		select_menu_dialog_item(dialog, &dialog->items[i], 0);
 	}
 }
