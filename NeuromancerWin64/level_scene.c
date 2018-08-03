@@ -48,7 +48,8 @@ typedef struct neuro_vm_state_t {
 
 typedef struct x3f85_t {
 	neuro_vm_state_t vm_state[35];
-	uint8_t x41ca[1007];
+	uint8_t vm_state_end;
+	uint8_t x407b[1006];
 } x3f85_t;
 
 typedef struct x3f85_wrapper_t {
@@ -330,10 +331,13 @@ static x3f85_t g_3f85 = {
 		{ 0x34, 0xE1, 0xFF, 0x0000, 0x5C, 0x32 },
 		{ 0x37, 0x41, 0xFF, 0x0000, 0x54, 0x29 },
 	},
+	0xFF,
 	{
-		0xFF,
-		0xFF, 0x00, 0xFF, 0xFF, 0x1, 0x0FF, 0x0FF, 0x0, 0x0FF, 0x4, 0x0FF, 0x0FF, 0x0FF, 0x0, 0x1, 0x0FF, 0x0FF, 0x0FF, 0x0FF, 0x0,
-		0x0FF, 0x0FF, 0x4, 0x0FF, 0x0FF, 0x0, 0x3, 0x0C, 0x5, 0x1, 0x0FF, 0x0, 0x4, 0x0FF, 0x0FF, 0x0FF, 0x0FF,
+		0xFF, 0x00, 0xFF, 0xFF, 0x01, 0xFF,
+		0xFF, 0x00, 0xFF, 0x04, 0xFF, 0xFF,
+		0xFF, 0x00, 0x01, 0xFF, 0xFF, 0xFF,
+		0xFF, 0x00, 0xFF, 0xFF, 0x04, 0xFF,
+		0x0FF, 0x0, 0x3, 0x0C, 0x5, 0x1, 0x0FF, 0x0, 0x4, 0x0FF, 0x0FF, 0x0FF, 0x0FF,
 		0x0, 0x0FF, 0x0E, 0x0FF, 0x0FF, 0x0FF, 0x0, 0x0FF, 0x0F, 0x0FF, 0x0FF, 0x0FF, 0x0, 0x0FF, 0x10, 0x0FF,
 		0x0FF, 0x0FF, 0x0, 0x0FF, 0x0FF, 0x0FF, 0x0FF, 0x0FF, 0x0, 0x0FF, 0x0FF, 0x0FF, 0x0FF, 0x0FF, 0x0, 0x0FF,
 		0x0FF, 0x0C, 0x0FF, 0x0FF, 0x0, 0x0B, 0x17, 0x0D, 0x4, 0x0FF, 0x0, 0x0C, 0x18, 0x0E, 0x0FF, 0x0FF, 0x0,
@@ -396,6 +400,14 @@ static uint8_t g_004e[8] = {
 	0x00,
 };
 
+typedef enum jumps_t {
+	JE, JNE, JL, JGE
+} jumps_t;
+
+static jumps_t g_4b9d[4] = {
+	JE, JNE, JL, JGE
+};
+
 static x3f85_wrapper_t g_3f85_wrapper = {
 	{ NULL, }, &g_3f85,
 };
@@ -407,6 +419,25 @@ static a8e0_t g_a8e0 = {
 static bih_hdr_wrapper_t g_bih_wrapper = {
 	NULL, NULL, NULL
 };
+
+static void sub_14DBA(char *text)
+{
+	switch (g_c91e.c926) {
+	case 0: {
+		g_state = LS_INTRO;
+		break;
+	}
+
+	case 8: {
+		imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
+		build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
+		drawing_control_add_sprite_to_chain(g_4bae.x4ccf--, 0, g_c91e.top, g_seg011, 1);
+	}
+
+	default:
+		break;
+	}
+}
 
 static void sub_1342E(uint16_t opcode)
 {
@@ -430,10 +461,7 @@ static void sub_1342E(uint16_t opcode)
 	*--p = 0;
 
 	sub_147EE(opcode, lines);
-
-	imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
-	build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
-	drawing_control_add_sprite_to_chain(g_4bae.x4ccf--, 0, g_c91e.top, g_seg011, 1);
+	sub_14DBA(text);
 }
 
 static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
@@ -480,6 +508,7 @@ static void neuro_vm()
 		uint8_t opcode = *next_opcode_addr;
 
 		switch (opcode) {
+		/* dialog reply, 1 arg (line number) */
 		case 1:
 			sub_10A5B(*(next_opcode_addr + 1), 0,
 				g_3f85.vm_state[op_index].var_1,
@@ -490,6 +519,40 @@ static void neuro_vm()
 			g_3f85_wrapper.vm_next_op_addr[op_index] += 2;
 			g_4bae.x4bbe = 0xFF;
 			break;
+
+		case 5:
+		case 6:
+		case 7: 
+		case 8: {
+			jumps_t jmp = g_4b9d[opcode - 5];
+			uint8_t arg_1 = *(next_opcode_addr + 1);
+			uint8_t arg_3 = *(next_opcode_addr + 3);
+
+			if (((jmp == JE) && (g_4bae.x4bae[arg_1] == arg_3)) ||
+				((jmp == JNE) && (g_4bae.x4bae[arg_1] != arg_3)) ||
+				((jmp == JL) && (g_4bae.x4bae[arg_1] < arg_3)) ||
+				((jmp == JGE) && (g_4bae.x4bae[arg_1] >= arg_3)))
+			{
+				g_3f85_wrapper.vm_next_op_addr[op_index] += 6;
+			}
+			else
+			{
+				int16_t arg_4 = *(int16_t*)(next_opcode_addr + 4);
+				g_3f85_wrapper.vm_next_op_addr[op_index] += arg_4;
+				g_3f85_wrapper.vm_next_op_addr[op_index] += 4;
+			}
+
+			break;
+		}
+
+		case 19: {
+			uint8_t *p = g_3f85.x407b + *(next_opcode_addr + 1);
+			p[0] = *(next_opcode_addr + 2);
+			p[1] = *(next_opcode_addr + 3);
+
+			g_3f85_wrapper.vm_next_op_addr[op_index] += 4;
+			break;
+		}
 
 		default:
 			break;
@@ -502,26 +565,18 @@ static int setup_intro()
 	uint16_t x = (0x80 >> (g_level_n & 7)) | 0x80;
 	uint16_t y = (g_level_n >> 3) | (g_level_n & 0x80);
 
-	switch (g_c91e.c926) {
-	case 0: {
-		g_state = LS_INTRO;
-		g_bih_string_ptr = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
+	g_bih_string_ptr = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
 
-		if ((g_004e[y] & x) == 0) {
-			/* setup long intro */
-			g_004e[y] |= x;
-		}
-		else {
-			/* setup short intro */
-			while (*g_bih_string_ptr++);
-		}
-
-		break;
+	if ((g_004e[y] & x) == 0) {
+		/* setup long intro */
+		g_004e[y] |= x;
+	}
+	else {
+		/* setup short intro */
+		while (*g_bih_string_ptr++);
 	}
 
-	default:
-		break;
-	}
+	sub_14DBA(g_bih_string_ptr);
 
 	return 0;
 }
@@ -828,7 +883,7 @@ static void wait_for_input()
 {
 	switch (g_state) {
 	case LS_DIALOG_WAIT_FOR_INPUT:
-		if (sfMouse_isButtonPressed(sfMouseLeft))
+		if (sfMouse_isButtonClicked(sfMouseLeft))
 		{
 			g_state = LS_NORMAL;
 			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
@@ -891,13 +946,13 @@ static void update_intro()
 	}
 	else if (state == LIS_WAITING_FOR_INPUT)
 	{
-		if (sfMouse_isButtonPressed(sfMouseLeft))
+		if (sfMouse_isButtonClicked(sfMouseLeft))
 		{
 			state = LIS_SCROLLING;
 			lines_on_screen = 0;
 		}
 	}
-
+	
 	return;
 }
 

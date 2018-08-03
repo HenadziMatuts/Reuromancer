@@ -14,5 +14,6 @@ void update_cursor();
 sfKeyCode handle_sfml_text_input(uint32_t u32_char, char *string, uint32_t size);
 
 int extract_line(char **text, char *line, int length);
+int sfMouse_isButtonClicked(int sfMouseButton);
 
 #endif

@@ -1,5 +1,29 @@
 #include <stdint.h>
 #include <string.h>
+#include "SFML\Window\Mouse.h"
+
+int sfMouse_isButtonClicked(int sfMouseButton)
+{
+	static int clicked = 0;
+
+	if (!clicked)
+	{
+		if (!sfMouse_isButtonPressed(sfMouseLeft))
+		{
+			clicked = 1;
+		}
+	}
+	else
+	{
+		if (sfMouse_isButtonPressed(sfMouseLeft))
+		{
+			clicked = 0;
+			return 1;
+		}
+	}
+
+	return 0;
+}
 
 int extract_line(char **text, char *line, int length)
 {
