@@ -52,6 +52,7 @@ typedef struct x3f85_t {
 	uint8_t x407b[1006];
 } x3f85_t;
 
+/* wraps 16-bit operation addresses */
 typedef struct x3f85_wrapper_t {
 	uint8_t *vm_next_op_addr[35];
 	x3f85_t *x3f85;
@@ -163,6 +164,7 @@ typedef struct a59e_t {
 	uint8_t a5ee[40];
 } a59e_t;
 
+/* Kind of "Window" */
 typedef struct c91e_t {
 	uint16_t left;
 	uint16_t top;
@@ -176,6 +178,7 @@ typedef struct c91e_t {
 	uint16_t c944;
 } c91e_t;
 
+/* Wraps 16-bit addresses of the button area structs */
 typedef struct c91e_wrapper_t {
 	uint8_t *ui_button_areas[10];
 	c91e_t *c91e;
@@ -186,27 +189,27 @@ typedef struct a8e0_t {
 	uint8_t bih[12288]; // 0xA8E8
 } a8e0_t;
 
-typedef struct neuro_ui_button_area_t {
+typedef struct neuro_ui_button_t {
 	uint16_t left;
 	uint16_t top;
 	uint16_t right;
 	uint16_t bottom;
 	uint16_t code;
 	uint8_t unknown[2];
-} neuro_ui_button_area_t;
+} neuro_ui_button_t;
 
-typedef struct neuro_ui_button_areas_t {
-	neuro_ui_button_area_t inventory;
-	neuro_ui_button_area_t pax;
-	neuro_ui_button_area_t dialog;
-	neuro_ui_button_area_t skills;
-	neuro_ui_button_area_t chip;
-	neuro_ui_button_area_t disk;
-	neuro_ui_button_area_t date;
-	neuro_ui_button_area_t time;
-	neuro_ui_button_area_t cash;
-	neuro_ui_button_area_t con;
-} neuro_ui_button_areas_t;
+typedef struct neuro_ui_buttons_t {
+	neuro_ui_button_t inventory;
+	neuro_ui_button_t pax;
+	neuro_ui_button_t dialog;
+	neuro_ui_button_t skills;
+	neuro_ui_button_t chip;
+	neuro_ui_button_t disk;
+	neuro_ui_button_t date;
+	neuro_ui_button_t time;
+	neuro_ui_button_t cash;
+	neuro_ui_button_t con;
+} neuro_ui_buttons_t;
 
 static a59e_t g_a59e = {
 	{ 0, }, { 0, }, { 0, }
@@ -453,7 +456,7 @@ static bih_hdr_wrapper_t g_bih_wrapper = {
 	NULL, NULL, NULL
 };
 
-static neuro_ui_button_areas_t g_ui_button_areas = {
+static neuro_ui_buttons_t g_ui_buttons = {
 	.inventory = {
 		0x10, 0x93, 0x23, 0xA5, 0x00,
 		{ 0x69, 0x00 }
@@ -571,6 +574,7 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 	return;
 }
 
+/* sub_10735 */
 static void neuro_vm()
 {
 	for (int i = 3; i >= 0; i--)
@@ -636,6 +640,7 @@ static void neuro_vm()
 	}
 }
 
+/* sub_106BD */
 static int setup_intro()
 {
 	uint16_t x = (0x80 >> (g_level_n & 7)) | 0x80;
@@ -714,6 +719,7 @@ static uint64_t sub_105F6(uint16_t opcode, ...)
 	return 0;
 }
 
+/* sub_1152B */
 static int has_pax()
 {
 	uint8_t *p = g_a8e0.bih + sizeof(bih_hdr_t); // 0xA910
@@ -726,7 +732,8 @@ static int has_pax()
 	return *p;
 }
 
-static int setup_ui_button_area(void *area)
+/* sub_14B1B */
+static int setup_ui_button(void *area)
 {
 	switch (g_c91e.c926)
 	{
@@ -741,30 +748,32 @@ static int setup_ui_button_area(void *area)
 	return 0;
 }
 
-static int setup_ui_button_areas()
+/* sub_156D4 */
+static int setup_ui_buttons()
 {
 	assert((g_c91e.c926 == 0) || (g_c91e.c926 > 2 && g_c91e.c926 <= 4));
 	g_c91e.c92e = 0;
 
-	setup_ui_button_area(&g_ui_button_areas.inventory);
-	setup_ui_button_area(&g_ui_button_areas.dialog);
+	setup_ui_button(&g_ui_buttons.inventory);
+	setup_ui_button(&g_ui_buttons.dialog);
 
 	if (has_pax())
 	{
-		setup_ui_button_area(&g_ui_button_areas.pax);
+		setup_ui_button(&g_ui_buttons.pax);
 	}
 
-	setup_ui_button_area(&g_ui_button_areas.skills);
-	setup_ui_button_area(&g_ui_button_areas.chip);
-	setup_ui_button_area(&g_ui_button_areas.disk);
-	setup_ui_button_area(&g_ui_button_areas.date);
-	setup_ui_button_area(&g_ui_button_areas.time);
-	setup_ui_button_area(&g_ui_button_areas.cash);
-	setup_ui_button_area(&g_ui_button_areas.con);
+	setup_ui_button(&g_ui_buttons.skills);
+	setup_ui_button(&g_ui_buttons.chip);
+	setup_ui_button(&g_ui_buttons.disk);
+	setup_ui_button(&g_ui_buttons.date);
+	setup_ui_button(&g_ui_buttons.time);
+	setup_ui_button(&g_ui_buttons.cash);
+	setup_ui_button(&g_ui_buttons.con);
 
 	return 0;
 }
 
+/* Setup "Window" */
 static int sub_147EE(uint16_t opcode, ...)
 {
 	memmove(g_a59e.a5ee, g_a59e.a5c6, 40);
@@ -775,8 +784,9 @@ static int sub_147EE(uint16_t opcode, ...)
 	g_c91e.c92e = 0;
 
 	switch (opcode) {
+	/* UI "window" */
 	case 0:
-		setup_ui_button_areas();
+		setup_ui_buttons();
 
 		g_c91e.left = 0;
 		g_c91e.top = 0;
@@ -786,6 +796,7 @@ static int sub_147EE(uint16_t opcode, ...)
 		break;
 
 	case 8: {
+		/* Dialog "window" */
 		va_list args;
 		va_start(args, opcode);
 		uint16_t lines = va_arg(args, uint16_t);
@@ -973,6 +984,7 @@ static void init()
 	uint16_t u = 0;
 	neuro_vm_state_t *p = g_3f85.vm_state;
 
+	/* Sets VM state for the level */
 	while (1)
 	{
 		if (p->level == 0xFF)
@@ -1004,14 +1016,14 @@ static void init()
 	}
 
 	sub_105F6(1);
-	setup_ui_button_areas();
+	setup_ui_buttons();
 	sub_105F6(SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
 	ui_panel_update();
 	return;
 }
 
-static void select_ui_button(neuro_ui_button_area_t *button)
+static void select_ui_button(neuro_ui_button_t *button)
 {
 	uint8_t *ui_pic = g_background + sizeof(imh_hdr_t);
 	uint8_t *p = ui_pic +
@@ -1033,7 +1045,7 @@ static void select_ui_button(neuro_ui_button_area_t *button)
 	return;
 }
 
-static on_ui_button(neuro_ui_button_area_t *button)
+static on_ui_button(neuro_ui_button_t *button)
 {
 	switch (button->code) {
 	case 0x0A:
@@ -1057,16 +1069,16 @@ static on_ui_button(neuro_ui_button_area_t *button)
 	}
 }
 
-static void unselect_ui_button(neuro_ui_button_area_t *button)
+static void unselect_ui_button(neuro_ui_button_t *button)
 {
 	select_ui_button(button);
 }
 
-static neuro_ui_button_area_t* cursor_ui_button_hit_test()
+static neuro_ui_button_t* cursor_ui_button_hit_test()
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
-	neuro_ui_button_area_t *hit =
-		(neuro_ui_button_area_t*)g_c91e_wrapper.ui_button_areas[0];
+	neuro_ui_button_t *hit =
+		(neuro_ui_button_t*)g_c91e_wrapper.ui_button_areas[0];
 
 	for (uint16_t u = 0; u < g_c91e.c92e; u++, hit++)
 	{
@@ -1083,9 +1095,9 @@ static neuro_ui_button_area_t* cursor_ui_button_hit_test()
 static void ui_handle_input(sfEvent *event)
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
-	neuro_ui_button_area_t *button = NULL;
-	static neuro_ui_button_area_t *selected = NULL;
-	static int _selected = 0;
+	neuro_ui_button_t *button = NULL;
+	static neuro_ui_button_t *selected = NULL; /* selected button */
+	static int _selected = 0; /* redrawing flag */
 
 	/* ui area */
 	if (cursor->left < 0 || cursor->left > 320 ||
@@ -1136,6 +1148,7 @@ static void update_normal(sfEvent *event)
 	character_control_handle_input();
 	character_control_update();
 
+	/* execute the following VM instruction */
 	sub_105F6(SUB_105F6_OP_NEURO_VM_STEP);
 
 	ui_handle_input(event);
@@ -1154,6 +1167,7 @@ static void wait_for_input()
 			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
 
+			/* restoring "window" state */
 			memmove(&g_c91e, g_a59e.a59e, 40);
 			memmove(g_a59e.a59e, g_a59e.a5c6, 40);
 			memmove(g_a59e.a5c6, g_a59e.a5ee, 40);
