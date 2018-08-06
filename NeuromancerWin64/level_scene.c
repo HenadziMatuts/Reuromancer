@@ -64,9 +64,9 @@ typedef struct x4bae_t {
 	uint16_t x4bc0;
 	uint16_t x4bc2;
 	uint16_t x4bc4;
-	uint16_t x4bc6;
-	uint8_t x4bc8;
-	uint8_t x4bc9;
+	uint16_t time_m;  // 0x4BC6
+	uint8_t time_h;   // 0x4BC8
+	uint8_t date_day; // 0x4BC9
 	uint8_t x4bca[2]; // padding
 	uint8_t x4bcc;
 	uint8_t x4bcd[38];
@@ -127,7 +127,7 @@ typedef struct x4bae_t {
 	uint8_t x4c74;
 	uint8_t x4c75;
 	uint8_t x4c76[2]; // padding
-	uint32_t money_account; // 0x4C78
+	uint32_t cash; // 0x4C78
 	uint16_t x4c7c;
 	uint8_t x4c7e[4];
 	uint16_t x4c82;
@@ -139,7 +139,7 @@ typedef struct x4bae_t {
 	uint16_t x4c8e;
 	uint16_t x4c90;
 	char x4c92[13];
-	uint16_t x4c9f;
+	uint16_t con;     // 0x4C9F
 	uint16_t level_n; // 0x4CA1
 	uint16_t roompos_spawn_x; // 0x4CA3
 	uint16_t roompos_spawn_y; // 0x4CA5
@@ -191,7 +191,8 @@ typedef struct neuro_ui_button_area_t {
 	uint16_t top;
 	uint16_t right;
 	uint16_t bottom;
-	uint8_t unknown[4];
+	uint16_t code;
+	uint8_t unknown[2];
 } neuro_ui_button_area_t;
 
 typedef struct neuro_ui_button_areas_t {
@@ -226,9 +227,9 @@ static x4bae_t g_4bae = {
 	.x4bc0 = 0xffff,
 	.x4bc2 = 0,
 	.x4bc4 = 0,
-	.x4bc6 = 0,
-	.x4bc8 = 0x0C,
-	.x4bc9 = 0,
+	.time_m = 0,
+	.time_h = 0x0C,
+	.date_day = 0,
 	.x4bca = { 0, 0 },
 	.x4bcc = 0,
 	.x4bcd = {
@@ -292,7 +293,7 @@ static x4bae_t g_4bae = {
 	.x4c74 = 0,
 	.x4c75 = 0,
 	.x4c76 = { 0, 0 },
-	.money_account = 6,
+	.cash = 6,
 	.x4c7c = 0,
 	.x4c7e = { 0, 0, 0, 0 },
 	.x4c82 = 0,
@@ -304,7 +305,7 @@ static x4bae_t g_4bae = {
 	.x4c8e = 0,
 	.x4c90 = 0,
 	.x4c92 = { '{', '@', 'C', 'a', 's', 'e', 0, },
-	.x4c9f = 0x7D0,
+	.con = 0x7D0,
 	.level_n = 0,
 	.roompos_spawn_x = 0xA0,
 	.roompos_spawn_y = 0x69,
@@ -454,44 +455,44 @@ static bih_hdr_wrapper_t g_bih_wrapper = {
 
 static neuro_ui_button_areas_t g_ui_button_areas = {
 	.inventory = {
-		0x10, 0x93, 0x23, 0xA5,
-		{ 0x00, 0x00, 0x69, 0x00 }
+		0x10, 0x93, 0x23, 0xA5, 0x00,
+		{ 0x69, 0x00 }
 	},
 	.pax = {
-		0x28, 0x93, 0x3B, 0xA5,
-		{ 0x01, 0x00, 0x70, 0x00 }
+		0x28, 0x93, 0x3B, 0xA5, 0x01,
+		{ 0x70, 0x00 }
 	},
 	.dialog = {
-		0x40, 0x93, 0x53, 0xA5,
-		{ 0x02, 0x00, 0x74, 0x00 }
+		0x40, 0x93, 0x53, 0xA5, 0x02,
+		{ 0x74, 0x00 }
 	},
 	.skills = {
-		0x10, 0xAB, 0x23, 0xBD,
-		{ 0x03, 0x00, 0x73, 0x00 }
+		0x10, 0xAB, 0x23, 0xBD, 0x03,
+		{ 0x73, 0x00 }
 	},
 	.chip = {
-		0x28, 0xAB, 0x3B, 0xBD,
-		{ 0x04, 0x00, 0x72, 0x00 }
+		0x28, 0xAB, 0x3B, 0xBD, 0x04,
+		{ 0x72, 0x00 }
 	},
 	.disk = {
-		0x40, 0xAB, 0x53, 0xBD,
-		{ 0x05, 0x00, 0x64, 0x00 }
+		0x40, 0xAB, 0x53, 0xBD, 0x05,
+		{ 0x64, 0x00 }
 	},
 	.date = {
-		0x70, 0xA8, 0x7D, 0xB2,
-		{ 0x0A, 0x00, 0x31, 0x00 }
+		0x70, 0xA8, 0x7D, 0xB2, 0x0A,
+		{ 0x31, 0x00 }
 	},
 	.time = {
-		0x80, 0xA8, 0x8F, 0xB2,
-		{ 0x0B, 0x00, 0x32, 0x00 }
+		0x80, 0xA8, 0x8F, 0xB2, 0x0B,
+		{ 0x32, 0x00 }
 	},
 	.cash = {
-		0x70, 0xB3, 0x7D, 0xBB,
-		{ 0x0C, 0x00, 0x33, 0x00 }
+		0x70, 0xB3, 0x7D, 0xBB, 0x0C,
+		{ 0x33, 0x00 }
 	},
 	.con = {
-		0x80, 0xB3, 0x8F, 0xBB,
-		{ 0x0D, 0x00, 0x34, 0x00 }
+		0x80, 0xB3, 0x8F, 0xBB, 0x0D,
+		{ 0x34, 0x00 }
 	}
 };
 
@@ -839,17 +840,84 @@ static int sub_147EE(uint16_t opcode, ...)
 }
 /***************************************/
 
-static void ui_update()
+static void ui_panel_update()
 {
 	char panel_string[9];
 	uint8_t *bg_pix = g_background + sizeof(imh_hdr_t);
+	static int update_cap_ms = 1000;
+	static int elapsed = 0;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
 
-	switch (g_ui_panel_mode)
+	if (passed - elapsed > update_cap_ms)
 	{
+		elapsed = passed;
+
+		if (++g_4bae.time_m == 60)
+		{
+			g_4bae.time_m = 0;
+			if (++g_4bae.time_h == 24)
+			{
+				g_4bae.time_h = 0;
+				g_4bae.date_day++;
+				g_4bae.x4c10 ^= 1;
+				g_4bae.x4c38 = 0;
+				g_4bae.x4c5c = 0xFF;
+			}
+		}
+	}
+
+	if (g_4bae.ui_type == 0)
+	{
+		if (g_4bae.level_n == 49 || g_4bae.level_n == 21)
+		{
+			g_ui_panel_mode = 1;
+		}
+	}
+
+	switch (g_ui_panel_mode) {
 	case UI_PM_CASH:
-		sprintf(panel_string, "$%7d", g_4bae.money_account);
+		sprintf(panel_string, "$%7d", g_4bae.cash);
 		build_string(panel_string, 320, 200, 96, 149, bg_pix);
 		break;
+
+	case UI_PM_CON:
+		sprintf(panel_string, "%8d", g_4bae.con);
+		build_string(panel_string, 320, 200, 96, 149, bg_pix);
+		break;
+
+	case UI_PM_TIME:
+		sprintf(panel_string, "   %02d:%02d", g_4bae.time_h, g_4bae.time_m);
+		build_string(panel_string, 320, 200, 96, 149, bg_pix);
+		break;
+
+	case UI_PM_DATE: {
+		uint16_t day = 16;
+		uint16_t month = 11;
+		uint16_t year = 58;
+
+		if (g_4bae.date_day > 14)
+		{
+			if (day + g_4bae.date_day > 61)
+			{
+				year = 59;
+				month = 1;
+				day = day + g_4bae.date_day - 61;
+			}
+			else
+			{
+				month = 12;
+				day = day + g_4bae.date_day - 30;
+			}
+		}
+		else
+		{
+			day += g_4bae.date_day;
+		}
+
+		sprintf(panel_string, "%02d/%02d/%02d", month, day, year);
+		build_string(panel_string, 320, 200, 96, 149, bg_pix);
+		break;
+	}
 
 	default:
 		break;
@@ -939,7 +1007,7 @@ static void init()
 	setup_ui_button_areas();
 	sub_105F6(SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
-	ui_update();
+	ui_panel_update();
 	return;
 }
 
@@ -963,6 +1031,30 @@ static void select_ui_button(neuro_ui_button_area_t *button)
 	}
 
 	return;
+}
+
+static on_ui_button(neuro_ui_button_area_t *button)
+{
+	switch (button->code) {
+	case 0x0A:
+		g_ui_panel_mode = UI_PM_DATE;
+		break;
+
+	case 0x0B:
+		g_ui_panel_mode = UI_PM_TIME;
+		break;
+
+	case 0x0C:
+		g_ui_panel_mode = UI_PM_CASH;
+		break;
+
+	case 0x0D:
+		g_ui_panel_mode = UI_PM_CON;
+		break;
+
+	default:
+		break;
+	}
 }
 
 static void unselect_ui_button(neuro_ui_button_area_t *button)
@@ -1029,6 +1121,11 @@ static void ui_handle_input(sfEvent *event)
 				_selected = 0;
 			}
 
+			if (selected == cursor_ui_button_hit_test())
+			{
+				on_ui_button(selected);
+			}
+
 			selected = NULL;
 		}
 	}
@@ -1042,7 +1139,7 @@ static void update_normal(sfEvent *event)
 	sub_105F6(SUB_105F6_OP_NEURO_VM_STEP);
 
 	ui_handle_input(event);
-	ui_update();
+	ui_panel_update();
 
 	bg_animation_control_update();
 }
