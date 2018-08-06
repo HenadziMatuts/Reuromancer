@@ -176,17 +176,49 @@ typedef struct c91e_t {
 	uint16_t c944;
 } c91e_t;
 
+typedef struct c91e_wrapper_t {
+	uint8_t *ui_button_areas[10];
+	c91e_t *c91e;
+} c91e_wrapper_t;
+
 typedef struct a8e0_t {
 	uint16_t a8e0[4];
 	uint8_t bih[12288]; // 0xA8E8
 } a8e0_t;
 
+typedef struct neuro_ui_button_area_t {
+	uint16_t left;
+	uint16_t top;
+	uint16_t right;
+	uint16_t bottom;
+	uint8_t unknown[4];
+} neuro_ui_button_area_t;
+
+typedef struct neuro_ui_button_areas_t {
+	neuro_ui_button_area_t inventory;
+	neuro_ui_button_area_t pax;
+	neuro_ui_button_area_t dialog;
+	neuro_ui_button_area_t skills;
+	neuro_ui_button_area_t chip;
+	neuro_ui_button_area_t disk;
+	neuro_ui_button_area_t date;
+	neuro_ui_button_area_t time;
+	neuro_ui_button_area_t cash;
+	neuro_ui_button_area_t con;
+} neuro_ui_button_areas_t;
+
 static a59e_t g_a59e = {
 	{ 0, }, { 0, }, { 0, }
 };
+
 static c91e_t g_c91e = {
 	{ 0, }
 };
+
+c91e_wrapper_t g_c91e_wrapper = {
+	{ NULL, }, &g_c91e
+};
+
 static x4bae_t g_4bae = {
 	.x4bae = { 0, },
 	.x4bbe = 0xff,
@@ -420,6 +452,49 @@ static bih_hdr_wrapper_t g_bih_wrapper = {
 	NULL, NULL, NULL
 };
 
+static neuro_ui_button_areas_t g_ui_button_areas = {
+	.inventory = {
+		0x10, 0x93, 0x23, 0xA5,
+		{ 0x00, 0x00, 0x69, 0x00 }
+	},
+	.pax = {
+		0x28, 0x93, 0x3B, 0xA5,
+		{ 0x01, 0x00, 0x70, 0x00 }
+	},
+	.dialog = {
+		0x40, 0x93, 0x53, 0xA5,
+		{ 0x02, 0x00, 0x74, 0x00 }
+	},
+	.skills = {
+		0x10, 0xAB, 0x23, 0xBD,
+		{ 0x03, 0x00, 0x73, 0x00 }
+	},
+	.chip = {
+		0x28, 0xAB, 0x3B, 0xBD,
+		{ 0x04, 0x00, 0x72, 0x00 }
+	},
+	.disk = {
+		0x40, 0xAB, 0x53, 0xBD,
+		{ 0x05, 0x00, 0x64, 0x00 }
+	},
+	.date = {
+		0x70, 0xA8, 0x7D, 0xB2,
+		{ 0x0A, 0x00, 0x31, 0x00 }
+	},
+	.time = {
+		0x80, 0xA8, 0x8F, 0xB2,
+		{ 0x0B, 0x00, 0x32, 0x00 }
+	},
+	.cash = {
+		0x70, 0xB3, 0x7D, 0xBB,
+		{ 0x0C, 0x00, 0x33, 0x00 }
+	},
+	.con = {
+		0x80, 0xB3, 0x8F, 0xBB,
+		{ 0x0D, 0x00, 0x34, 0x00 }
+	}
+};
+
 static void sub_14DBA(char *text)
 {
 	switch (g_c91e.c926) {
@@ -638,7 +713,7 @@ static uint64_t sub_105F6(uint16_t opcode, ...)
 	return 0;
 }
 
-static int sub_1152B()
+static int has_pax()
 {
 	uint8_t *p = g_a8e0.bih + sizeof(bih_hdr_t); // 0xA910
 
@@ -650,12 +725,12 @@ static int sub_1152B()
 	return *p;
 }
 
-static int sub_14B1B(uint16_t addr)
+static int setup_ui_button_area(void *area)
 {
 	switch (g_c91e.c926)
 	{
 	case 0:
-		g_c91e.c930[g_c91e.c92e++] = addr;
+		g_c91e_wrapper.ui_button_areas[g_c91e.c92e++] = area;
 		break;
 
 	default:
@@ -665,26 +740,26 @@ static int sub_14B1B(uint16_t addr)
 	return 0;
 }
 
-static int sub_156D4()
+static int setup_ui_button_areas()
 {
 	assert((g_c91e.c926 == 0) || (g_c91e.c926 > 2 && g_c91e.c926 <= 4));
 	g_c91e.c92e = 0;
 
-	sub_14B1B(0x1FA2);
-	sub_14B1B(0x1FBA);
+	setup_ui_button_area(&g_ui_button_areas.inventory);
+	setup_ui_button_area(&g_ui_button_areas.dialog);
 
-	if (sub_1152B())
+	if (has_pax())
 	{
-		sub_14B1B(0x1FAE);
+		setup_ui_button_area(&g_ui_button_areas.pax);
 	}
 
-	sub_14B1B(0x1FC6);
-	sub_14B1B(0x1FD2);
-	sub_14B1B(0x1FDE);
-	sub_14B1B(0x1FEA);
-	sub_14B1B(0x1FF6);
-	sub_14B1B(0x2002);
-	sub_14B1B(0x200E);
+	setup_ui_button_area(&g_ui_button_areas.skills);
+	setup_ui_button_area(&g_ui_button_areas.chip);
+	setup_ui_button_area(&g_ui_button_areas.disk);
+	setup_ui_button_area(&g_ui_button_areas.date);
+	setup_ui_button_area(&g_ui_button_areas.time);
+	setup_ui_button_area(&g_ui_button_areas.cash);
+	setup_ui_button_area(&g_ui_button_areas.con);
 
 	return 0;
 }
@@ -700,7 +775,7 @@ static int sub_147EE(uint16_t opcode, ...)
 
 	switch (opcode) {
 	case 0:
-		sub_156D4();
+		setup_ui_button_areas();
 
 		g_c91e.left = 0;
 		g_c91e.top = 0;
@@ -764,7 +839,7 @@ static int sub_147EE(uint16_t opcode, ...)
 }
 /***************************************/
 
-static void update_ui()
+static void ui_update()
 {
 	char panel_string[9];
 	uint8_t *bg_pix = g_background + sizeof(imh_hdr_t);
@@ -861,21 +936,114 @@ static void init()
 	}
 
 	sub_105F6(1);
-	sub_156D4();
+	setup_ui_button_areas();
 	sub_105F6(SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
-	update_ui();
+	ui_update();
 	return;
 }
 
-static void update_normal()
+static void select_ui_button(neuro_ui_button_area_t *button)
+{
+	uint8_t *ui_pic = g_background + sizeof(imh_hdr_t);
+	uint8_t *p = ui_pic +
+		((button->left - g_c91e.left) / 2) +
+		((button->top - g_c91e.top) * g_c91e.c944);
+
+	uint16_t lines = button->bottom - button->top + 1;
+	uint16_t width = ((button->right | 1) - (button->left & 0xFE) + 1) / 2;
+	uint16_t skip = g_c91e.c944 - width;
+
+	for (uint16_t h = 0; h < lines; h++, p += skip)
+	{
+		for (uint16_t w = 0; w < width; w++)
+		{
+			*p++ ^= 0xFF;
+		}
+	}
+
+	return;
+}
+
+static void unselect_ui_button(neuro_ui_button_area_t *button)
+{
+	select_ui_button(button);
+}
+
+static neuro_ui_button_area_t* cursor_ui_button_hit_test()
+{
+	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
+	neuro_ui_button_area_t *hit =
+		(neuro_ui_button_area_t*)g_c91e_wrapper.ui_button_areas[0];
+
+	for (uint16_t u = 0; u < g_c91e.c92e; u++, hit++)
+	{
+		if (cursor->left > hit->left && cursor->left < hit->right &&
+			cursor->top > hit->top && cursor->top < hit->bottom)
+		{
+			return hit;
+		}
+	}
+
+	return NULL;
+}
+
+static void ui_handle_input(sfEvent *event)
+{
+	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
+	neuro_ui_button_area_t *button = NULL;
+	static neuro_ui_button_area_t *selected = NULL;
+	static int _selected = 0;
+
+	/* ui area */
+	if (cursor->left < 0 || cursor->left > 320 ||
+		cursor->top < 140 || cursor->top > 200)
+	{
+		return;
+	}
+
+	if (sfMouse_isButtonPressed(sfMouseLeft))
+	{
+		if (button = cursor_ui_button_hit_test())
+		{
+			if ((!selected || (button == selected)) && !_selected)
+			{
+				select_ui_button(button);
+				selected = button;
+				_selected = 1;
+			}
+		}
+		else if (selected && _selected)
+		{
+			unselect_ui_button(selected);
+			_selected = 0;
+		}
+	}
+	else if (event->mouseButton.type == sfEvtMouseButtonReleased)
+	{
+		if (selected)
+		{
+			if (_selected)
+			{
+				unselect_ui_button(selected);
+				_selected = 0;
+			}
+
+			selected = NULL;
+		}
+	}
+}
+
+static void update_normal(sfEvent *event)
 {
 	character_control_handle_input();
 	character_control_update();
 
 	sub_105F6(SUB_105F6_OP_NEURO_VM_STEP);
 
-	update_ui();
+	ui_handle_input(event);
+	ui_update();
+
 	bg_animation_control_update();
 }
 
@@ -888,6 +1056,10 @@ static void wait_for_input()
 			g_state = LS_NORMAL;
 			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
+
+			memmove(&g_c91e, g_a59e.a59e, 40);
+			memmove(g_a59e.a59e, g_a59e.a5c6, 40);
+			memmove(g_a59e.a5c6, g_a59e.a5ee, 40);
 		}
 		break;
 
@@ -973,7 +1145,7 @@ static neuro_scene_id_t update(sfEvent *event)
 		break;
 
 	case LS_NORMAL:
-		update_normal();
+		update_normal(event);
 		break;
 
 	default:
