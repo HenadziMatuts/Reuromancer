@@ -122,6 +122,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bg_animation_control.c" />
+    <ClCompile Include="data.c" />
     <ClCompile Include="drawing_control.c" />
     <ClCompile Include="level_scene.c" />
     <ClCompile Include="main.c" />
@@ -134,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h" />
     <ClInclude Include="character_control.h" />
+    <ClInclude Include="data.h" />
     <ClInclude Include="drawing_control.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="resource_manager.h" />

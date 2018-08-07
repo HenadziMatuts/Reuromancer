@@ -154,6 +154,13 @@ typedef struct neuro_savegame_t {
 	uint8_t unknown_area_6[40];
 } neuro_savegame_t;
 
+typedef enum ui_panel_mode_t {
+	UI_PM_CASH = 0,
+	UI_PM_CON,
+	UI_PM_TIME,
+	UI_PM_DATE
+} ui_panel_mode_t;
+
 /*
  * Resource tables.
  */
