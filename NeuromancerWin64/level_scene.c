@@ -17,7 +17,7 @@ typedef enum level_intro_state_t {
 
 typedef enum level_state_t {
 	LS_INTRO = 0,
-	LS_DIALOG_WAIT_FOR_INPUT,
+	LS_WAIT_FOR_INPUT,
 	LS_INVENTORY,
 	LS_NORMAL,
 } level_state_t;
@@ -26,12 +26,14 @@ static char *g_bih_string_ptr = NULL;
 static level_state_t g_state = LS_NORMAL;
 
 /***************************************/
-static int sub_147EE(uint16_t opcode, ...);
+static int neuro_window_setup(uint16_t opcode, ...);
 
-static void sub_14DBA(char *text, ...)
+/* sub_14DBA */
+static void neuro_window_draw_string(char *text, ...)
 {
 	switch (g_neuro_window.mode) {
 	case 0:
+		/* incorrect! */
 		g_state = LS_INTRO;
 		break;
 
@@ -80,8 +82,8 @@ static void sub_1342E(uint16_t opcode)
 	}
 	*--p = 0;
 
-	sub_147EE(opcode, lines);
-	sub_14DBA(text);
+	neuro_window_setup(opcode, lines);
+	neuro_window_draw_string(text);
 }
 
 static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
@@ -135,7 +137,7 @@ static void neuro_vm()
 				g_3f85.vm_state[op_index].var_1,
 				g_3f85.vm_state[op_index].var_2);
 
-			g_state = LS_DIALOG_WAIT_FOR_INPUT;
+			g_state = LS_WAIT_FOR_INPUT;
 
 			g_3f85_wrapper.vm_next_op_addr[op_index] += 2;
 			g_4bae.x4bbe = 0xFF;
@@ -198,7 +200,7 @@ static int setup_intro()
 		while (*g_bih_string_ptr++);
 	}
 
-	sub_14DBA(g_bih_string_ptr);
+	neuro_window_draw_string(g_bih_string_ptr);
 
 	return 0;
 }
@@ -339,8 +341,8 @@ static void restore_window()
 	memmove(&g_a59e_wrapper[1], &g_a59e_wrapper[2], sizeof(neuro_window_wrapper_t));
 }
 
-/* Setup "Window" */
-static int sub_147EE(uint16_t mode, ...)
+/* Setup "Window" - sub_147EE */
+static int neuro_window_setup(uint16_t mode, ...)
 {
 	store_window();
 
@@ -526,7 +528,7 @@ static void init()
 	assert(resource_manager_load_resource("NEURO.IMH", g_background));
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
 
-	sub_147EE(0);
+	neuro_window_setup(0);
 
 	if (g_level_n >= 0 && g_4bae.x4bcc == 0)
 	{
@@ -607,21 +609,29 @@ static void init()
 
 static void wait_for_input()
 {
-	switch (g_state) {
-	case LS_DIALOG_WAIT_FOR_INPUT:
-		if (sfMouse_isButtonClicked(sfMouseLeft))
-		{
+	if (sfMouse_isButtonClicked(sfMouseLeft))
+	{
+		switch (g_neuro_window.mode) {
+		case 3:
+			g_state = LS_NORMAL;
+			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+
+			/* restoring "window" state */
+			restore_window();
+			break;
+
+		case 8:
 			g_state = LS_NORMAL;
 			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
 
 			/* restoring "window" state */
 			restore_window();
-		}
-		break;
+			break;
 
-	default:
-		break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -661,35 +671,49 @@ static char* inventoty_get_item_name(uint16_t item_code, char *credits)
 	return g_inventory_item_names[item_code];
 }
 
-static void inventory_setup(int inv_type, int max_items)
+static void inventory_next_page(int inv_type, int max_items, int first_page)
 {
+	static uint16_t items_listed = 0;
+	static uint8_t *inv = NULL;
 	uint16_t items_total = inventory_count_items(inv_type);
-	items_total = (inv_type) ? items_total : items_total + 1;
 
-	sub_14DBA(inv_type ? "Software" : "Items", inv_type ? 8 : 56, 8);
+	items_total = (inv_type) ? items_total : items_total + 1;
+	inv = inv ? inv :
+		(inv_type ? g_3f85.inventory.software : g_3f85.inventory.items);
+
+	/* clear window */
+	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
+		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+
+	neuro_window_draw_string(inv_type ? "Software" : "Items", inv_type ? 8 : 56, 8);
 
 	if (items_total)
 	{
-		uint8_t *inv = (inv_type) ? g_3f85.inventory.software : g_3f85.inventory.items;
-		uint8_t credists = (inv_type) ? 0 : 1;
+		if (items_total == items_listed || first_page)
+		{
+			items_listed = 0;
+			inv = inv_type ? g_3f85.inventory.software : g_3f85.inventory.items;
+		}
+
+		uint8_t credists = items_listed ? 0 : (inv_type ? 0 : 1);
 		uint8_t inv_index = 0;
-		uint16_t items_listed = 0;
+		uint16_t listed_on_page = 0;
 		char string[32] = { 0, };
 
 		/* sub_14AF2 */
 		assert((g_neuro_window.mode == 0) || (g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
 		g_neuro_window.total_items = 0;
 
-		max_items = (items_total < 4) ? items_total : 4;
+		max_items = (items_total - items_listed < 4) ? items_total - items_listed : 4;
 
-		while (items_listed != max_items)
+		while (listed_on_page != max_items)
 		{
-			neuro_button_t *button = &g_inventory_item_button[items_listed];
+			neuro_button_t *button = &g_inventory_item_button[listed_on_page];
 
 			if (credists)
 			{
-				g_inventory_item_button[items_listed].code = items_listed;
-				g_inventory_item_code[items_listed] = 0x7F;
+				g_inventory_item_button[listed_on_page].code = listed_on_page;
+				g_inventory_item_code[listed_on_page] = 0x7F;
 
 				sprintf(string, "1.  Credits %d", g_4bae.cash);
 				credists = 0;
@@ -703,54 +727,62 @@ static void inventory_setup(int inv_type, int max_items)
 					continue;
 				}
 
-				g_inventory_item_button[items_listed].code = items_listed;
-				g_inventory_item_code[items_listed] = *inv;
-				g_inventory_item_index[items_listed] = inv_index;
+				g_inventory_item_button[listed_on_page].code = listed_on_page;
+				g_inventory_item_code[listed_on_page] = *inv;
+				g_inventory_item_index[listed_on_page] = inv_index;
 
 				char c = (*(inv + 2) == 0) ? ' ' : '-';
 				char *item_name = inventoty_get_item_name(*inv, NULL);;
 
 				if (inv_type == 0)
 				{
-					sprintf(string, "%d. %c%s", items_listed + 1, c, item_name);
+					sprintf(string, "%d. %c%s", listed_on_page + 1, c, item_name);
 				}
 				else
 				{
 					sprintf(string, "%d. %c%-11s %2d.0",
-						items_listed + 1, c, item_name, *(inv + 1));
+						listed_on_page + 1, c, item_name, *(inv + 1));
 				}
 
 				inv += 4;
 				inv_index++;
 			}
+			items_listed++;
 
-			sub_14DBA(string, 8, ++items_listed * 8 + 8);
-
+			neuro_window_draw_string(string, 8, ++listed_on_page * 8 + 8);
+			
 			button->left = 64;
-			button->top = (items_listed * 8) + 136;
+			button->top = (listed_on_page * 8) + 136;
 			button->right = 223;
-			button->bottom = (items_listed * 8) + 143;
-			button->label = items_listed + '0';
+			button->bottom = (listed_on_page * 8) + 143;
+			button->label = listed_on_page + '0';
+
 			neuro_window_add_button(button);
 		}
 
 		neuro_window_add_button(&g_inv_buttons.exit);
-		sub_14DBA("exit", 40, 48);
+		neuro_window_draw_string("exit", 40, 48);
 
 		if (items_total > 4)
 		{
 			neuro_window_add_button(&g_inv_buttons.more);
-			sub_14DBA("more", 80, 48);
+			neuro_window_draw_string("more", 80, 48);
 		}
+	}
+	else
+	{
+		neuro_window_draw_string("None", 50, 40);
+		g_state = LS_WAIT_FOR_INPUT;
 	}
 }
 
 static void ui_open_inventory()
 {
 	/* setup inventory window */
-	sub_147EE(3);
-	inventory_setup(IT_ITEMS, 4);
+	neuro_window_setup(3);
+
 	g_state = LS_INVENTORY;
+	inventory_next_page(IT_ITEMS, 4, 1);
 }
 
 static void on_inventory_button(neuro_button_t *button)
@@ -762,6 +794,10 @@ static void on_inventory_button(neuro_button_t *button)
 
 		/* restoring "window" state */
 		restore_window();
+		break;
+
+	case 0x0B:
+		inventory_next_page(IT_ITEMS, 4, 0);
 		break;
 
 	default:
@@ -1036,7 +1072,7 @@ static neuro_scene_id_t update(sfEvent *event)
 		update_inventory(event);
 		break;
 
-	case LS_DIALOG_WAIT_FOR_INPUT:
+	case LS_WAIT_FOR_INPUT:
 		wait_for_input();
 		break;
 
