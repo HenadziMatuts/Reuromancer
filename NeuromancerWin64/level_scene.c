@@ -18,6 +18,7 @@ typedef enum level_intro_state_t {
 typedef enum level_state_t {
 	LS_INTRO = 0,
 	LS_DIALOG_WAIT_FOR_INPUT,
+	LS_INVENTORY,
 	LS_NORMAL,
 } level_state_t;
 
@@ -27,18 +28,30 @@ static level_state_t g_state = LS_NORMAL;
 /***************************************/
 static int sub_147EE(uint16_t opcode, ...);
 
-static void sub_14DBA(char *text)
+static void sub_14DBA(char *text, ...)
 {
-	switch (g_c91e.mode) {
-	case 0: {
+	switch (g_neuro_window.mode) {
+	case 0:
 		g_state = LS_INTRO;
+		break;
+
+	case 3: {
+		va_list args;
+		va_start(args, text);
+		uint16_t left = va_arg(args, uint16_t);
+		uint16_t top = va_arg(args, uint16_t);
+		va_end(args);
+
+		imh_hdr_t *imh = (imh_hdr_t*)g_seg012;
+		build_string(text, imh->width * 2, imh->height, left, top, g_seg012 + sizeof(imh_hdr_t));
+
 		break;
 	}
 
 	case 8: {
 		imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
 		build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
-		drawing_control_add_sprite_to_chain(g_4bae.x4ccf--, 0, g_c91e.top, g_seg011, 1);
+		drawing_control_add_sprite_to_chain(g_4bae.x4ccf--, 0, g_neuro_window.top, g_seg011, 1);
 	}
 
 	default:
@@ -261,12 +274,13 @@ static int has_pax()
 }
 
 /* sub_14B1B */
-static int setup_ui_button(void *area)
+static int neuro_window_add_button(neuro_button_t *button)
 {
-	switch (g_c91e.mode)
+	switch (g_neuro_window.mode)
 	{
 	case 0:
-		g_c91e_wrapper.window_item[g_c91e.total_items++] = area;
+	case 3:
+		g_neuro_window_wrapper.window_item[g_neuro_window.total_items++] = (uint8_t*)button;
 		break;
 
 	default:
@@ -279,77 +293,115 @@ static int setup_ui_button(void *area)
 /* sub_156D4 */
 static int setup_ui_buttons()
 {
-	assert((g_c91e.mode == 0) || (g_c91e.mode > 2 && g_c91e.mode <= 4));
-	g_c91e.total_items = 0;
+	assert((g_neuro_window.mode == 0) || (g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
+	g_neuro_window.total_items = 0;
 
-	setup_ui_button(&g_ui_buttons.inventory);
-	setup_ui_button(&g_ui_buttons.dialog);
+	neuro_window_add_button(&g_ui_buttons.inventory);
+	neuro_window_add_button(&g_ui_buttons.dialog);
 
 	if (has_pax())
 	{
-		setup_ui_button(&g_ui_buttons.pax);
+		neuro_window_add_button(&g_ui_buttons.pax);
 	}
 
-	setup_ui_button(&g_ui_buttons.skills);
-	setup_ui_button(&g_ui_buttons.chip);
-	setup_ui_button(&g_ui_buttons.disk);
-	setup_ui_button(&g_ui_buttons.date);
-	setup_ui_button(&g_ui_buttons.time);
-	setup_ui_button(&g_ui_buttons.cash);
-	setup_ui_button(&g_ui_buttons.con);
+	neuro_window_add_button(&g_ui_buttons.skills);
+	neuro_window_add_button(&g_ui_buttons.chip);
+	neuro_window_add_button(&g_ui_buttons.disk);
+	neuro_window_add_button(&g_ui_buttons.date);
+	neuro_window_add_button(&g_ui_buttons.time);
+	neuro_window_add_button(&g_ui_buttons.cash);
+	neuro_window_add_button(&g_ui_buttons.con);
 
 	return 0;
 }
 
-/* Setup "Window" */
-static int sub_147EE(uint16_t opcode, ...)
+static void store_window()
 {
-	memmove(g_a59e.a5ee, g_a59e.a5c6, 40);
-	memmove(g_a59e.a5c6, g_a59e.a59e, 40);
-	memmove(g_a59e.a59e, &g_c91e, 40);
+	memmove(&g_a59e[2], &g_a59e[1], sizeof(neuro_window_t));
+	memmove(&g_a59e_wrapper[2], &g_a59e_wrapper[1], sizeof(neuro_window_wrapper_t));
 
-	g_c91e.mode = opcode;
-	g_c91e.total_items = 0;
+	memmove(&g_a59e[1], &g_a59e[0], sizeof(neuro_window_t));
+	memmove(&g_a59e_wrapper[1], &g_a59e_wrapper[0], sizeof(neuro_window_wrapper_t));
 
-	switch (opcode) {
+	memmove(&g_a59e[0], &g_neuro_window, sizeof(neuro_window_t));
+	memmove(&g_a59e_wrapper[0], &g_neuro_window_wrapper, sizeof(neuro_window_wrapper_t));
+}
+
+static void restore_window()
+{
+	memmove(&g_neuro_window, &g_a59e[0], sizeof(neuro_window_t));
+	memmove(&g_neuro_window_wrapper, &g_a59e_wrapper[0], sizeof(neuro_window_wrapper_t));
+
+	memmove(&g_a59e[0], &g_a59e[1], sizeof(neuro_window_t));
+	memmove(&g_a59e_wrapper[0], &g_a59e_wrapper[1], sizeof(neuro_window_wrapper_t));
+
+	memmove(&g_a59e[1], &g_a59e[2], sizeof(neuro_window_t));
+	memmove(&g_a59e_wrapper[1], &g_a59e_wrapper[2], sizeof(neuro_window_wrapper_t));
+}
+
+/* Setup "Window" */
+static int sub_147EE(uint16_t mode, ...)
+{
+	store_window();
+
+	g_neuro_window.mode = mode;
+	g_neuro_window.total_items = 0;
+
+	switch (mode) {
 	/* UI "window" */
 	case 0:
 		setup_ui_buttons();
 
-		g_c91e.left = 0;
-		g_c91e.top = 0;
-		g_c91e.width = 319;
-		g_c91e.height = 199;
-		g_c91e.c944 = 160;
+		g_neuro_window.left = 0;
+		g_neuro_window.top = 0;
+		g_neuro_window.right = 319;
+		g_neuro_window.bottom = 199;
+		g_neuro_window.c944 = 160;
+
+		break;
+
+	case 3:
+		/* inventory "window" */
+		g_neuro_window.left = 56;
+		g_neuro_window.top = 128;
+		g_neuro_window.right = 231;
+		g_neuro_window.bottom = 191;
+		g_neuro_window.c944 = 88;
+
+		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
+			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+		drawing_control_add_sprite_to_chain(g_4bae.x4ccf--,
+			g_neuro_window.left, g_neuro_window.top, g_seg012, 1);
+
 		break;
 
 	case 8: {
 		/* Dialog "window" */
 		va_list args;
-		va_start(args, opcode);
+		va_start(args, mode);
 		uint16_t lines = va_arg(args, uint16_t);
 		va_end(args);
 
-		g_c91e.left = 0;
-		g_c91e.top = 4;
-		g_c91e.width = 319;
-		g_c91e.height = (lines * 8) + 19;
-		g_c91e.c928 = lines;
-		g_c91e.c944 = 160;
+		g_neuro_window.left = 0;
+		g_neuro_window.top = 4;
+		g_neuro_window.right = 319;
+		g_neuro_window.bottom = (lines * 8) + 19;
+		g_neuro_window.c928 = lines;
+		g_neuro_window.c944 = 160;
 
 		if (g_4bae.ui_type == 0)
 		{
-			if (g_c91e.mode == 1)
+			if (g_neuro_window.mode == 1)
 			{
 				if (g_4bae.roompos_spawn_x < 0xA0)
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_c91e.height + 1, g_dialog_bubbles + 0x1A2, 0);
+						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x1A2, 0);
 				}
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_c91e.height + 1, g_dialog_bubbles + 0xDC, 0);
+						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0xDC, 0);
 				}
 			}
 			else
@@ -357,17 +409,19 @@ static int sub_147EE(uint16_t opcode, ...)
 				if (g_4bae.roompos_spawn_x < 0xA0)
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_c91e.height + 1, g_dialog_bubbles + 0x6E, 0);
+						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x6E, 0);
 				}
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_c91e.height + 1, g_dialog_bubbles, 0);
+						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles, 0);
 				}
 			}
 		}
 
-		build_text_frame(g_c91e.height + 1, g_c91e.width + 1, (imh_hdr_t*)g_seg011);
+		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
+			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011);
+
 		break;
 	}
 
@@ -551,31 +605,177 @@ static void init()
 	return;
 }
 
-static void select_ui_button(neuro_ui_button_t *button)
+static void wait_for_input()
 {
-	uint8_t *ui_pic = g_background + sizeof(imh_hdr_t);
-	uint8_t *p = ui_pic +
-		((button->left - g_c91e.left) / 2) +
-		((button->top - g_c91e.top) * g_c91e.c944);
-
-	uint16_t lines = button->bottom - button->top + 1;
-	uint16_t width = ((button->right | 1) - (button->left & 0xFE) + 1) / 2;
-	uint16_t skip = g_c91e.c944 - width;
-
-	for (uint16_t h = 0; h < lines; h++, p += skip)
-	{
-		for (uint16_t w = 0; w < width; w++)
+	switch (g_state) {
+	case LS_DIALOG_WAIT_FOR_INPUT:
+		if (sfMouse_isButtonClicked(sfMouseLeft))
 		{
-			*p++ ^= 0xFF;
+			g_state = LS_NORMAL;
+			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
+
+			/* restoring "window" state */
+			restore_window();
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+typedef enum inventory_type_t {
+	IT_ITEMS = 0,
+	IT_SOFTWARE,
+} inventory_type_t;
+
+static neuro_button_t g_inventory_item_button[4];
+static uint8_t g_inventory_item_code[4];
+static uint8_t g_inventory_item_index[4];
+
+static uint16_t inventory_count_items(int inv_type)
+{
+	uint8_t *inv = (inv_type) ? g_3f85.inventory.software : g_3f85.inventory.items;
+	uint16_t items = 0;
+
+	for (int i = 0; i < 32; i++, inv += 4)
+	{
+		if (*inv != 0xFF)
+		{
+			items++;
 		}
 	}
 
-	return;
+	return items;
 }
 
-static on_ui_button(neuro_ui_button_t *button)
+static char* inventoty_get_item_name(uint16_t item_code, char *credits)
+{
+	if (item_code == 0x7F)
+	{
+		sprintf(credits, "Credits %d", g_4bae.cash);
+		return credits;
+	}
+
+	return g_inventory_item_names[item_code];
+}
+
+static void inventory_setup(int inv_type, int max_items)
+{
+	uint16_t items_total = inventory_count_items(inv_type);
+	items_total = (inv_type) ? items_total : items_total + 1;
+
+	sub_14DBA(inv_type ? "Software" : "Items", inv_type ? 8 : 56, 8);
+
+	if (items_total)
+	{
+		uint8_t *inv = (inv_type) ? g_3f85.inventory.software : g_3f85.inventory.items;
+		uint8_t credists = (inv_type) ? 0 : 1;
+		uint8_t inv_index = 0;
+		uint16_t items_listed = 0;
+		char string[32] = { 0, };
+
+		/* sub_14AF2 */
+		assert((g_neuro_window.mode == 0) || (g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
+		g_neuro_window.total_items = 0;
+
+		max_items = (items_total < 4) ? items_total : 4;
+
+		while (items_listed != max_items)
+		{
+			neuro_button_t *button = &g_inventory_item_button[items_listed];
+
+			if (credists)
+			{
+				g_inventory_item_button[items_listed].code = items_listed;
+				g_inventory_item_code[items_listed] = 0x7F;
+
+				sprintf(string, "1.  Credits %d", g_4bae.cash);
+				credists = 0;
+			}
+			else
+			{
+				if (*inv == 0xFF)
+				{
+					inv += 4;
+					inv_index++;
+					continue;
+				}
+
+				g_inventory_item_button[items_listed].code = items_listed;
+				g_inventory_item_code[items_listed] = *inv;
+				g_inventory_item_index[items_listed] = inv_index;
+
+				char c = (*(inv + 2) == 0) ? ' ' : '-';
+				char *item_name = inventoty_get_item_name(*inv, NULL);;
+
+				if (inv_type == 0)
+				{
+					sprintf(string, "%d. %c%s", items_listed + 1, c, item_name);
+				}
+				else
+				{
+					sprintf(string, "%d. %c%-11s %2d.0",
+						items_listed + 1, c, item_name, *(inv + 1));
+				}
+
+				inv += 4;
+				inv_index++;
+			}
+
+			sub_14DBA(string, 8, ++items_listed * 8 + 8);
+
+			button->left = 64;
+			button->top = (items_listed * 8) + 136;
+			button->right = 223;
+			button->bottom = (items_listed * 8) + 143;
+			button->label = items_listed + '0';
+			neuro_window_add_button(button);
+		}
+
+		neuro_window_add_button(&g_inv_buttons.exit);
+		sub_14DBA("exit", 40, 48);
+
+		if (items_total > 4)
+		{
+			neuro_window_add_button(&g_inv_buttons.more);
+			sub_14DBA("more", 80, 48);
+		}
+	}
+}
+
+static void ui_open_inventory()
+{
+	/* setup inventory window */
+	sub_147EE(3);
+	inventory_setup(IT_ITEMS, 4);
+	g_state = LS_INVENTORY;
+}
+
+static void on_inventory_button(neuro_button_t *button)
 {
 	switch (button->code) {
+	case 0x0A:
+		g_state = LS_NORMAL;
+		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+
+		/* restoring "window" state */
+		restore_window();
+		break;
+
+	default:
+		break;
+	}
+}
+
+static void on_ui_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0x00:
+		ui_open_inventory();
+		break;
+
 	case 0x0A:
 		g_ui_panel_mode = UI_PM_DATE;
 		break;
@@ -597,19 +797,70 @@ static on_ui_button(neuro_ui_button_t *button)
 	}
 }
 
-static void unselect_ui_button(neuro_ui_button_t *button)
+static void on_window_button(neuro_button_t *button)
 {
-	select_ui_button(button);
+	switch (g_neuro_window.mode) {
+	case 0:
+		on_ui_button(button);
+		break;
+
+	case 3:
+		on_inventory_button(button);
+		break;
+
+	default:
+		break;
+	}
 }
 
-static neuro_ui_button_t* cursor_ui_button_hit_test()
+static void select_window_button(neuro_button_t *button)
+{
+	uint8_t *pic = NULL;
+
+	switch (g_neuro_window.mode) {
+	case 0:
+		pic = g_background;
+		break;
+	case 3:
+		pic = g_seg012;
+		break;
+	default:
+		return;
+	}
+
+	uint8_t *p = pic + sizeof(imh_hdr_t) +
+		((button->left - g_neuro_window.left) / 2) +
+		((button->top - g_neuro_window.top) * g_neuro_window.c944);
+
+	uint16_t lines = button->bottom - button->top + 1;
+	uint16_t width = ((button->right | 1) - (button->left & 0xFE) + 1) / 2;
+	uint16_t skip = g_neuro_window.c944 - width;
+
+	for (uint16_t h = 0; h < lines; h++, p += skip)
+	{
+		for (uint16_t w = 0; w < width; w++)
+		{
+			*p++ ^= 0xFF;
+		}
+	}
+
+	return;
+}
+
+static void unselect_window_button(neuro_button_t *button)
+{
+	select_window_button(button);
+}
+
+static neuro_button_t* window_button_hit_test()
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
-	neuro_ui_button_t *hit =
-		(neuro_ui_button_t*)g_c91e_wrapper.window_item[0];
 
-	for (uint16_t u = 0; u < g_c91e.total_items; u++, hit++)
+	for (uint16_t u = 0; u < g_neuro_window.total_items; u++)
 	{
+		neuro_button_t *hit =
+			(neuro_button_t*)g_neuro_window_wrapper.window_item[u];
+
 		if (cursor->left > hit->left && cursor->left < hit->right &&
 			cursor->top > hit->top && cursor->top < hit->bottom)
 		{
@@ -620,34 +871,49 @@ static neuro_ui_button_t* cursor_ui_button_hit_test()
 	return NULL;
 }
 
-static void ui_handle_input(sfEvent *event)
+static void window_handle_input(sfEvent *event)
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
-	neuro_ui_button_t *button = NULL;
-	static neuro_ui_button_t *selected = NULL; /* selected button */
+	neuro_button_t *button = NULL;
+	static neuro_button_t *selected = NULL; /* selected button */
 	static int _selected = 0; /* redrawing flag */
 
-	/* ui area */
-	if (cursor->left < 0 || cursor->left > 320 ||
-		cursor->top < 140 || cursor->top > 200)
-	{
-		return;
-	}
+	switch (g_neuro_window.mode) {
+	case 0:
+		/* ui area */
+		if (cursor->left < 0 || cursor->left > 320 ||
+			cursor->top < 140 || cursor->top > 200)
+		{
+			return;
+		}
+		break;
+	case 3:
+		/* inventory area */
+		if (cursor->left < g_neuro_window.left || cursor->left > g_neuro_window.right ||
+			cursor->top < g_neuro_window.top || cursor->top > g_neuro_window.bottom)
+		{
+			return;
+		}
+		break;
 
+	default:
+		break;
+	}
+	
 	if (sfMouse_isButtonPressed(sfMouseLeft))
 	{
-		if (button = cursor_ui_button_hit_test())
+		if (button = window_button_hit_test())
 		{
 			if ((!selected || (button == selected)) && !_selected)
 			{
-				select_ui_button(button);
+				select_window_button(button);
 				selected = button;
 				_selected = 1;
 			}
 		}
 		else if (selected && _selected)
 		{
-			unselect_ui_button(selected);
+			unselect_window_button(selected);
 			_selected = 0;
 		}
 	}
@@ -657,18 +923,23 @@ static void ui_handle_input(sfEvent *event)
 		{
 			if (_selected)
 			{
-				unselect_ui_button(selected);
+				unselect_window_button(selected);
 				_selected = 0;
 			}
 
-			if (selected == cursor_ui_button_hit_test())
+			if (selected == window_button_hit_test())
 			{
-				on_ui_button(selected);
+				on_window_button(selected);
 			}
 
 			selected = NULL;
 		}
 	}
+}
+
+static void update_inventory(sfEvent *event)
+{
+	window_handle_input(event);
 }
 
 static void update_normal(sfEvent *event)
@@ -679,32 +950,10 @@ static void update_normal(sfEvent *event)
 	/* execute the following VM instruction */
 	sub_105F6(SUB_105F6_OP_NEURO_VM_STEP);
 
-	ui_handle_input(event);
+	window_handle_input(event);
 	ui_panel_update();
 
 	bg_animation_control_update();
-}
-
-static void wait_for_input()
-{
-	switch (g_state) {
-	case LS_DIALOG_WAIT_FOR_INPUT:
-		if (sfMouse_isButtonClicked(sfMouseLeft))
-		{
-			g_state = LS_NORMAL;
-			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
-
-			/* restoring "window" state */
-			memmove(&g_c91e, g_a59e.a59e, 40);
-			memmove(g_a59e.a59e, g_a59e.a5c6, 40);
-			memmove(g_a59e.a5c6, g_a59e.a5ee, 40);
-		}
-		break;
-
-	default:
-		break;
-	}
 }
 
 static void update_intro()
@@ -779,12 +1028,16 @@ static neuro_scene_id_t update(sfEvent *event)
 		update_intro();
 		break;
 
-	case LS_DIALOG_WAIT_FOR_INPUT:
-		wait_for_input();
-		break;
-
 	case LS_NORMAL:
 		update_normal(event);
+		break;
+
+	case LS_INVENTORY:
+		update_inventory(event);
+		break;
+
+	case LS_DIALOG_WAIT_FOR_INPUT:
+		wait_for_input();
 		break;
 
 	default:

@@ -85,7 +85,7 @@ static neuro_scene_id_t update(sfEvent *event)
 			{
 				if (selected == i)
 				{
-					scene = on_menu_dialog_item(g_not_implemented_dialog.items[i].letter);
+					scene = on_menu_dialog_item(g_not_implemented_dialog.items[i].label);
 					break;
 				}
 			}

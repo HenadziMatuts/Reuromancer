@@ -72,22 +72,22 @@ void build_menu_dialog_item(neuro_menu_dialog_t *dialog,
 		return;
 	}
 
-	dialog_item_t *item = &dialog->items[dialog->items_count];
+	neuro_button_t *item = &dialog->items[dialog->items_count];
 
-	memset(item, 0, sizeof(dialog_item_t));
+	memset(item, 0, sizeof(neuro_button_t));
 
 	item->left = dialog->inner_left + x_offt;
 	item->top = dialog->inner_top + y_offt;
 	item->right = item->left + w - 1;
 	item->bottom = item->top + 7;
-	item->unknown = item_num;
-	item->letter = c;
+	item->code = item_num;
+	item->label = c;
 
 	dialog->items_count++;
 }
 
 void select_menu_dialog_item(neuro_menu_dialog_t *_dialog,
-		dialog_item_t *item, int select)
+		neuro_button_t *item, int select)
 {
 	imh_hdr_t *dialog = (imh_hdr_t*)_dialog->pixels;
 	uint8_t *pixels = (uint8_t*)dialog + sizeof(imh_hdr_t);

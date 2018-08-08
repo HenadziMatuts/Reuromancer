@@ -10,30 +10,29 @@ extern int g_level_n;
 
 extern uint8_t g_004e[8];
 
-typedef struct neuro_ui_button_t {
-	uint16_t left;
-	uint16_t top;
-	uint16_t right;
-	uint16_t bottom;
-	uint16_t code;
-	uint16_t unknown;
-} neuro_ui_button_t;
-
 typedef struct neuro_ui_buttons_t {
-	neuro_ui_button_t inventory;
-	neuro_ui_button_t pax;
-	neuro_ui_button_t dialog;
-	neuro_ui_button_t skills;
-	neuro_ui_button_t chip;
-	neuro_ui_button_t disk;
-	neuro_ui_button_t date;
-	neuro_ui_button_t time;
-	neuro_ui_button_t cash;
-	neuro_ui_button_t con;
+	neuro_button_t inventory;
+	neuro_button_t pax;
+	neuro_button_t dialog;
+	neuro_button_t skills;
+	neuro_button_t chip;
+	neuro_button_t disk;
+	neuro_button_t date;
+	neuro_button_t time;
+	neuro_button_t cash;
+	neuro_button_t con;
 } neuro_ui_buttons_t;
 
 /* 0x1FA2 */
 extern neuro_ui_buttons_t g_ui_buttons;
+
+typedef struct neuro_inventory_buttons_t {
+	neuro_button_t exit;
+	neuro_button_t more;
+} neuro_inventory_buttons_t;
+
+/* 0x2206 */
+extern neuro_inventory_buttons_t g_inv_buttons;
 
 /* 0x25B4 */
 extern ui_panel_mode_t g_ui_panel_mode;
@@ -47,12 +46,17 @@ typedef struct neuro_vm_state_t {
 	uint8_t var_2;
 } neuro_vm_state_t;
 
+typedef struct neuro_inventory_t {
+	uint8_t items[128];
+	uint8_t software[128];
+} neuro_inventory_t;
+
 typedef struct x3f85_t {
 	neuro_vm_state_t vm_state[35];
-	uint8_t vm_state_end;   // 0x407A
+	uint8_t vm_state_end;        // 0x407A
 	uint8_t x407b[348];
-	uint8_t inventory[128]; // 0x41D7
-	uint8_t x4257[530];
+	neuro_inventory_t inventory; // 0x41D7
+	uint8_t x42d7[402];
 } x3f85_t;
 
 /* wraps 16-bit operation addresses */
@@ -67,6 +71,9 @@ extern x3f85_wrapper_t g_3f85_wrapper;
 typedef enum jumps_t {
 	JE, JNE, JL, JGE
 } jumps_t;
+
+/* 0x4469 */
+extern char *g_inventory_item_names[];
 
 extern jumps_t g_4b9d[4];
 
@@ -172,33 +179,17 @@ typedef struct x4bae_t {
 
 extern x4bae_t g_4bae;
 
-typedef struct a59e_t {
-	uint8_t a59e[40];
-	uint8_t a5c6[40];
-	uint8_t a5ee[40];
-} a59e_t;
-
-extern a59e_t g_a59e;
-
-typedef struct a8e0_t {
-	uint16_t a8e0[4];
-	uint8_t bih[12288]; // 0xA8E8
-} a8e0_t;
-
-extern a8e0_t g_a8e0;
-extern bih_hdr_wrapper_t g_bih_wrapper;
-
 /* Kind of "Window", 0xC91E */
 typedef struct neuro_window_t {
-	uint16_t left;
-	uint16_t top;
-	uint16_t width;
-	uint16_t height;
-	uint16_t mode;
+	uint16_t left;        // 0xC91E
+	uint16_t top;         // 0xC920
+	uint16_t right;       // 0xC922
+	uint16_t bottom;      // 0xC924
+	uint16_t mode;        // 0xC926
 	uint16_t c928;
 	uint8_t c92a[4];
-	uint16_t total_items;
-	uint16_t item[10];
+	uint16_t total_items; // 0xC92E
+	uint16_t item[10];    // 0xC930
 	uint16_t c944;
 } neuro_window_t;
 
@@ -208,8 +199,21 @@ typedef struct neuro_window_wrapper_t {
 	neuro_window_t *window;
 } neuro_window_wrapper_t;
 
-extern neuro_window_t g_c91e;
-extern neuro_window_wrapper_t g_c91e_wrapper;
+/* 0xA59E, 0xA5C6, 0xA5EE */
+extern neuro_window_t g_a59e[3];
+extern neuro_window_wrapper_t g_a59e_wrapper[3];
+
+typedef struct a8e0_t {
+	uint16_t a8e0[4];
+	uint8_t bih[12288]; // 0xA8E8
+} a8e0_t;
+
+extern a8e0_t g_a8e0;
+extern bih_hdr_wrapper_t g_bih_wrapper;
+
+/* 0xC91E */
+extern neuro_window_t g_neuro_window;
+extern neuro_window_wrapper_t g_neuro_window_wrapper;
 
 #pragma pack(pop)
 #endif

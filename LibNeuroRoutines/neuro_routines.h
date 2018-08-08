@@ -57,14 +57,14 @@ typedef struct sprite_layer_t {
 	uint8_t *_sprite_pixels;
 } sprite_layer_t;
 
-typedef struct dialog_item_t {
+typedef struct neuro_button_t {
 	uint16_t left;
 	uint16_t top;
 	uint16_t right;
 	uint16_t bottom;
-	uint16_t unknown; /* index? */
-	char letter;
-} dialog_item_t;
+	uint16_t code; /* index? */
+	char label;
+} neuro_button_t;
 
 typedef struct neuro_menu_dialog_t {
 	uint16_t left;
@@ -85,7 +85,7 @@ typedef struct neuro_menu_dialog_t {
 	uint16_t flags;
 
 	uint16_t items_count;
-	dialog_item_t items[16];
+	neuro_button_t items[16];
 
 	uint16_t width;
 	uint8_t *pixels;
@@ -210,7 +210,7 @@ LIBNEUROAPI void build_menu_dialog_item(neuro_menu_dialog_t *dialog,
 					uint16_t item_num, char c);
 
 LIBNEUROAPI void select_menu_dialog_item(neuro_menu_dialog_t *_dialog,
-					dialog_item_t *item, int select);
+					neuro_button_t *item, int select);
 
 LIBNEUROAPI void unselect_menu_dialog_items(neuro_menu_dialog_t *dialog);
 
