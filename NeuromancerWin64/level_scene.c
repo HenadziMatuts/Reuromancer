@@ -15,24 +15,52 @@ typedef enum level_intro_state_t {
 	LIS_WAITING_FOR_INPUT,
 } level_intro_state_t;
 
+/*
+ *                                ---> "IS_ITEM_LIST_WFI" ---> (no items)
+ *                                |                          |
+ *                                |                          |
+ * "IS_OPEN_INVENTORY" ---> "IS_ITEM_LIST" ------> "IS_CLOSE_INVENTORY" (exit)
+ *                            |   |
+ *                            |   |
+ *                            |   <------------------------------------ <----- <----------------
+ *                            |                           |             |      |               |
+ *                            |                           |             |      |               |
+ *                            -----> "IS_ITEM_OPTIONS" ---> (exit)      |      |               |
+ *                                          |                           |      |               |
+ *                                          |                           |      |               |
+ *                                          | ---> "IS_DISCARD_ITEM" --->      |               |
+ *                                          |                                  |               |
+ *                                          |                                  |               |
+ *                                          -----> "IS_ERASE_SOFTWARE_LIST" ---> (exit)        |
+ *                                                      |   |                                  |
+ *                                                      |   |                                  |
+ *                                                      |   <--------------------------        |
+ *                                                      |                             |        |
+ *                                                      | ---> "IS_ERASE_SOFTWARE" --->        |
+ *                                                      |                                      |
+ *                                                      |                                      |
+ *                                                      | ---> "IS_ERASE_SOFTWARE_LIST_WFI" ---> (no software)
+ */
 typedef enum inventory_state_t {
+	IS_OPEN_INVENTORY = -1,
 	IS_ITEM_LIST = 0,
+	IS_ITEM_LIST_WFI,
 	IS_ITEM_OPTIONS,
 	IS_DISCARD_ITEM,
 	IS_ERASE_SOFTWARE_LIST,
+	IS_ERASE_SOFTWARE_LIST_WFI,
 	IS_ERASE_SOFTWARE,
+	IS_CLOSE_INVENTORY,
 } inventory_state_t;
 
 typedef enum level_state_t {
 	LS_INTRO = 0,
-	LS_WAIT_FOR_INPUT,
-	LS_INVENTORY,
 	LS_NORMAL,
+	LS_INVENTORY,
+	LS_WAIT_FOR_INPUT,
 } level_state_t;
 
 static char *g_bih_string_ptr = NULL;
-static level_state_t g_state = LS_NORMAL;
-static inventory_state_t g_inventory_state = 0;
 
 /***************************************/
 static int neuro_window_setup(uint16_t opcode, ...);
@@ -42,8 +70,6 @@ static void neuro_window_draw_string(char *text, ...)
 {
 	switch (g_neuro_window.mode) {
 	case 0:
-		/* incorrect! */
-		g_state = LS_INTRO;
 		break;
 
 	case 3: {
@@ -127,7 +153,7 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 }
 
 /* sub_10735 */
-static void neuro_vm()
+static void neuro_vm(level_state_t *state)
 {
 	for (int i = 3; i >= 0; i--)
 	{
@@ -146,7 +172,7 @@ static void neuro_vm()
 				g_3f85.vm_state[op_index].var_1,
 				g_3f85.vm_state[op_index].var_2);
 
-			g_state = LS_WAIT_FOR_INPUT;
+			*state = LS_WAIT_FOR_INPUT;
 
 			g_3f85_wrapper.vm_next_op_addr[op_index] += 2;
 			g_4bae.x4bbe = 0xFF;
@@ -209,8 +235,6 @@ static int setup_intro()
 		while (*g_bih_string_ptr++);
 	}
 
-	neuro_window_draw_string(g_bih_string_ptr);
-
 	return 0;
 }
 
@@ -219,7 +243,7 @@ typedef enum sub_105f6_opcodes_t {
 	SUB_105F6_OP_NEURO_VM_STEP,
 } sub_105f6_opcodes_t;
 
-static uint64_t sub_105F6(uint16_t opcode, ...)
+static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...)
 {
 	switch (opcode) {
 	case 0: {
@@ -261,7 +285,7 @@ static uint64_t sub_105F6(uint16_t opcode, ...)
 	}
 
 	case SUB_105F6_OP_NEURO_VM_STEP:
-		neuro_vm();
+		neuro_vm(state);
 		break;
 
 	default:
@@ -532,7 +556,6 @@ static void init()
 {
 	char resource[32] = { 0, };
 	memset(g_vga, 0, 320 * 200 * 4);
-	g_state = LS_NORMAL;
 
 	assert(resource_manager_load_resource("NEURO.IMH", g_background));
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
@@ -597,7 +620,7 @@ static void init()
 		if (p->mark == 0xFF)
 		{
 			p->mark = 0;
-			g_3f85_wrapper.vm_next_op_addr[u] = (uint8_t*)sub_105F6(4, p->flag & 3, 0);
+			g_3f85_wrapper.vm_next_op_addr[u] = (uint8_t*)sub_105F6(NULL, 4, p->flag & 3, 0);
 		}
 
 		uint16_t offt = p->flag & 3;
@@ -608,9 +631,9 @@ static void init()
 		u++;
 	}
 
-	sub_105F6(1);
+	sub_105F6(NULL, 1);
 	setup_ui_buttons();
-	sub_105F6(SUB_105F6_OP_PLAY_LEVEL_INTRO);
+	sub_105F6(NULL, SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
 	ui_panel_update();
 	return;
@@ -657,7 +680,7 @@ typedef enum inventory_show_list_page_t {
 	ISLP_FIRST,
 } inventory_show_list_page_t;
 
-static void inventory_item_list(int inv_type, int max_items, int page)
+static inventory_state_t inventory_item_list(int inv_type, int max_items, int page)
 {
 	static uint16_t items_listed = 0;
 	static uint8_t *inv = NULL;
@@ -758,8 +781,10 @@ static void inventory_item_list(int inv_type, int max_items, int page)
 	else
 	{
 		neuro_window_draw_string("None", 50, 40);
-		g_state = LS_WAIT_FOR_INPUT;
+		return (inv_type == IT_ITEMS) ? IS_ITEM_LIST_WFI : IS_ERASE_SOFTWARE_LIST_WFI;
 	}
+
+	return (inv_type == IT_ITEMS) ? IS_ITEM_LIST : IS_ERASE_SOFTWARE_LIST;
 }
 
 static void inventory_item_options()
@@ -874,13 +899,43 @@ static void inventory_discard(int discard)
 	neuro_window_add_button(&g_inv_disc_buttons.no);
 }
 
-static void ui_open_inventory()
+static void inventory_give_item()
 {
-	/* setup inventory window */
-	neuro_window_setup(3);
+	/* clear window */
+	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
+		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
 
-	g_state = LS_INVENTORY;
-	inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+	if (g_c946 == 0x7F)
+	{
+		char credits[32] = { 0, };
+		neuro_window_draw_string("Give how much?", 8, 16);
+
+		sprintf(credits, "Credits %d", g_4bae.cash);
+		neuro_window_draw_string(credits, 8, 8);
+	}
+	else
+	{
+
+	}
+}
+
+static inventory_state_t inventory_wait_for_input(inventory_state_t state)
+{
+	if (sfMouse_isButtonClicked(sfMouseLeft))
+	{
+		switch (state) {
+		case IS_ITEM_LIST_WFI:
+			return IS_CLOSE_INVENTORY;
+
+		case IS_ERASE_SOFTWARE_LIST_WFI:
+			return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+
+		default:
+			return state;
+		}
+	}
+
+	return state;
 }
 
 static inventory_state_t on_inventory_erase_software_list_button(neuro_button_t *button)
@@ -896,12 +951,10 @@ static inventory_state_t on_inventory_erase_software_list_button(neuro_button_t 
 		return IS_ERASE_SOFTWARE;
 
 	case 0x0A: /* exit */
-		inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
-		return IS_ITEM_LIST;
+		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 
 	case 0x0B: /* more */
-		inventory_item_list(IT_SOFTWARE, 4, ISLP_NEXT);
-		break;
+		return inventory_item_list(IT_SOFTWARE, 4, ISLP_NEXT);
 	}
 
 	return IS_ERASE_SOFTWARE_LIST;
@@ -920,8 +973,7 @@ static inventory_state_t on_inventory_discard_button(neuro_button_t *button, int
 			g_3f85.inventory.software[g_a86a * 4] = 0xFF;
 		}
 	case 0x00: /* no */
-		inventory_item_list((discard == ID_ITEM) ? IT_ITEMS : IT_SOFTWARE, 4, ISLP_FIRST);
-		return (discard == ID_ITEM) ? IS_ITEM_LIST : IS_ERASE_SOFTWARE_LIST;
+		return inventory_item_list((discard == ID_ITEM) ? IT_ITEMS : IT_SOFTWARE, 4, ISLP_FIRST);
 	}
 
 	return IS_DISCARD_ITEM;
@@ -933,25 +985,23 @@ static inventory_state_t on_inventory_item_options_button(neuro_button_t *button
 	case 0x64: /* discard */
 		if (g_c946 == 0x53 || g_c946 == 0x7F)
 		{
-			inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
-			return IS_ITEM_LIST;
+			return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 		}
 		inventory_discard(ID_ITEM);
 		return IS_DISCARD_ITEM;
 
 	case 0x65: /* erase */
-		inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
-		return IS_ERASE_SOFTWARE_LIST;
+		return inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
 
-	case 0x67:
+	case 0x67: /* give */
+		inventory_give_item();
 		break;
 
 	case 0x6F:
 		break;
 
 	case 0x0A: /* exit */
-		inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
-		return IS_ITEM_LIST;
+		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 	}
 
 	return IS_ITEM_OPTIONS;
@@ -970,55 +1020,45 @@ static inventory_state_t on_inventory_item_list_button(neuro_button_t *button)
 		return IS_ITEM_OPTIONS;
 
 	case 0x0A: /* exit */
-		g_state = LS_NORMAL;
-		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-		/* restoring "window" state */
-		restore_window();
-		break;
+		return IS_CLOSE_INVENTORY;
 
 	case 0x0B: /* more */
-		inventory_item_list(IT_ITEMS, 4, ISLP_NEXT);
-		break;
+		return inventory_item_list(IT_ITEMS, 4, ISLP_NEXT);
 	}
 
 	return IS_ITEM_LIST;
 }
 
-static void on_inventory_button(neuro_button_t *button)
+static void on_inventory_button(inventory_state_t *state, neuro_button_t *button)
 {
-	static inventory_state_t state = IS_ITEM_LIST;
-	state = (state == g_inventory_state) ? state : g_inventory_state;
-
-	switch (state) {
+	switch (*state) {
 	case IS_ITEM_LIST:
-		state = on_inventory_item_list_button(button);
+		*state = on_inventory_item_list_button(button);
 		break;
 
 	case IS_ITEM_OPTIONS:
-		state = on_inventory_item_options_button(button);
+		*state = on_inventory_item_options_button(button);
 		break;
 
 	case IS_DISCARD_ITEM:
-		state = on_inventory_discard_button(button, IT_ITEMS);
+		*state = on_inventory_discard_button(button, IT_ITEMS);
 		break;
 
 	case IS_ERASE_SOFTWARE_LIST:
-		state = on_inventory_erase_software_list_button(button);
+		*state = on_inventory_erase_software_list_button(button);
 		break;
 
 	case IS_ERASE_SOFTWARE:
-		state = on_inventory_discard_button(button, IT_SOFTWARE);
+		*state = on_inventory_discard_button(button, IT_SOFTWARE);
 		break;
 	}
-
-	g_inventory_state = state;
 }
 
-static void on_ui_button(neuro_button_t *button)
+static void on_ui_button(level_state_t *state, neuro_button_t *button)
 {
 	switch (button->code) {
 	case 0x00: /* inventory */
-		ui_open_inventory();
+		*state = LS_INVENTORY;
 		break;
 
 	case 0x0A: /* panel date */
@@ -1042,15 +1082,15 @@ static void on_ui_button(neuro_button_t *button)
 	}
 }
 
-static void on_window_button(neuro_button_t *button)
+static void on_window_button(int *state, neuro_button_t *button)
 {
 	switch (g_neuro_window.mode) {
 	case 0:
-		on_ui_button(button);
+		on_ui_button((level_state_t*)state, button);
 		break;
 
 	case 3:
-		on_inventory_button(button);
+		on_inventory_button((inventory_state_t*)state, button);
 		break;
 
 	default:
@@ -1116,7 +1156,7 @@ static neuro_button_t* window_button_hit_test()
 	return NULL;
 }
 
-static void window_handle_input(sfEvent *event)
+static void window_handle_input(int *state, sfEvent *event)
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
 	neuro_button_t *button = NULL;
@@ -1174,7 +1214,7 @@ static void window_handle_input(sfEvent *event)
 
 			if (selected == window_button_hit_test())
 			{
-				on_window_button(selected);
+				on_window_button(state, selected);
 			}
 
 			selected = NULL;
@@ -1182,26 +1222,83 @@ static void window_handle_input(sfEvent *event)
 	}
 }
 
-static void update_inventory(sfEvent *event)
+static level_state_t wait_for_input()
 {
-	window_handle_input(event);
+	if (sfMouse_isButtonClicked(sfMouseLeft))
+	{
+		switch (g_neuro_window.mode) {
+		case 3:
+			return LS_INVENTORY;
+
+		case 8:
+			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
+			/* restoring "window" state */
+			restore_window();
+			return LS_NORMAL;
+
+		default:
+			break;
+		}
+	}
+
+	return LS_WAIT_FOR_INPUT;
 }
 
-static void update_normal(sfEvent *event)
+static level_state_t update_inventory(sfEvent *event)
 {
+	static inventory_state_t state = IS_OPEN_INVENTORY;
+
+	switch (state) {
+	case IS_OPEN_INVENTORY:
+		neuro_window_setup(3);
+		state = inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+		break;
+
+	case IS_CLOSE_INVENTORY:
+		state = IS_OPEN_INVENTORY;
+		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+		restore_window();
+		return LS_NORMAL;
+
+	case IS_ITEM_LIST_WFI:
+	case IS_ERASE_SOFTWARE_LIST_WFI:
+		state = inventory_wait_for_input(state);
+		break;
+
+	default:
+		window_handle_input((int*)&state, event);
+		break;
+	}
+
+	return LS_INVENTORY;
+}
+
+static level_state_t update_normal(sfEvent *event)
+{
+	level_state_t state = LS_NORMAL;
+	level_state_t new_state = state;
+
+	window_handle_input((int*)&new_state, event);
+	if (new_state != state)
+	{
+		return new_state;
+	}
+
+	ui_panel_update();
+
 	character_control_handle_input();
 	character_control_update();
 
 	/* execute the following VM instruction */
-	sub_105F6(SUB_105F6_OP_NEURO_VM_STEP);
-
-	window_handle_input(event);
-	ui_panel_update();
+	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_STEP);
 
 	bg_animation_control_update();
+
+	return state;
 }
 
-static void update_intro()
+static level_state_t update_intro()
 {
 	static level_intro_state_t state = LIS_NEXT_LINE;
 	static int lines_on_screen = 0, lines_scrolled = 0;
@@ -1214,7 +1311,7 @@ static void update_intro()
 
 	if (passed - elapsed <= frame_cap_ms)
 	{
-		return;
+		return LS_INTRO;
 	}
 	elapsed = passed;
 
@@ -1226,10 +1323,9 @@ static void update_intro()
 		
 		if (last)
 		{
-			g_state = LS_NORMAL;
 			state = LIS_NEXT_LINE;
 			lines_on_screen = 0;
-			return;
+			return LS_NORMAL;
 		}
 
 		state = (++lines_on_screen == 7)
@@ -1258,66 +1354,31 @@ static void update_intro()
 		}
 	}
 	
-	return;
-}
-
-static void wait_for_input()
-{
-	if (sfMouse_isButtonClicked(sfMouseLeft))
-	{
-		switch (g_neuro_window.mode) {
-		case 3:
-			if (g_inventory_state == IS_ITEM_LIST)
-			{
-				g_state = LS_NORMAL;
-				drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-				/* restoring "window" state */
-				restore_window();
-			}
-			else
-			{
-				g_state = LS_INVENTORY;
-				g_inventory_state = IS_ITEM_LIST;
-				inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
-			}
-			break;
-
-		case 8:
-			g_state = LS_NORMAL;
-			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
-			/* restoring "window" state */
-			restore_window();
-			break;
-
-		default:
-			break;
-		}
-	}
+	return LS_INTRO;
 }
 
 static neuro_scene_id_t update(sfEvent *event)
 {
+	static level_state_t state = LS_INTRO;
 	neuro_scene_id_t scene = NSID_LEVEL;
 
 	update_cursor();
 
-	switch (g_state)
-	{
+	switch (state) {
 	case LS_INTRO:
-		update_intro();
+		state = update_intro();
 		break;
 
 	case LS_NORMAL:
-		update_normal(event);
+		state = update_normal(event);
 		break;
 
 	case LS_INVENTORY:
-		update_inventory(event);
+		state = update_inventory(event);
 		break;
 
 	case LS_WAIT_FOR_INPUT:
-		wait_for_input();
+		state = wait_for_input();
 		break;
 
 	default:
