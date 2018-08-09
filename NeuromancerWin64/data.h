@@ -27,12 +27,21 @@ typedef struct neuro_ui_buttons_t {
 extern neuro_ui_buttons_t g_ui_buttons;
 
 typedef struct neuro_inventory_buttons_t {
+	neuro_button_t item_page_exit;
 	neuro_button_t exit;
 	neuro_button_t more;
 } neuro_inventory_buttons_t;
 
-/* 0x2206 */
+/* 0x21FA */
 extern neuro_inventory_buttons_t g_inv_buttons;
+
+typedef struct neuro_inventory_discard_buttons_t {
+	neuro_button_t yes;
+	neuro_button_t no;
+} neuro_inventory_discard_buttons_t;
+
+/* 0x2236 */
+extern neuro_inventory_discard_buttons_t g_inv_disc_buttons;
 
 /* 0x25B4 */
 extern ui_panel_mode_t g_ui_panel_mode;
@@ -203,6 +212,8 @@ typedef struct neuro_window_wrapper_t {
 extern neuro_window_t g_a59e[3];
 extern neuro_window_wrapper_t g_a59e_wrapper[3];
 
+extern uint16_t g_a86a;
+
 typedef struct a8e0_t {
 	uint16_t a8e0[4];
 	uint8_t bih[12288]; // 0xA8E8
@@ -214,6 +225,8 @@ extern bih_hdr_wrapper_t g_bih_wrapper;
 /* 0xC91E */
 extern neuro_window_t g_neuro_window;
 extern neuro_window_wrapper_t g_neuro_window_wrapper;
+
+extern uint8_t g_c946;
 
 #pragma pack(pop)
 #endif

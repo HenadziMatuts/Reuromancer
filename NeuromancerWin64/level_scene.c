@@ -15,6 +15,14 @@ typedef enum level_intro_state_t {
 	LIS_WAITING_FOR_INPUT,
 } level_intro_state_t;
 
+typedef enum inventory_state_t {
+	IS_ITEM_LIST = 0,
+	IS_ITEM_OPTIONS,
+	IS_DISCARD_ITEM,
+	IS_ERASE_SOFTWARE_LIST,
+	IS_ERASE_SOFTWARE,
+} inventory_state_t;
+
 typedef enum level_state_t {
 	LS_INTRO = 0,
 	LS_WAIT_FOR_INPUT,
@@ -24,6 +32,7 @@ typedef enum level_state_t {
 
 static char *g_bih_string_ptr = NULL;
 static level_state_t g_state = LS_NORMAL;
+static inventory_state_t g_inventory_state = 0;
 
 /***************************************/
 static int neuro_window_setup(uint16_t opcode, ...);
@@ -607,34 +616,6 @@ static void init()
 	return;
 }
 
-static void wait_for_input()
-{
-	if (sfMouse_isButtonClicked(sfMouseLeft))
-	{
-		switch (g_neuro_window.mode) {
-		case 3:
-			g_state = LS_NORMAL;
-			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-
-			/* restoring "window" state */
-			restore_window();
-			break;
-
-		case 8:
-			g_state = LS_NORMAL;
-			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
-
-			/* restoring "window" state */
-			restore_window();
-			break;
-
-		default:
-			break;
-		}
-	}
-}
-
 typedef enum inventory_type_t {
 	IT_ITEMS = 0,
 	IT_SOFTWARE,
@@ -671,7 +652,12 @@ static char* inventoty_get_item_name(uint16_t item_code, char *credits)
 	return g_inventory_item_names[item_code];
 }
 
-static void inventory_next_page(int inv_type, int max_items, int first_page)
+typedef enum inventory_show_list_page_t {
+	ISLP_NEXT = 0,
+	ISLP_FIRST,
+} inventory_show_list_page_t;
+
+static void inventory_item_list(int inv_type, int max_items, int page)
 {
 	static uint16_t items_listed = 0;
 	static uint8_t *inv = NULL;
@@ -689,7 +675,7 @@ static void inventory_next_page(int inv_type, int max_items, int first_page)
 
 	if (items_total)
 	{
-		if (items_total == items_listed || first_page)
+		if (items_total == items_listed || page)
 		{
 			items_listed = 0;
 			inv = inv_type ? g_3f85.inventory.software : g_3f85.inventory.items;
@@ -776,55 +762,278 @@ static void inventory_next_page(int inv_type, int max_items, int first_page)
 	}
 }
 
+static void inventory_item_options()
+{
+	char string[32] = { 0 };
+	char *item_name = NULL;
+	int i = 0;
+
+	/* clear window */
+	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
+		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+
+	/* sub_14AF2 */
+	assert((g_neuro_window.mode == 0) ||
+		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
+	g_neuro_window.total_items = 0;
+
+	item_name = inventoty_get_item_name(g_c946, (g_c946 == 0x7F) ? string : NULL);
+	neuro_window_draw_string(item_name, 8, 8);
+
+	neuro_window_draw_string("X. Exit", 8, 16);
+	neuro_window_add_button(&g_inv_buttons.item_page_exit);
+
+	for (i = 0; i < 4; i++)
+	{
+		g_inventory_item_button[i].left = 64;
+		g_inventory_item_button[i].top = i * 8 + 152;
+		g_inventory_item_button[i].right = 199;
+		g_inventory_item_button[i].bottom = g_inventory_item_button[i].top + 7;
+	}
+
+	for (i = 0; i < 4; i++)
+	{
+		if (g_a8e0.a8e0[i] != 0xFFFF)
+		{
+			break;
+		}
+	}
+
+	if (i != 4 || g_4bae.level_n == 55)
+	{
+		neuro_window_draw_string("G. Give Item", 8, 40);
+		g_inventory_item_button[2].code =
+			g_inventory_item_button[2].label = 'g';
+		neuro_window_add_button(&g_inventory_item_button[2]);
+		i = 48;
+	}
+	else if (i == 4 && g_4bae.level_n != 55)
+	{
+		i = 40;
+	}
+
+	if (g_c946 == 0x53 || (g_c946 >= 0x1D && g_c946 <= 0x34))
+	{
+		g_4bae.x4bf3 = g_c946;
+		neuro_window_draw_string("E. Erase Software", 8, i);
+
+		i = (i == 40) ? 2 : 3;
+		g_inventory_item_button[i].code =
+			g_inventory_item_button[i].label = 'e';
+		neuro_window_add_button(&g_inventory_item_button[i]);
+	}
+
+	neuro_window_draw_string("O. Operate Item", 8, 24);
+	neuro_window_draw_string("D. Discard Item", 8, 32);
+
+	g_inventory_item_button[0].code =
+		g_inventory_item_button[0].label = 'o';
+	g_inventory_item_button[1].code =
+		g_inventory_item_button[1].label = 'd';
+
+	neuro_window_add_button(&g_inventory_item_button[0]);
+	neuro_window_add_button(&g_inventory_item_button[1]);
+}
+
+typedef enum inventory_discard_t {
+	ID_ITEM = 0,
+	ID_SOFTWARE,
+} inventory_discard_t;
+
+static void inventory_discard(int discard)
+{
+	char string[32] = { 0, };
+	char *item_name = 0;
+
+	/* clear window */
+	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
+		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+
+	/* sub_14AF2 */
+	assert((g_neuro_window.mode == 0) ||
+		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
+	g_neuro_window.total_items = 0;
+
+	neuro_window_draw_string(discard ? "ERASE" : "Discard", 72, 8);
+
+	item_name = inventoty_get_item_name(g_c946, NULL);
+
+	if (g_c946 > 0x1C)
+	{
+		sprintf(string, "%s", item_name);
+	}
+	else
+	{
+		sprintf(string, "%s %d.0", item_name, g_3f85.inventory.software[g_a86a * 4 + 1]);
+	}
+
+	neuro_window_draw_string(string, 16, 24);
+	neuro_window_draw_string("Are you sure (Y/N)", 8, 40);
+
+	neuro_window_add_button(&g_inv_disc_buttons.yes);
+	neuro_window_add_button(&g_inv_disc_buttons.no);
+}
+
 static void ui_open_inventory()
 {
 	/* setup inventory window */
 	neuro_window_setup(3);
 
 	g_state = LS_INVENTORY;
-	inventory_next_page(IT_ITEMS, 4, 1);
+	inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 }
 
-static void on_inventory_button(neuro_button_t *button)
+static inventory_state_t on_inventory_erase_software_list_button(neuro_button_t *button)
 {
 	switch (button->code) {
-	case 0x0A:
+	case 0x00: /* softwares */
+	case 0x01:
+	case 0x02:
+	case 0x03:
+		g_a86a = g_inventory_item_index[button->code];
+		g_c946 = g_inventory_item_code[button->code];
+		inventory_discard(ID_SOFTWARE);
+		return IS_ERASE_SOFTWARE;
+
+	case 0x0A: /* exit */
+		inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+		return IS_ITEM_LIST;
+
+	case 0x0B: /* more */
+		inventory_item_list(IT_SOFTWARE, 4, ISLP_NEXT);
+		break;
+	}
+
+	return IS_ERASE_SOFTWARE_LIST;
+}
+
+static inventory_state_t on_inventory_discard_button(neuro_button_t *button, int discard)
+{
+	switch (button->code) {
+	case 0x01: /* yes */
+		if (discard == ID_ITEM)
+		{
+			g_3f85.inventory.items[g_a86a * 4] = 0xFF;
+		}
+		else
+		{
+			g_3f85.inventory.software[g_a86a * 4] = 0xFF;
+		}
+	case 0x00: /* no */
+		inventory_item_list((discard == ID_ITEM) ? IT_ITEMS : IT_SOFTWARE, 4, ISLP_FIRST);
+		return (discard == ID_ITEM) ? IS_ITEM_LIST : IS_ERASE_SOFTWARE_LIST;
+	}
+
+	return IS_DISCARD_ITEM;
+}
+
+static inventory_state_t on_inventory_item_options_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0x64: /* discard */
+		if (g_c946 == 0x53 || g_c946 == 0x7F)
+		{
+			inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+			return IS_ITEM_LIST;
+		}
+		inventory_discard(ID_ITEM);
+		return IS_DISCARD_ITEM;
+
+	case 0x65: /* erase */
+		inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
+		return IS_ERASE_SOFTWARE_LIST;
+
+	case 0x67:
+		break;
+
+	case 0x6F:
+		break;
+
+	case 0x0A: /* exit */
+		inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+		return IS_ITEM_LIST;
+	}
+
+	return IS_ITEM_OPTIONS;
+}
+
+static inventory_state_t on_inventory_item_list_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0x00: /*items */
+	case 0x01:
+	case 0x02:
+	case 0x03:
+		g_a86a = g_inventory_item_index[button->code];
+		g_c946 = g_inventory_item_code[button->code];
+		inventory_item_options();
+		return IS_ITEM_OPTIONS;
+
+	case 0x0A: /* exit */
 		g_state = LS_NORMAL;
 		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-
 		/* restoring "window" state */
 		restore_window();
 		break;
 
-	case 0x0B:
-		inventory_next_page(IT_ITEMS, 4, 0);
-		break;
-
-	default:
+	case 0x0B: /* more */
+		inventory_item_list(IT_ITEMS, 4, ISLP_NEXT);
 		break;
 	}
+
+	return IS_ITEM_LIST;
+}
+
+static void on_inventory_button(neuro_button_t *button)
+{
+	static inventory_state_t state = IS_ITEM_LIST;
+	state = (state == g_inventory_state) ? state : g_inventory_state;
+
+	switch (state) {
+	case IS_ITEM_LIST:
+		state = on_inventory_item_list_button(button);
+		break;
+
+	case IS_ITEM_OPTIONS:
+		state = on_inventory_item_options_button(button);
+		break;
+
+	case IS_DISCARD_ITEM:
+		state = on_inventory_discard_button(button, IT_ITEMS);
+		break;
+
+	case IS_ERASE_SOFTWARE_LIST:
+		state = on_inventory_erase_software_list_button(button);
+		break;
+
+	case IS_ERASE_SOFTWARE:
+		state = on_inventory_discard_button(button, IT_SOFTWARE);
+		break;
+	}
+
+	g_inventory_state = state;
 }
 
 static void on_ui_button(neuro_button_t *button)
 {
 	switch (button->code) {
-	case 0x00:
+	case 0x00: /* inventory */
 		ui_open_inventory();
 		break;
 
-	case 0x0A:
+	case 0x0A: /* panel date */
 		g_ui_panel_mode = UI_PM_DATE;
 		break;
 
-	case 0x0B:
+	case 0x0B: /* panel time */
 		g_ui_panel_mode = UI_PM_TIME;
 		break;
 
-	case 0x0C:
+	case 0x0C: /* panel cash */
 		g_ui_panel_mode = UI_PM_CASH;
 		break;
 
-	case 0x0D:
+	case 0x0D: /* panel con */
 		g_ui_panel_mode = UI_PM_CON;
 		break;
 
@@ -1050,6 +1259,41 @@ static void update_intro()
 	}
 	
 	return;
+}
+
+static void wait_for_input()
+{
+	if (sfMouse_isButtonClicked(sfMouseLeft))
+	{
+		switch (g_neuro_window.mode) {
+		case 3:
+			if (g_inventory_state == IS_ITEM_LIST)
+			{
+				g_state = LS_NORMAL;
+				drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+				/* restoring "window" state */
+				restore_window();
+			}
+			else
+			{
+				g_state = LS_INVENTORY;
+				g_inventory_state = IS_ITEM_LIST;
+				inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+			}
+			break;
+
+		case 8:
+			g_state = LS_NORMAL;
+			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
+			/* restoring "window" state */
+			restore_window();
+			break;
+
+		default:
+			break;
+		}
+	}
 }
 
 static neuro_scene_id_t update(sfEvent *event)
