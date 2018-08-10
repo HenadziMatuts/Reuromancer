@@ -151,7 +151,7 @@ static neuro_scene_id_t update(sfEvent *event)
 	else if (event->text.type == sfEvtTextEntered && g_state == MMS_NEW)
 	{
 		char input[12] = { 0x00 };
-		sfKeyCode key = handle_sfml_text_input(event->text.unicode, g_name, 11);
+		sfKeyCode key = handle_sfml_text_input(event->text.unicode, g_name, 11, 0);
 
 		if (key == sfKeyReturn)
 		{

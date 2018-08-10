@@ -90,9 +90,8 @@ typedef struct x4bae_t {
 	uint8_t x4bae[16];
 	uint8_t x4bbe;
 	uint8_t x4bbf;
-	uint16_t x4bc0;
-	uint16_t x4bc2;
-	uint16_t x4bc4;
+	uint16_t active_item;
+	uint32_t cash_withdrawal; // 0x4BC2
 	uint16_t time_m;  // 0x4BC6
 	uint8_t time_h;   // 0x4BC8
 	uint8_t date_day; // 0x4BC9

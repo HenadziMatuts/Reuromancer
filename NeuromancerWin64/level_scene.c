@@ -8,6 +8,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 typedef enum level_intro_state_t {
 	LIS_NEXT_LINE = 0,
@@ -19,42 +20,50 @@ typedef enum level_intro_state_t {
  *                                ---> "IS_ITEM_LIST_WFI" ---> (no items)
  *                                |                          |
  *                                |                          |
- * "IS_OPEN_INVENTORY" ---> "IS_ITEM_LIST" ------> "IS_CLOSE_INVENTORY" (exit)
- *                            |   |
- *                            |   |
- *                            |   <------------------------------------ <----- <----------------
- *                            |                           |             |      |               |
- *                            |                           |             |      |               |
- *                            -----> "IS_ITEM_OPTIONS" ---> (exit)      |      |               |
- *                                          |                           |      |               |
- *                                          |                           |      |               |
- *                                          | ---> "IS_DISCARD_ITEM" --->      |               |
- *                                          |                                  |               |
- *                                          |                                  |               |
- *                                          -----> "IS_ERASE_SOFTWARE_LIST" ---> (exit)        |
- *                                                      |   |                                  |
- *                                                      |   |                                  |
- *                                                      |   <--------------------------        |
- *                                                      |                             |        |
- *                                                      | ---> "IS_ERASE_SOFTWARE" --->        |
- *                                                      |                                      |
- *                                                      |                                      |
- *                                                      | ---> "IS_ERASE_SOFTWARE_LIST_WFI" ---> (no software)
+ * "IS_OPEN_INVENTORY" ---> "IS_ITEM_LIST" ------> "IS_CLOSE_INVENTORY" (exit) <-----------------------------------
+ *                            |   |                                                                               |
+ *                            |   |                                                                               |
+ *                            |   <------------------------------------ <----- <----------------                  |
+ *                            |                           |             |      |               |                  |
+ *                            |                           |             |      |               |                  |
+ *                            -----> "IS_ITEM_OPTIONS" ---> (exit)      |      |               |                  |
+ *                                          |                           |      |               |                  |
+ *                                          |                           |      |               |                  |
+ *                                          | ---> "IS_DISCARD_ITEM" --->      |               |                  |
+ *                                          |                                  |               |                  |
+ *                                          |                                  |               |                  |
+ *                                          | ---> "IS_ERASE_SOFTWARE_LIST" ---> (exit)        |                  |
+ *                                          |           |   |                                  |                  |
+ *                                          |           |   |                                  |                  |
+ *                                          |           |   <--------------------------        |                  |
+ *                                          |           |                             |        |                  |
+ *                                          |           | ---> "IS_ERASE_SOFTWARE" --->        |                  |
+ *                                          |           |                                      |                  |
+ *                                          |           |                                      |                  |
+ *                                          |           -----> "IS_ERASE_SOFTWARE_LIST_WFI" ---> (no software)    |
+ *                                          |                                                                     |
+ *                                          |                                                                     |
+ *                                          | ---> "IS_GIVE_CREDITS" -------------------------------------------> |
+ *                                          |                                                                     |
+ *                                          |                                                                     |
+ *                                          -----> "IS_GIVE_ITEM"    -------------------------------------------> |
  */
 typedef enum inventory_state_t {
 	IS_OPEN_INVENTORY = -1,
-	IS_ITEM_LIST = 0,
-	IS_ITEM_LIST_WFI,
-	IS_ITEM_OPTIONS,
-	IS_DISCARD_ITEM,
-	IS_ERASE_SOFTWARE_LIST,
-	IS_ERASE_SOFTWARE_LIST_WFI,
-	IS_ERASE_SOFTWARE,
+	  IS_ITEM_LIST = 0,
+	    IS_ITEM_LIST_WFI,
+	    IS_ITEM_OPTIONS,
+	      IS_DISCARD_ITEM,
+	      IS_ERASE_SOFTWARE_LIST,
+	        IS_ERASE_SOFTWARE_LIST_WFI,
+	        IS_ERASE_SOFTWARE,
+	      IS_GIVE_CREDITS,
+	      IS_GIVE_ITEM,
 	IS_CLOSE_INVENTORY,
 } inventory_state_t;
 
 typedef enum level_state_t {
-	LS_INTRO = 0,
+	LS_TEXT_OUTPUT = 0,
 	LS_NORMAL,
 	LS_INVENTORY,
 	LS_WAIT_FOR_INPUT,
@@ -70,6 +79,7 @@ static void neuro_window_draw_string(char *text, ...)
 {
 	switch (g_neuro_window.mode) {
 	case 0:
+		build_string(text, 320, 200, 176, 182, g_background + sizeof(imh_hdr_t));
 		break;
 
 	case 3: {
@@ -152,6 +162,27 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 	return;
 }
 
+/* just a stub */
+static void bih_call(uint16_t offt)
+{
+	if (g_4bae.level_n != 0)
+	{
+		return;
+	}
+
+	switch (offt) {
+	case 0xDB: {
+		x4bae_t *s = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
+		s->cash += s->cash_withdrawal;
+		break;
+	}
+
+	default:
+		break;
+	}
+
+}
+
 /* sub_10735 */
 static void neuro_vm(level_state_t *state)
 {
@@ -167,7 +198,7 @@ static void neuro_vm(level_state_t *state)
 
 		switch (opcode) {
 		/* dialog reply, 1 arg (line number) */
-		case 1:
+		case 0x01:
 			sub_10A5B(*(next_opcode_addr + 1), 0,
 				g_3f85.vm_state[op_index].var_1,
 				g_3f85.vm_state[op_index].var_2);
@@ -178,32 +209,64 @@ static void neuro_vm(level_state_t *state)
 			g_4bae.x4bbe = 0xFF;
 			break;
 
-		case 5:
-		case 6:
-		case 7: 
-		case 8: {
-			jumps_t jmp = g_4b9d[opcode - 5];
-			uint8_t arg_1 = *(next_opcode_addr + 1);
-			uint8_t arg_3 = *(next_opcode_addr + 3);
+		case 0x02:
+			sub_10A5B(*(next_opcode_addr + 1), 1, 0, 0);
+			if (g_neuro_window.mode == 0)
+			{
+				*state = LS_TEXT_OUTPUT;
+			}
 
-			if (((jmp == JE) && (g_4bae.x4bae[arg_1] == arg_3)) ||
-				((jmp == JNE) && (g_4bae.x4bae[arg_1] != arg_3)) ||
-				((jmp == JL) && (g_4bae.x4bae[arg_1] < arg_3)) ||
-				((jmp == JGE) && (g_4bae.x4bae[arg_1] >= arg_3)))
+			g_3f85_wrapper.vm_next_op_addr[op_index] += 2;
+			break;
+
+		case 0x05:
+		case 0x06:
+		case 0x07: 
+		case 0x08: {
+			jumps_t jmp = g_4b9d[opcode - 5];
+			uint8_t x4bae_index = *(next_opcode_addr + 1);
+			uint8_t x4bae_value = *(next_opcode_addr + 3);
+
+			if (((jmp == JE) && (g_4bae.x4bae[x4bae_index] == x4bae_value)) ||
+				((jmp == JNE) && (g_4bae.x4bae[x4bae_index] != x4bae_value)) ||
+				((jmp == JL) && (g_4bae.x4bae[x4bae_index] < x4bae_value)) ||
+				((jmp == JGE) && (g_4bae.x4bae[x4bae_index] >= x4bae_value)))
 			{
 				g_3f85_wrapper.vm_next_op_addr[op_index] += 6;
 			}
 			else
 			{
-				int16_t arg_4 = *(int16_t*)(next_opcode_addr + 4);
-				g_3f85_wrapper.vm_next_op_addr[op_index] += arg_4;
+				int16_t skip = *(int16_t*)(next_opcode_addr + 4);
+				g_3f85_wrapper.vm_next_op_addr[op_index] += skip;
 				g_3f85_wrapper.vm_next_op_addr[op_index] += 4;
 			}
 
 			break;
 		}
 
-		case 19: {
+		case 0x0E:
+		case 0x0F: {
+			uint16_t index = *(uint16_t*)(next_opcode_addr + 1);
+			uint16_t *p = (uint16_t*)&g_4bae.x4bae[index];
+			*p = *(uint16_t*)(next_opcode_addr + 3);
+			g_3f85_wrapper.vm_next_op_addr[op_index] += 5;
+
+			break;
+		}
+
+			break;
+
+		case 0x11:
+			// inc [0x152C]
+			g_3f85_wrapper.vm_next_op_addr[op_index]++;
+			break;
+
+		case 0x12:
+			// mov [0x152C], 0
+			g_3f85_wrapper.vm_next_op_addr[op_index]++;
+			break;
+
+		case 0x13: {
 			uint8_t *p = g_3f85.x407b + *(next_opcode_addr + 1);
 			p[0] = *(next_opcode_addr + 2);
 			p[1] = *(next_opcode_addr + 3);
@@ -211,6 +274,11 @@ static void neuro_vm(level_state_t *state)
 			g_3f85_wrapper.vm_next_op_addr[op_index] += 4;
 			break;
 		}
+
+		case 0x16:
+			bih_call(*(uint16_t*)(next_opcode_addr + 1));
+			g_3f85_wrapper.vm_next_op_addr[op_index] += 3;
+			break;
 
 		default:
 			break;
@@ -572,9 +640,8 @@ static void init()
 	g_4bae.x4cc3 = 0;
 	g_4bae.x4bbe = 0xFF;
 	g_4bae.x4bbf = 0xFF;
-	g_4bae.x4bc0 = 0xFFFF;
-	g_4bae.x4bc2 = 0xFFFF;
-	g_4bae.x4bc4 = 0xFFFF;
+	g_4bae.active_item = 0xFFFF;
+	g_4bae.cash_withdrawal = 0xFFFFFFFF;
 	// mov [152C], 0
 	g_4bae.x4bf4 = 0xFF;
 	// mov [1E34], 0
@@ -899,11 +966,12 @@ static void inventory_discard(int discard)
 	neuro_window_add_button(&g_inv_disc_buttons.no);
 }
 
-static void inventory_give_item()
+static inventory_state_t inventory_give_item()
 {
 	/* clear window */
 	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
 		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+	g_neuro_window.total_items = 0;
 
 	if (g_c946 == 0x7F)
 	{
@@ -912,10 +980,14 @@ static void inventory_give_item()
 
 		sprintf(credits, "Credits %d", g_4bae.cash);
 		neuro_window_draw_string(credits, 8, 8);
+		neuro_window_draw_string("<", 8, 24);
+		return IS_GIVE_CREDITS;
 	}
 	else
 	{
-
+		neuro_window_draw_string("GIVE", 80, 8);
+		inventory_discard(ID_ITEM);
+		return IS_GIVE_ITEM;
 	}
 }
 
@@ -960,6 +1032,20 @@ static inventory_state_t on_inventory_erase_software_list_button(neuro_button_t 
 	return IS_ERASE_SOFTWARE_LIST;
 }
 
+static inventory_state_t on_inventory_give_item_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0x01: /* yes */
+		g_3f85.inventory.items[g_a86a * 4] = 0xFF;
+		g_4bae.active_item = g_c946;
+		g_4bae.x4bbf = 1;
+	case 0x00: /* no */
+		return IS_CLOSE_INVENTORY;
+	}
+
+	return IS_GIVE_ITEM;
+}
+
 static inventory_state_t on_inventory_discard_button(neuro_button_t *button, int discard)
 {
 	switch (button->code) {
@@ -994,8 +1080,7 @@ static inventory_state_t on_inventory_item_options_button(neuro_button_t *button
 		return inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
 
 	case 0x67: /* give */
-		inventory_give_item();
-		break;
+		return inventory_give_item();
 
 	case 0x6F:
 		break;
@@ -1050,6 +1135,10 @@ static void on_inventory_button(inventory_state_t *state, neuro_button_t *button
 
 	case IS_ERASE_SOFTWARE:
 		*state = on_inventory_discard_button(button, IT_SOFTWARE);
+		break;
+
+	case IS_GIVE_ITEM:
+		*state = on_inventory_give_item_button(button);
 		break;
 	}
 }
@@ -1156,34 +1245,73 @@ static neuro_button_t* window_button_hit_test()
 	return NULL;
 }
 
+inventory_state_t on_inventory_give_credits_kboard(sfEvent *event)
+{
+	static char input[9] = { 0 };
+
+	if (event->text.type == sfEvtTextEntered)
+	{
+		sfKeyCode key = handle_sfml_text_input(event->text.unicode, input, 8, 1);
+
+		if (key != sfKeyReturn)
+		{
+			char credits[10] = { 0 };
+			sprintf(credits, "%s<", input);
+			memset(credits + strlen(credits), 0x20, 8 - strlen(credits));
+			neuro_window_draw_string(credits, 8, 24);
+		}
+		else
+		{
+			uint32_t val = strlen(input) ? (uint32_t)atoi(input) : 0;
+			memset(input, 0, 9);
+
+			if (val <= g_4bae.cash)
+			{
+				g_4bae.cash -= val;
+				g_4bae.x4bbf = 1;
+				g_4bae.active_item = g_c946;
+				g_4bae.cash_withdrawal = val;
+
+				return IS_CLOSE_INVENTORY;
+			}
+
+			neuro_window_draw_string("<        ", 8, 24);
+		}
+	}
+
+	return IS_GIVE_CREDITS;
+}
+
+static void inventory_handle_kboard(inventory_state_t *state, sfEvent *event)
+{
+	switch (*state) {
+	case IS_GIVE_CREDITS:
+		*state = on_inventory_give_credits_kboard(event);
+		break;
+	}
+}
+
+static void window_handle_kboard(int *state, sfEvent *event)
+{
+	switch (g_neuro_window.mode) {
+	case 0:
+		break;
+
+	case 3:
+		inventory_handle_kboard((inventory_state_t*)state, event);
+		break;
+
+	default:
+		break;
+	}
+}
+
 static void window_handle_input(int *state, sfEvent *event)
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
 	neuro_button_t *button = NULL;
 	static neuro_button_t *selected = NULL; /* selected button */
 	static int _selected = 0; /* redrawing flag */
-
-	switch (g_neuro_window.mode) {
-	case 0:
-		/* ui area */
-		if (cursor->left < 0 || cursor->left > 320 ||
-			cursor->top < 140 || cursor->top > 200)
-		{
-			return;
-		}
-		break;
-	case 3:
-		/* inventory area */
-		if (cursor->left < g_neuro_window.left || cursor->left > g_neuro_window.right ||
-			cursor->top < g_neuro_window.top || cursor->top > g_neuro_window.bottom)
-		{
-			return;
-		}
-		break;
-
-	default:
-		break;
-	}
 	
 	if (sfMouse_isButtonPressed(sfMouseLeft))
 	{
@@ -1219,6 +1347,10 @@ static void window_handle_input(int *state, sfEvent *event)
 
 			selected = NULL;
 		}
+	}
+	else
+	{
+		window_handle_kboard(state, event);
 	}
 }
 
@@ -1298,7 +1430,7 @@ static level_state_t update_normal(sfEvent *event)
 	return state;
 }
 
-static level_state_t update_intro()
+static level_state_t update_text_output()
 {
 	static level_intro_state_t state = LIS_NEXT_LINE;
 	static int lines_on_screen = 0, lines_scrolled = 0;
@@ -1311,7 +1443,7 @@ static level_state_t update_intro()
 
 	if (passed - elapsed <= frame_cap_ms)
 	{
-		return LS_INTRO;
+		return LS_TEXT_OUTPUT;
 	}
 	elapsed = passed;
 
@@ -1319,8 +1451,8 @@ static level_state_t update_intro()
 	{
 		int last = extract_line(&g_bih_string_ptr, line, 17);
 
-		build_string(line, 320, 200, 176, 182, pix);
-		
+		neuro_window_draw_string(line);
+
 		if (last)
 		{
 			state = LIS_NEXT_LINE;
@@ -1354,19 +1486,19 @@ static level_state_t update_intro()
 		}
 	}
 	
-	return LS_INTRO;
+	return LS_TEXT_OUTPUT;
 }
 
 static neuro_scene_id_t update(sfEvent *event)
 {
-	static level_state_t state = LS_INTRO;
+	static level_state_t state = LS_TEXT_OUTPUT;
 	neuro_scene_id_t scene = NSID_LEVEL;
 
 	update_cursor();
 
 	switch (state) {
-	case LS_INTRO:
-		state = update_intro();
+	case LS_TEXT_OUTPUT:
+		state = update_text_output();
 		break;
 
 	case LS_NORMAL:

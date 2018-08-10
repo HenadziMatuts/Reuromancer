@@ -74,11 +74,12 @@ void update_cursor()
 	g_sprite_chain[SCI_CURSOR].top = (uint16_t)mouse_pos_y;
 }
 
-sfKeyCode handle_sfml_text_input(uint32_t u32_char, char *string, uint32_t size)
+sfKeyCode handle_sfml_text_input(uint32_t u32_char, char *string, uint32_t size, int digits_only)
 {
 	size_t l = strlen(string);
 
-	if (u32_char >= 0x20 && u32_char <= 0x7e)
+	if ((digits_only && (u32_char >= 0x30 && u32_char <= 0x39)) ||
+		(!digits_only && (u32_char >= 0x20 && u32_char <= 0x7e)))
 	{
 		/* printable ascii */
 		if (l + 1 >= size)
