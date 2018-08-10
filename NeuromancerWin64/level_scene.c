@@ -73,6 +73,7 @@ static char *g_bih_string_ptr = NULL;
 
 /***************************************/
 static int neuro_window_setup(uint16_t opcode, ...);
+static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...);
 
 /* sub_14DBA */
 static void neuro_window_draw_string(char *text, ...)
@@ -197,7 +198,7 @@ static void neuro_vm(level_state_t *state)
 		uint8_t opcode = *next_opcode_addr;
 
 		switch (opcode) {
-		/* dialog reply, 1 arg (line number) */
+		/* dialog reply */
 		case 0x01:
 			sub_10A5B(*(next_opcode_addr + 1), 0,
 				g_3f85.vm_state[op_index].var_1,
@@ -209,6 +210,7 @@ static void neuro_vm(level_state_t *state)
 			g_4bae.x4bbe = 0xFF;
 			break;
 
+		/* text output */
 		case 0x02:
 			sub_10A5B(*(next_opcode_addr + 1), 1, 0, 0);
 			if (g_neuro_window.mode == 0)
@@ -219,6 +221,14 @@ static void neuro_vm(level_state_t *state)
 			g_3f85_wrapper.vm_next_op_addr[op_index] += 2;
 			break;
 
+		/* goto */
+		case 0x03:
+			g_3f85_wrapper.vm_next_op_addr[op_index] =
+				(uint8_t*)sub_105F6(NULL, 4, g_3f85.vm_state[op_index].flag & 3,
+					*(next_opcode_addr + 1));
+			break;
+
+		/* conditional jump */
 		case 0x05:
 		case 0x06:
 		case 0x07: 
@@ -244,6 +254,7 @@ static void neuro_vm(level_state_t *state)
 			break;
 		}
 
+		/* set memory */
 		case 0x0E:
 		case 0x0F: {
 			uint16_t index = *(uint16_t*)(next_opcode_addr + 1);
@@ -275,6 +286,7 @@ static void neuro_vm(level_state_t *state)
 			break;
 		}
 
+		/* exec */
 		case 0x16:
 			bih_call(*(uint16_t*)(next_opcode_addr + 1));
 			g_3f85_wrapper.vm_next_op_addr[op_index] += 3;
