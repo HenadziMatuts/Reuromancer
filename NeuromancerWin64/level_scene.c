@@ -789,7 +789,6 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 		}
 
 		uint8_t credists = items_listed ? 0 : (inv_type ? 0 : 1);
-		uint8_t inv_index = 0;
 		uint16_t listed_on_page = 0;
 		char string[32] = { 0, };
 
@@ -816,13 +815,13 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 				if (*inv == 0xFF)
 				{
 					inv += 4;
-					inv_index++;
 					continue;
 				}
 
 				g_inventory_item_button[listed_on_page].code = listed_on_page;
 				g_inventory_item_code[listed_on_page] = *inv;
-				g_inventory_item_index[listed_on_page] = inv_index;
+				g_inventory_item_index[listed_on_page] =
+					(uint8_t)((inv - (inv_type ? g_3f85.inventory.software : g_3f85.inventory.items)) / 4);
 
 				char c = (*(inv + 2) == 0) ? ' ' : '-';
 				char *item_name = inventoty_get_item_name(*inv, NULL);;
@@ -838,7 +837,6 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 				}
 
 				inv += 4;
-				inv_index++;
 			}
 			items_listed++;
 
