@@ -4,20 +4,27 @@
 
 int sfMouse_isButtonClicked(int sfMouseButton)
 {
-	static int clicked = 0;
+	static int state = 0;
 
-	if (!clicked)
+	if (state == 0)
 	{
 		if (!sfMouse_isButtonPressed(sfMouseLeft))
 		{
-			clicked = 1;
+			state = 1;
 		}
 	}
-	else
+	else if (state == 1)
 	{
 		if (sfMouse_isButtonPressed(sfMouseLeft))
 		{
-			clicked = 0;
+			state = 2;
+		}
+	}
+	else if (state == 2)
+	{
+		if (!sfMouse_isButtonPressed(sfMouseLeft))
+		{
+			state = 0;
 			return 1;
 		}
 	}
