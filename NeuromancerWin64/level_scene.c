@@ -189,43 +189,49 @@ static void neuro_vm(level_state_t *state)
 {
 	for (int i = 3; i >= 0; i--)
 	{
-		uint16_t op_index = g_a8e0.a8e0[i];
-		if (op_index == 0xffff) {
+		uint16_t vm_thread = g_a8e0.a8e0[i];
+		if (vm_thread == 0xffff) {
 			continue;
 		}
 
-		uint8_t *next_opcode_addr = g_3f85_wrapper.vm_next_op_addr[op_index];
-		uint8_t opcode = *next_opcode_addr;
+		uint8_t *opcode_addr = g_3f85_wrapper.vm_next_op_addr[vm_thread];
+		uint8_t opcode = *opcode_addr;
 
 		switch (opcode) {
 		/* dialog reply */
-		case 0x01:
-			sub_10A5B(*(next_opcode_addr + 1), 0,
-				g_3f85.vm_state[op_index].var_1,
-				g_3f85.vm_state[op_index].var_2);
+		case 0x01: {
+			uint8_t string_num = *(opcode_addr + 1);
+
+			sub_10A5B(string_num, 0,
+				g_3f85.vm_state[vm_thread].var_1,
+				g_3f85.vm_state[vm_thread].var_2);
 
 			*state = LS_WAIT_FOR_INPUT;
 
-			g_3f85_wrapper.vm_next_op_addr[op_index] += 2;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 2;
 			g_4bae.x4bbe = 0xFF;
 			break;
+		}
 
 		/* text output */
-		case 0x02:
-			sub_10A5B(*(next_opcode_addr + 1), 1, 0, 0);
+		case 0x02: {
+			uint8_t string_num = *(opcode_addr + 1);
+
+			sub_10A5B(string_num, 1, 0, 0);
 			if (g_neuro_window.mode == 0)
 			{
 				*state = LS_TEXT_OUTPUT;
 			}
 
-			g_3f85_wrapper.vm_next_op_addr[op_index] += 2;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 2;
 			break;
+		}
 
 		/* goto */
 		case 0x03:
-			g_3f85_wrapper.vm_next_op_addr[op_index] =
-				(uint8_t*)sub_105F6(NULL, 4, g_3f85.vm_state[op_index].flag & 3,
-					*(next_opcode_addr + 1));
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] =
+				(uint8_t*)sub_105F6(NULL, 4, g_3f85.vm_state[vm_thread].flag & 3,
+					*(opcode_addr + 1));
 			break;
 
 		/* conditional jump */
@@ -234,21 +240,21 @@ static void neuro_vm(level_state_t *state)
 		case 0x07: 
 		case 0x08: {
 			jumps_t jmp = g_4b9d[opcode - 5];
-			uint8_t x4bae_index = *(next_opcode_addr + 1);
-			uint8_t x4bae_value = *(next_opcode_addr + 3);
+			uint8_t x4bae_index = *(opcode_addr + 1);
+			uint8_t x4bae_value = *(opcode_addr + 3);
 
 			if (((jmp == JE) && (g_4bae.x4bae[x4bae_index] == x4bae_value)) ||
 				((jmp == JNE) && (g_4bae.x4bae[x4bae_index] != x4bae_value)) ||
 				((jmp == JL) && (g_4bae.x4bae[x4bae_index] < x4bae_value)) ||
 				((jmp == JGE) && (g_4bae.x4bae[x4bae_index] >= x4bae_value)))
 			{
-				g_3f85_wrapper.vm_next_op_addr[op_index] += 6;
+				g_3f85_wrapper.vm_next_op_addr[vm_thread] += 6;
 			}
 			else
 			{
-				int16_t skip = *(int16_t*)(next_opcode_addr + 4);
-				g_3f85_wrapper.vm_next_op_addr[op_index] += skip;
-				g_3f85_wrapper.vm_next_op_addr[op_index] += 4;
+				int16_t offset = *(int16_t*)(opcode_addr + 4);
+				g_3f85_wrapper.vm_next_op_addr[vm_thread] += offset;
+				g_3f85_wrapper.vm_next_op_addr[vm_thread] += 4;
 			}
 
 			break;
@@ -257,39 +263,38 @@ static void neuro_vm(level_state_t *state)
 		/* set memory */
 		case 0x0E:
 		case 0x0F: {
-			uint16_t index = *(uint16_t*)(next_opcode_addr + 1);
+			uint16_t index = *(uint16_t*)(opcode_addr + 1);
+			uint16_t value = *(uint16_t*)(opcode_addr + 3);
 			uint16_t *p = (uint16_t*)&g_4bae.x4bae[index];
-			*p = *(uint16_t*)(next_opcode_addr + 3);
-			g_3f85_wrapper.vm_next_op_addr[op_index] += 5;
+			*p = value;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 5;
 
 			break;
 		}
 
-			break;
-
 		case 0x11:
 			// inc [0x152C]
-			g_3f85_wrapper.vm_next_op_addr[op_index]++;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
 			break;
 
 		case 0x12:
 			// mov [0x152C], 0
-			g_3f85_wrapper.vm_next_op_addr[op_index]++;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
 			break;
 
 		case 0x13: {
-			uint8_t *p = g_3f85.x407b + *(next_opcode_addr + 1);
-			p[0] = *(next_opcode_addr + 2);
-			p[1] = *(next_opcode_addr + 3);
+			uint8_t *p = g_3f85.x407b + *(opcode_addr + 1);
+			p[0] = *(opcode_addr + 2);
+			p[1] = *(opcode_addr + 3);
 
-			g_3f85_wrapper.vm_next_op_addr[op_index] += 4;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 4;
 			break;
 		}
 
 		/* exec */
 		case 0x16:
-			bih_call(*(uint16_t*)(next_opcode_addr + 1));
-			g_3f85_wrapper.vm_next_op_addr[op_index] += 3;
+			bih_call(*(uint16_t*)(opcode_addr + 1));
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 3;
 			break;
 
 		default:
@@ -353,7 +358,7 @@ static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...)
 		uint16_t y = va_arg(args, uint16_t);
 		va_end(args);
 
-		uint8_t offt = *((uint8_t*)&g_bih_wrapper.bih->text_offset + (x * 2));
+		uint16_t offt = *(&g_bih_wrapper.bih->text_offset + x);
 		uint8_t *p = g_a8e0.bih + offt;
 		p = g_a8e0.bih + *(p + (y * 2));
 		return (uint64_t)p;
