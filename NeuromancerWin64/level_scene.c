@@ -1392,21 +1392,66 @@ static level_state_t wait_for_input()
 	return LS_WAIT_FOR_INPUT;
 }
 
+static inventory_state_t update_inventory_open_close(int open)
+{
+	static int frame = 0;
+	uint8_t frames[12][4] = {
+		//  w,  h,   l,   t,
+		{   3,  2, 143, 159 }, {  7,   2, 141, 159 }, {  15,  2, 136, 159 },
+		{  23,  2, 132, 159 }, {  45,  2, 121, 159 }, {  87,  2, 101, 159 },
+		{ 176,  3,  56, 159 }, { 176,  5,  56, 157 }, { 176, 11,  56, 154 },
+		{ 176, 21,  56, 149 }, { 176, 33,  56, 143 }, { 176, 64,  56, 128 }
+	};
+
+	static int frame_cap_ms = 50;
+	static int elapsed = 0;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= frame_cap_ms)
+	{
+		return open ? IS_OPEN_INVENTORY : IS_CLOSE_INVENTORY;
+	}
+	elapsed = passed;
+
+	if (open && frame == 12)
+	{
+		frame = 11;
+		neuro_window_setup(3);
+		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+	}
+	else if (!open && frame == -1)
+	{
+		frame = 0;
+		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+		restore_window();
+		return IS_OPEN_INVENTORY;
+	}
+
+	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg012);
+	drawing_control_add_sprite_to_chain(open ? g_4bae.x4ccf : g_4bae.x4ccf + 1,
+		frames[frame][2], frames[frame][3], g_seg012, 1);
+
+	frame = open ? frame + 1 : frame - 1;
+
+	return open ? IS_OPEN_INVENTORY : IS_CLOSE_INVENTORY;
+}
+
 static level_state_t update_inventory(sfEvent *event)
 {
 	static inventory_state_t state = IS_OPEN_INVENTORY;
 
 	switch (state) {
 	case IS_OPEN_INVENTORY:
-		neuro_window_setup(3);
-		state = inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+		state = update_inventory_open_close(1);
 		break;
 
 	case IS_CLOSE_INVENTORY:
-		state = IS_OPEN_INVENTORY;
-		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-		restore_window();
-		return LS_NORMAL;
+		state = update_inventory_open_close(0);
+		if (state == IS_OPEN_INVENTORY)
+		{
+			return LS_NORMAL;
+		}
+		break;
 
 	case IS_ITEM_LIST_WFI:
 	case IS_ERASE_SOFTWARE_LIST_WFI:
@@ -1449,7 +1494,7 @@ static level_state_t update_text_output()
 {
 	static level_intro_state_t state = LIS_NEXT_LINE;
 	static int lines_on_screen = 0, lines_scrolled = 0;
-	static int frame_cap_ms = 10;
+	static int frame_cap_ms = 12;
 	static int elapsed = 0;
 
 	char line[18] = { 0, };
