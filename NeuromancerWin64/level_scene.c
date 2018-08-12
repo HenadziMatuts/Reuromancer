@@ -17,48 +17,46 @@ typedef enum level_intro_state_t {
 } level_intro_state_t;
 
 /*
- *                                ---> "IS_ITEM_LIST_WFI" ---> (no items)
- *                                |                          |
- *                                |                          |
- * "IS_OPEN_INVENTORY" ---> "IS_ITEM_LIST" ------> "IS_CLOSE_INVENTORY" (exit) <-----------------------------------
- *                            |   |                                                                               |
- *                            |   |                                                                               |
- *                            |   <------------------------------------ <----- <----------------                  |
- *                            |                           |             |      |               |                  |
- *                            |                           |             |      |               |                  |
- *                            -----> "IS_ITEM_OPTIONS" ---> (exit)      |      |               |                  |
- *                                          |                           |      |               |                  |
- *                                          |                           |      |               |                  |
- *                                          | ---> "IS_DISCARD_ITEM" --->      |               |                  |
- *                                          |                                  |               |                  |
- *                                          |                                  |               |                  |
- *                                          | ---> "IS_ERASE_SOFTWARE_LIST" ---> (exit)        |                  |
- *                                          |           |   |                                  |                  |
- *                                          |           |   |                                  |                  |
- *                                          |           |   <--------------------------        |                  |
- *                                          |           |                             |        |                  |
- *                                          |           | ---> "IS_ERASE_SOFTWARE" --->        |                  |
- *                                          |           |                                      |                  |
- *                                          |           |                                      |                  |
- *                                          |           -----> "IS_ERASE_SOFTWARE_LIST_WFI" ---> (no software)    |
- *                                          |                                                                     |
- *                                          |                                                                     |
- *                                          | ---> "IS_GIVE_CREDITS" -------------------------------------------> |
- *                                          |                                                                     |
- *                                          |                                                                     |
- *                                          -----> "IS_GIVE_ITEM"    -------------------------------------------> |
- */
+ * "IS_OPEN_INVENTORY"        -> "IS_ITEM_LIST",           "IS_WFI_AND_CLOSE"
+ *
+ * "IS_ITEM_LIST"             -> "IS_ITEM_OPTIONS",        "IS_CLOSE_INVENTORY"
+ *
+ * "IS_ITEM_OPTIONS"          -> "IS_ITEM_LIST",           "IS_DISCARD_ITEM",   "IS_ERASE_SOFTWARE_LIST",
+ *                               "IS_GIVE_CREDITS",        "IS_GIVE_ITEM",      "IS_OPERATE_SOFTWARE_LIST",
+ *                               "IS_WFI_AND_CONTINUE",    "IS_WFI_AND_CLOSE"
+ *
+ * "IS_DISCARD_ITEM"          -> "IS_ITEM_LIST"
+ *
+ * "IS_ERASE_SOFTWARE_LIST"   -> "IS_ERASE_SOFTWARE",      "IS_ITEM_LIST"
+ *
+ * "IS_ERASE_SOFTWARE"        -> "IS_ERASE_SOFTWARE_LIST", "IS_WFI_AND_CONTINUE"
+ *
+ * "IS_WFI_AND_CONTINUE"      -> "IS_ITEM_LIST"
+ *
+ * "IS_GIVE_CREDITS"          -> "IS_CLOSE_INVENTORY"
+ *
+ * "IS_GIVE_ITEM"             -> "IS_CLOSE_INVENTORY"
+ *
+ * "IS_OPERATE_SOFTWARE_LIST" -> "IS_WFI_AND_CLOSE",       "IS_WFI_AND_CONTINUE"
+ *
+ * "IS_WFI_AND_CLOSE"         -> "IS_CLOSE_INVENTORY"
+ *
+ * "IS_CLOSE_INVENTORY"       -> "IS_OPEN_INVENTORY" (EXIT)
+*/
+
 typedef enum inventory_state_t {
 	IS_OPEN_INVENTORY = -1,
-	  IS_ITEM_LIST = 0,
-	    IS_ITEM_LIST_WFI,
-	    IS_ITEM_OPTIONS,
-	      IS_DISCARD_ITEM,
-	      IS_ERASE_SOFTWARE_LIST,
-	        IS_ERASE_SOFTWARE_LIST_WFI,
-	        IS_ERASE_SOFTWARE,
-	      IS_GIVE_CREDITS,
-	      IS_GIVE_ITEM,
+	IS_ITEM_LIST = 0,
+	IS_SOFTWARE_LIST, // <- not a real state
+	IS_ITEM_OPTIONS,
+	IS_DISCARD_ITEM,
+	IS_OPERATE_SOFTWARE_LIST,
+	IS_ERASE_SOFTWARE_LIST,
+	IS_ERASE_SOFTWARE,
+	IS_GIVE_CREDITS,
+	IS_GIVE_ITEM,
+	IS_WFI_AND_CONTINUE,
+	IS_WFI_AND_CLOSE,
 	IS_CLOSE_INVENTORY,
 } inventory_state_t;
 
@@ -390,7 +388,19 @@ static int has_pax()
 		p++;
 	}
 
-	return *p;
+	return (*p == 1) ? 1 : 0;
+}
+
+static int sub_1155A()
+{
+	uint8_t *p = g_a8e0.bih + sizeof(bih_hdr_t); // 0xA910
+
+	while ((*p != 0) && (*p != 2))
+	{
+		p++;
+	}
+
+	return (*p == 2) ? 1 : 0;
 }
 
 /* sub_14B1B */
@@ -863,10 +873,10 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 	else
 	{
 		neuro_window_draw_string("None", 50, 40);
-		return (inv_type == IT_ITEMS) ? IS_ITEM_LIST_WFI : IS_ERASE_SOFTWARE_LIST_WFI;
+		return (inv_type == IT_ITEMS) ? IS_WFI_AND_CLOSE : IS_WFI_AND_CONTINUE;
 	}
 
-	return (inv_type == IT_ITEMS) ? IS_ITEM_LIST : IS_ERASE_SOFTWARE_LIST;
+	return (inv_type == IT_ITEMS) ? IS_ITEM_LIST : IS_SOFTWARE_LIST;
 }
 
 static void inventory_item_options()
@@ -1006,15 +1016,169 @@ static inventory_state_t inventory_give_item()
 	}
 }
 
+static inventory_state_t inventory_operate_item(uint8_t *item)
+{
+	uint8_t item_code = item[0];
+	uint8_t item_op = g_inventory_item_operations[item_code];
+
+	/* clear window */
+	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
+		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+
+	/* sub_14AF2 */
+	assert((g_neuro_window.mode == 0) ||
+		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
+	g_neuro_window.total_items = 0;
+
+	if (g_c946 == 0x7F || item_op == 0xFF)
+	{
+		neuro_window_draw_string("Nothing happens.", 8, 16);
+		return IS_WFI_AND_CONTINUE;
+	}
+
+	if ((rand() & 0xFF) < item[2])
+	{
+		if ((item_op & 0xC0) != 0)
+		{
+			neuro_window_draw_string("Hardware failure.", 8, 16);
+			return IS_WFI_AND_CONTINUE;
+			
+		}
+		else
+		{
+			neuro_window_draw_string("Program crashed.", 8, 16);
+			return IS_WFI_AND_CLOSE;
+		}
+	}
+
+	g_4bae.x4ccb = item_op & 0x0F;
+	g_4bae.x4ccc = item_op & 0x30;
+
+	inventory_state_t state;
+
+	if (item_op & 0x80)
+	{
+		switch (g_4bae.x4ccb) {
+		case 0:
+			g_4bae.x4c74 = item_op << 1;
+			state = inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
+			return (state == IS_SOFTWARE_LIST) ? IS_OPERATE_SOFTWARE_LIST : IS_WFI_AND_CLOSE;
+
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		default:
+			neuro_window_draw_string("Not implemented.", 8, 16);
+			return IS_WFI_AND_CLOSE;
+		}
+	}
+
+	if (g_4bae.x4ccc != 0x10)
+	{
+		if (g_4bae.x4ccc == 0x20)
+		{
+			if (g_a61a == 1)
+			{
+				uint8_t cb = 0;
+				uint8_t x = g_4bae.x4ccb - 1;
+
+				while (!(x-- & 0x80))
+				{
+					cb++;
+				}
+
+				switch (cb) {
+				default:
+					neuro_window_draw_string("Some callback...", 8, 16);
+					return IS_WFI_AND_CLOSE;
+				}
+			}
+			else
+			{
+				neuro_window_draw_string("Cyberspace only.", 8, 16);
+				return IS_WFI_AND_CLOSE;
+			}
+		}
+		else if ((g_4bae.x4ccb == 0) || g_4bae.x4c74 & 0x80)
+		{
+			if (sub_1155A())
+			{
+				if (g_4bae.x4ccd != 0)
+				{
+					return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+				}
+				else if (g_4bae.x4ccb == 0)
+				{
+					g_a61a = 2;
+					g_4bae.x4ccd++;
+					/* sub_189AE */
+					neuro_window_draw_string("call sub_189AE", 8, 16);
+					g_4bae.x4ccd--;
+					return IS_WFI_AND_CLOSE;
+				}
+				else
+				{
+					/* sub_19E32 */
+					neuro_window_draw_string("call sub_19E32", 8, 16);
+					return IS_WFI_AND_CLOSE;
+				}
+			}
+			else
+			{
+				neuro_window_draw_string("No jack here.", 8, 16);
+				return IS_WFI_AND_CLOSE;
+			}
+		}
+		else
+		{
+			neuro_window_draw_string("Nothing happens.", 8, 16);
+			return IS_WFI_AND_CLOSE;
+		}
+	}
+	else
+	{
+		if (item_code == 0x18)
+		{
+			neuro_window_draw_string("Nothing happens.", 8, 16);
+			return IS_WFI_AND_CLOSE;
+		}
+		else if (g_4bae.x4cc5 == 0)
+		{
+			neuro_window_draw_string("Database only.", 8, 16);
+			return IS_WFI_AND_CLOSE;
+		}
+		else
+		{
+			uint8_t cb = 0;
+			uint8_t x = g_4bae.x4ccb - 1;
+
+			while (!(x-- & 0x80))
+			{
+				cb++;
+			}
+
+			switch (cb) {
+			default:
+				neuro_window_draw_string("Some callback...", 8, 16);
+				return IS_WFI_AND_CLOSE;
+			}
+		}
+	}
+
+	return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+}
+
 static inventory_state_t inventory_wait_for_input(inventory_state_t state)
 {
 	if (sfMouse_isButtonClicked(sfMouseLeft))
 	{
 		switch (state) {
-		case IS_ITEM_LIST_WFI:
+		case IS_WFI_AND_CLOSE:
 			return IS_CLOSE_INVENTORY;
 
-		case IS_ERASE_SOFTWARE_LIST_WFI:
+		case IS_WFI_AND_CONTINUE:
 			return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 
 		default:
@@ -1025,8 +1189,34 @@ static inventory_state_t inventory_wait_for_input(inventory_state_t state)
 	return state;
 }
 
+static inventory_state_t on_inventory_operate_software_button(neuro_button_t *button)
+{
+	inventory_state_t state;
+
+	switch (button->code) {
+	case 0x00: /* softwares */
+	case 0x01:
+	case 0x02:
+	case 0x03:
+		g_a86a = g_inventory_item_index[button->code];
+		g_c946 = g_inventory_item_code[button->code];
+		return inventory_operate_item(&g_3f85.inventory.software[g_a86a * 4]);
+
+	case 0x0A: /* exit */
+		return IS_CLOSE_INVENTORY;
+
+	case 0x0B: /* more */
+		state = inventory_item_list(IT_SOFTWARE, 4, ISLP_NEXT);
+		return (state == IS_SOFTWARE_LIST) ? IS_OPERATE_SOFTWARE_LIST : IS_CLOSE_INVENTORY;
+	}
+
+	return IS_OPERATE_SOFTWARE_LIST;
+}
+
 static inventory_state_t on_inventory_erase_software_list_button(neuro_button_t *button)
 {
+	inventory_state_t state;
+
 	switch (button->code) {
 	case 0x00: /* softwares */
 	case 0x01:
@@ -1041,7 +1231,8 @@ static inventory_state_t on_inventory_erase_software_list_button(neuro_button_t 
 		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 
 	case 0x0B: /* more */
-		return inventory_item_list(IT_SOFTWARE, 4, ISLP_NEXT);
+		state = inventory_item_list(IT_SOFTWARE, 4, ISLP_NEXT);
+		return (state == IS_SOFTWARE_LIST) ? IS_ERASE_SOFTWARE_LIST : state;
 	}
 
 	return IS_ERASE_SOFTWARE_LIST;
@@ -1063,6 +1254,8 @@ static inventory_state_t on_inventory_give_item_button(neuro_button_t *button)
 
 static inventory_state_t on_inventory_discard_button(neuro_button_t *button, int discard)
 {
+	inventory_state_t state;
+
 	switch (button->code) {
 	case 0x01: /* yes */
 		if (discard == ID_ITEM)
@@ -1074,7 +1267,15 @@ static inventory_state_t on_inventory_discard_button(neuro_button_t *button, int
 			g_3f85.inventory.software[g_a86a * 4] = 0xFF;
 		}
 	case 0x00: /* no */
-		return inventory_item_list((discard == ID_ITEM) ? IT_ITEMS : IT_SOFTWARE, 4, ISLP_FIRST);
+		if (discard == ID_ITEM)
+		{
+			return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+		}
+		else
+		{
+			state = inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
+			return (state == IS_SOFTWARE_LIST) ? IS_ERASE_SOFTWARE_LIST : state;
+		}
 	}
 
 	return IS_DISCARD_ITEM;
@@ -1082,6 +1283,8 @@ static inventory_state_t on_inventory_discard_button(neuro_button_t *button, int
 
 static inventory_state_t on_inventory_item_options_button(neuro_button_t *button)
 {
+	inventory_state_t state;
+
 	switch (button->code) {
 	case 0x64: /* discard */
 		if (g_c946 == 0x53 || g_c946 == 0x7F)
@@ -1092,13 +1295,14 @@ static inventory_state_t on_inventory_item_options_button(neuro_button_t *button
 		return IS_DISCARD_ITEM;
 
 	case 0x65: /* erase */
-		return inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
+		state = inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
+		return (state == IS_SOFTWARE_LIST) ? IS_ERASE_SOFTWARE_LIST : state;
 
 	case 0x67: /* give */
 		return inventory_give_item();
 
-	case 0x6F:
-		break;
+	case 0x6F: /* operate */
+		return inventory_operate_item(&g_3f85.inventory.items[g_a86a * 4]);
 
 	case 0x0A: /* exit */
 		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
@@ -1154,6 +1358,10 @@ static void on_inventory_button(inventory_state_t *state, neuro_button_t *button
 
 	case IS_GIVE_ITEM:
 		*state = on_inventory_give_item_button(button);
+		break;
+
+	case IS_OPERATE_SOFTWARE_LIST:
+		*state = on_inventory_operate_software_button(button);
 		break;
 	}
 }
@@ -1397,7 +1605,7 @@ static inventory_state_t update_inventory_open_close(int open)
 	static int frame = 0;
 	uint8_t frames[12][4] = {
 		//  w,  h,   l,   t,
-		{   3,  2, 143, 159 }, {  7,   2, 141, 159 }, {  15,  2, 136, 159 },
+		{   3,  2, 143, 159 }, {   7,  2, 141, 159 }, {  15,  2, 136, 159 },
 		{  23,  2, 132, 159 }, {  45,  2, 121, 159 }, {  87,  2, 101, 159 },
 		{ 176,  3,  56, 159 }, { 176,  5,  56, 157 }, { 176, 11,  56, 154 },
 		{ 176, 21,  56, 149 }, { 176, 33,  56, 143 }, { 176, 64,  56, 128 }
@@ -1453,8 +1661,8 @@ static level_state_t update_inventory(sfEvent *event)
 		}
 		break;
 
-	case IS_ITEM_LIST_WFI:
-	case IS_ERASE_SOFTWARE_LIST_WFI:
+	case IS_WFI_AND_CLOSE:
+	case IS_WFI_AND_CONTINUE:
 		state = inventory_wait_for_input(state);
 		break;
 

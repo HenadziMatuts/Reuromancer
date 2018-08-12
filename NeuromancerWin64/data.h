@@ -84,6 +84,9 @@ typedef enum jumps_t {
 /* 0x4469 */
 extern char *g_inventory_item_names[];
 
+/* 0x475B */
+extern uint8_t g_inventory_item_operations[128];
+
 extern jumps_t g_4b9d[4];
 
 typedef struct x4bae_t {
@@ -210,6 +213,8 @@ typedef struct neuro_window_wrapper_t {
 /* 0xA59E, 0xA5C6, 0xA5EE */
 extern neuro_window_t g_a59e[3];
 extern neuro_window_wrapper_t g_a59e_wrapper[3];
+
+extern uint8_t g_a61a;
 
 extern uint16_t g_a86a;
 
