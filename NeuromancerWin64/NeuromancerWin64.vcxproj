@@ -124,9 +124,11 @@
     <ClCompile Include="bg_animation_control.c" />
     <ClCompile Include="data.c" />
     <ClCompile Include="drawing_control.c" />
+    <ClCompile Include="inventory_control.c" />
     <ClCompile Include="level_scene.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="main_menu_scene.c" />
+    <ClCompile Include="neuro_window_control.c" />
     <ClCompile Include="not_implemented_scene.cpp" />
     <ClCompile Include="resource_manager.c" />
     <ClCompile Include="scene_control.c" />
@@ -138,6 +140,8 @@
     <ClInclude Include="data.h" />
     <ClInclude Include="drawing_control.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="inventory_control.h" />
+    <ClInclude Include="neuro_window_control.h" />
     <ClInclude Include="resource_manager.h" />
     <ClInclude Include="scene_control.h" />
   </ItemGroup>

@@ -30,4 +30,11 @@ void setup_main_menu_scene();
 void setup_not_implemented_scene();
 void setup_level_scene();
 
+typedef enum level_state_t {
+	LS_TEXT_OUTPUT = 0,
+	LS_NORMAL,
+	LS_INVENTORY,
+	LS_WAIT_FOR_INPUT,
+} level_state_t;
+
 #endif

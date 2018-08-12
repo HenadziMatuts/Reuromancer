@@ -48,6 +48,12 @@
     <ClCompile Include="data.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="neuro_window_control.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inventory_control.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h">
@@ -69,6 +75,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="neuro_window_control.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inventory_control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
