@@ -145,7 +145,7 @@ static dialog_state_t update_dialog_open_close(int open)
 
 	if (first_reply == 0xFF)
 	{
-		return DS_CLOSE_DIALOG;
+		return open ? DS_CLOSE_DIALOG : DS_OPEN_DIALOG;
 	}
 
 	if (passed - elapsed <= frame_cap_ms)
