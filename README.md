@@ -37,8 +37,6 @@ In future it is planned to replace all _MASM_ with the similar _C_-code. Followi
 
 ## TODO
 
-* Reverse and implement dialog system.
-
 _ResourceBrowser_:
 * rewrite audio player using _WinApi_ only to remove _CSFML_ dependency. 
 
