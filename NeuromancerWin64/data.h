@@ -1,6 +1,7 @@
 #ifndef _DATA_H
 #define _DATA_H
 
+#include "drawing_control.h"
 #include <neuro_routines.h>
 
 #pragma pack(push, 1)
@@ -190,30 +191,6 @@ typedef struct x4bae_t {
 
 extern x4bae_t g_4bae;
 
-/* Kind of "Window", 0xC91E */
-typedef struct neuro_window_t {
-	uint16_t left;        // 0xC91E
-	uint16_t top;         // 0xC920
-	uint16_t right;       // 0xC922
-	uint16_t bottom;      // 0xC924
-	uint16_t mode;        // 0xC926
-	uint16_t c928;
-	uint8_t c92a[4];
-	uint16_t total_items; // 0xC92E
-	uint16_t item[10];    // 0xC930
-	uint16_t c944;
-} neuro_window_t;
-
-/* Wraps 16-bit addresses of the button area structs */
-typedef struct neuro_window_wrapper_t {
-	uint8_t *window_item[10];
-	neuro_window_t *window;
-} neuro_window_wrapper_t;
-
-/* 0xA59E, 0xA5C6, 0xA5EE */
-extern neuro_window_t g_a59e[3];
-extern neuro_window_wrapper_t g_a59e_wrapper[3];
-
 extern uint8_t g_a61a;
 extern uint8_t *g_a642;
 extern uint16_t g_a86a;
@@ -225,10 +202,6 @@ typedef struct a8e0_t {
 
 extern a8e0_t g_a8e0;
 extern bih_hdr_wrapper_t g_bih_wrapper;
-
-/* 0xC91E */
-extern neuro_window_t g_neuro_window;
-extern neuro_window_wrapper_t g_neuro_window_wrapper;
 
 extern uint8_t g_c946;
 

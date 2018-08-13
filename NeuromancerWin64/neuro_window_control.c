@@ -9,7 +9,34 @@
 #include <string.h>
 #include <assert.h>
 
+/* 0xA59E, 0xA5C6, 0xA5EE */
+neuro_window_t g_a59e[3] = {
+	{ 0, },{ 0, },{ 0, }
+};
+
+neuro_window_wrapper_t g_a59e_wrapper[3] = {
+	{
+		{ NULL, }, &g_a59e[0]
+	},
+	{
+		{ NULL, }, &g_a59e[1]
+	},
+	{
+		{ NULL, }, &g_a59e[2]
+	}
+};
+
+/* 0xC91E */
+neuro_window_t g_neuro_window = {
+	{ 0, }
+};
+
+neuro_window_wrapper_t g_neuro_window_wrapper = {
+	{ NULL, }, &g_neuro_window
+};
+
 int setup_ui_buttons();
+
 
 void store_window()
 {
@@ -44,8 +71,7 @@ int neuro_window_setup(uint16_t mode, ...)
 	g_neuro_window.total_items = 0;
 
 	switch (mode) {
-	case 0:
-		/* UI "window" */
+	case NWM_NEURO_UI:
 		setup_ui_buttons();
 
 		g_neuro_window.left = 0;
@@ -56,8 +82,7 @@ int neuro_window_setup(uint16_t mode, ...)
 
 		break;
 
-	case 3:
-		/* inventory "window" */
+	case NWM_INVENTORY:
 		g_neuro_window.left = 56;
 		g_neuro_window.top = 128;
 		g_neuro_window.right = 231;
@@ -71,10 +96,9 @@ int neuro_window_setup(uint16_t mode, ...)
 
 		break;
 
-	case 1:
-	case 5:
-	case 8: {
-		/* Dialog "window", 1 - choose reply, 5 - acceped reply, 8 - npc reply */
+	case NWM_PLAYER_DIALOG_CHOICE:
+	case NWM_PLAYER_DIALOG_REPLY:
+	case NWM_NPC_DIALOG_REPLY: {
 		va_list args;
 		va_start(args, mode);
 		uint16_t lines = va_arg(args, uint16_t);
@@ -89,7 +113,7 @@ int neuro_window_setup(uint16_t mode, ...)
 
 		if (g_4bae.ui_type == 0)
 		{
-			if (g_neuro_window.mode == 1)
+			if (g_neuro_window.mode == NWM_PLAYER_DIALOG_CHOICE)
 			{
 				if (g_4bae.roompos_spawn_x < 0xA0)
 				{
@@ -134,11 +158,11 @@ int neuro_window_setup(uint16_t mode, ...)
 void neuro_window_draw_string(char *text, ...)
 {
 	switch (g_neuro_window.mode) {
-	case 0:
+	case NWM_NEURO_UI:
 		build_string(text, 320, 200, 176, 182, g_background + sizeof(imh_hdr_t));
 		break;
 
-	case 3: {
+	case NWM_INVENTORY: {
 		va_list args;
 		va_start(args, text);
 		uint16_t left = va_arg(args, uint16_t);
@@ -151,7 +175,7 @@ void neuro_window_draw_string(char *text, ...)
 		break;
 	}
 
-	case 5: {
+	case NWM_PLAYER_DIALOG_REPLY: {
 		va_list args;
 		va_start(args, text);
 		uint16_t arg_1 = va_arg(args, uint16_t);
@@ -165,8 +189,8 @@ void neuro_window_draw_string(char *text, ...)
 			break;
 		}
 	}
-	case 1:
-	case 8: {
+	case NWM_PLAYER_DIALOG_CHOICE:
+	case NWM_NPC_DIALOG_REPLY: {
 		imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
 		build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
 		drawing_control_add_sprite_to_chain(g_4bae.x4ccf--, 0, g_neuro_window.top, g_seg011, 1);
@@ -182,8 +206,8 @@ int neuro_window_add_button(neuro_button_t *button)
 {
 	switch (g_neuro_window.mode)
 	{
-	case 0:
-	case 3:
+	case NWM_NEURO_UI:
+	case NWM_INVENTORY:
 		g_neuro_window_wrapper.window_item[g_neuro_window.total_items++] = (uint8_t*)button;
 		break;
 
@@ -197,10 +221,10 @@ int neuro_window_add_button(neuro_button_t *button)
 static void window_handle_kboard(int *state, sfEvent *event)
 {
 	switch (g_neuro_window.mode) {
-	case 0:
+	case NWM_NEURO_UI:
 		break;
 
-	case 3:
+	case NWM_INVENTORY:
 		inventory_handle_kboard((inventory_state_t*)state, event);
 		break;
 
@@ -214,11 +238,11 @@ void ui_handle_mouse(level_state_t *state, neuro_button_t *button);
 static void window_handle_mouse(int *state, neuro_button_t *button)
 {
 	switch (g_neuro_window.mode) {
-	case 0:
+	case NWM_NEURO_UI:
 		ui_handle_mouse((level_state_t*)state, button);
 		break;
 
-	case 3:
+	case NWM_INVENTORY:
 		inventory_handle_mouse((inventory_state_t*)state, button);
 		break;
 
@@ -232,10 +256,10 @@ static void select_window_button(neuro_button_t *button)
 	uint8_t *pic = NULL;
 
 	switch (g_neuro_window.mode) {
-	case 0:
+	case NWM_NEURO_UI:
 		pic = g_background;
 		break;
-	case 3:
+	case NWM_INVENTORY:
 		pic = g_seg012;
 		break;
 	default:

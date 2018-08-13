@@ -81,7 +81,8 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 		char string[32] = { 0, };
 
 		/* sub_14AF2 */
-		assert((g_neuro_window.mode == 0) || (g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
+		assert((g_neuro_window.mode == NWM_NEURO_UI) ||
+			(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
 		g_neuro_window.total_items = 0;
 
 		max_items = (items_total - items_listed < 4) ? items_total - items_listed : 4;
@@ -168,7 +169,7 @@ static void inventory_item_options()
 		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
 
 	/* sub_14AF2 */
-	assert((g_neuro_window.mode == 0) ||
+	assert((g_neuro_window.mode == NWM_NEURO_UI) ||
 		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
 	g_neuro_window.total_items = 0;
 
@@ -245,7 +246,7 @@ static void inventory_discard(int discard)
 		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
 
 	/* sub_14AF2 */
-	assert((g_neuro_window.mode == 0) ||
+	assert((g_neuro_window.mode == NWM_NEURO_UI) ||
 		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
 	g_neuro_window.total_items = 0;
 
@@ -304,7 +305,7 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
 
 	/* sub_14AF2 */
-	assert((g_neuro_window.mode == 0) ||
+	assert((g_neuro_window.mode == NWM_NEURO_UI) ||
 		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
 	g_neuro_window.total_items = 0;
 
@@ -714,7 +715,7 @@ static inventory_state_t update_inventory_open_close(int open)
 	if (open && frame == 12)
 	{
 		frame = 11;
-		neuro_window_setup(3);
+		neuro_window_setup(NWM_INVENTORY);
 		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 	}
 	else if (!open && frame == -1)

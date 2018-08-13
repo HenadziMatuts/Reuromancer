@@ -438,22 +438,6 @@ x4bae_t g_4bae = {
 	.x4ccf = 2
 };
 
-neuro_window_t g_a59e[3] = {
-	{ 0, }, { 0, }, { 0, }
-};
-
-neuro_window_wrapper_t g_a59e_wrapper[3] = {
-	{
-		{ NULL, }, &g_a59e[0]
-	},
-	{
-		{ NULL, }, &g_a59e[1]
-	},
-	{
-		{ NULL, }, &g_a59e[2]
-	}
-};
-
 uint8_t g_a61a = 0;
 uint8_t *g_a642 = NULL;
 uint16_t g_a86a = 0;
@@ -464,15 +448,6 @@ a8e0_t g_a8e0 = {
 
 bih_hdr_wrapper_t g_bih_wrapper = {
 	NULL, NULL, (bih_hdr_t*)g_a8e0.bih
-};
-
-/* 0xC91E */
-neuro_window_t g_neuro_window = {
-	{ 0, }
-};
-
-neuro_window_wrapper_t g_neuro_window_wrapper = {
-	{ NULL, }, &g_neuro_window
 };
 
 uint8_t g_c946 = 0;

@@ -24,7 +24,7 @@ static void dialog_first_reply()
 		while (*reply++);
 	}
 
-	sub_1342E(reply, 1);
+	sub_1342E(reply, NWM_PLAYER_DIALOG_CHOICE);
 	g_current_reply = 0;
 }
 
@@ -44,7 +44,7 @@ static void dialog_next_reply()
 		while (*reply++);
 	}
 
-	sub_1342E(reply, 1);
+	sub_1342E(reply, NWM_PLAYER_DIALOG_CHOICE);
 }
 
 static void dialog_accept_reply()
@@ -59,7 +59,7 @@ static void dialog_accept_reply()
 
 	/* also has replies with user input */
 
-	sub_1342E(reply, 5);
+	sub_1342E(reply, NWM_PLAYER_DIALOG_REPLY);
 }
 
 static dialog_state_t dialog_wait_for_input(dialog_state_t state, sfEvent *event)

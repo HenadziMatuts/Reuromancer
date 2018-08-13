@@ -16,7 +16,7 @@
 typedef enum level_intro_state_t {
 	LIS_NEXT_LINE = 0,
 	LIS_SCROLLING,
-	LIS_WAITING_FOR_INPUT,
+	LIS_WAIT_FOR_INPUT,
 } level_intro_state_t;
 
 static char *g_bih_string_ptr = NULL;
@@ -24,7 +24,7 @@ static char *g_bih_string_ptr = NULL;
 /***************************************/
 static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...);
 
-void sub_1342E(char *str, uint16_t opcode)
+void sub_1342E(char *str, uint16_t mode)
 {
 	char text[256] = { 0, };
 	char *p = text;
@@ -45,7 +45,7 @@ void sub_1342E(char *str, uint16_t opcode)
 	}
 	*--p = 0;
 
-	neuro_window_setup(opcode, lines);
+	neuro_window_setup(mode, lines);
 	neuro_window_draw_string(text, 0, 0, 0);
 }
 
@@ -72,7 +72,7 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 	g_4bae.roompos_spawn_y = d;
 
 	/* builds dialog bubble with text */
-	sub_1342E(g_bih_string_ptr, 8);
+	sub_1342E(g_bih_string_ptr, NWM_NPC_DIALOG_REPLY);
 
 	g_4bae.roompos_spawn_x = temp_1;
 	g_4bae.roompos_spawn_y = temp_2;
@@ -134,8 +134,9 @@ static void neuro_vm(level_state_t *state)
 		case 0x02: {
 			uint8_t string_num = *(opcode_addr + 1);
 
+			/* bad */
 			sub_10A5B(string_num, 1, 0, 0);
-			if (g_neuro_window.mode == 0)
+			if (g_neuro_window.mode == NWM_NEURO_UI)
 			{
 				*state = LS_TEXT_OUTPUT;
 			}
@@ -144,13 +145,14 @@ static void neuro_vm(level_state_t *state)
 			break;
 		}
 
-		/* goto */
+		/* call */
 		case 0x03:
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] =
 				(uint8_t*)sub_105F6(NULL, 4, g_3f85.vm_state[vm_thread].flag & 3,
 					*(opcode_addr + 1));
 			break;
 
+		/* goto */
 		case 0x04: {
 			int16_t offset = *(int16_t*)(opcode_addr + 1);
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] += offset;
@@ -206,6 +208,7 @@ static void neuro_vm(level_state_t *state)
 			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
 			break;
 
+		/* set dialog ctrl */
 		case 0x13: {
 			uint8_t *p = g_3f85.x407b + *(opcode_addr + 1);
 			p[0] = *(opcode_addr + 2);
@@ -223,8 +226,8 @@ static void neuro_vm(level_state_t *state)
 
 		/* dialog */
 		case 0x17:
-			g_dialog_escapable = 0;
 			*state = LS_DIALOG;
+			g_dialog_escapable = 0;
 			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
 			break;
 
@@ -338,7 +341,8 @@ int sub_1155A()
 /* sub_156D4 */
 int setup_ui_buttons()
 {
-	assert((g_neuro_window.mode == 0) || (g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
+	assert((g_neuro_window.mode == NWM_NEURO_UI) ||
+		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
 	g_neuro_window.total_items = 0;
 
 	neuro_window_add_button(&g_ui_buttons.inventory);
@@ -570,10 +574,7 @@ static level_state_t wait_for_input()
 	if (sfMouse_isLeftMouseButtonClicked())
 	{
 		switch (g_neuro_window.mode) {
-		case 3:
-			return LS_INVENTORY;
-
-		case 8:
+		case NWM_NPC_DIALOG_REPLY:
 			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
 			/* restoring "window" state */
@@ -643,7 +644,7 @@ static level_state_t update_text_output()
 		}
 
 		state = (++lines_on_screen == 7)
-			? LIS_WAITING_FOR_INPUT : LIS_SCROLLING;
+			? LIS_WAIT_FOR_INPUT : LIS_SCROLLING;
 
 	}
 	else if (state == LIS_SCROLLING)
@@ -659,7 +660,7 @@ static level_state_t update_text_output()
 			state = LIS_NEXT_LINE;
 		}
 	}
-	else if (state == LIS_WAITING_FOR_INPUT)
+	else if (state == LIS_WAIT_FOR_INPUT)
 	{
 		if (sfMouse_isLeftMouseButtonClicked())
 		{
