@@ -71,8 +71,10 @@ int neuro_window_setup(uint16_t mode, ...)
 
 		break;
 
+	case 1:
+	case 5:
 	case 8: {
-		/* Dialog "window" */
+		/* Dialog "window", 1 - choose reply, 5 - acceped reply, 8 - npc reply */
 		va_list args;
 		va_start(args, mode);
 		uint16_t lines = va_arg(args, uint16_t);
@@ -97,7 +99,7 @@ int neuro_window_setup(uint16_t mode, ...)
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0xDC, 0);
+						g_4bae.roompos_spawn_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0xDC, 0);
 				}
 			}
 			else
@@ -110,7 +112,7 @@ int neuro_window_setup(uint16_t mode, ...)
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles, 0);
+						g_4bae.roompos_spawn_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles, 0);
 				}
 			}
 		}
@@ -149,6 +151,21 @@ void neuro_window_draw_string(char *text, ...)
 		break;
 	}
 
+	case 5: {
+		va_list args;
+		va_start(args, text);
+		uint16_t arg_1 = va_arg(args, uint16_t);
+		uint16_t arg_2 = va_arg(args, uint16_t);
+		uint16_t arg_3 = va_arg(args, uint16_t);
+		va_end(args);
+
+		if (arg_3 != 0)
+		{
+			/* loc_14D11 */
+			break;
+		}
+	}
+	case 1:
 	case 8: {
 		imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
 		build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
