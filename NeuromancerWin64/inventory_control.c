@@ -234,6 +234,7 @@ static void inventory_item_options()
 typedef enum inventory_discard_t {
 	ID_ITEM = 0,
 	ID_SOFTWARE,
+	ID_GIVE,
 } inventory_discard_t;
 
 static void inventory_discard(int discard)
@@ -250,7 +251,14 @@ static void inventory_discard(int discard)
 		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
 	g_neuro_window.total_items = 0;
 
-	neuro_window_draw_string(discard ? "ERASE" : "Discard", 72, 8);
+	if (discard == ID_GIVE)
+	{
+		neuro_window_draw_string("GIVE", 80, 8);
+	}
+	else
+	{
+		neuro_window_draw_string((discard == ID_SOFTWARE) ? "ERASE" : "Discard", 72, 8);
+	}
 
 	item_name = inventoty_get_item_name(g_c946, NULL);
 
@@ -289,8 +297,7 @@ static inventory_state_t inventory_give_item()
 	}
 	else
 	{
-		neuro_window_draw_string("GIVE", 80, 8);
-		inventory_discard(ID_ITEM);
+		inventory_discard(ID_GIVE);
 		return IS_GIVE_ITEM;
 	}
 }
