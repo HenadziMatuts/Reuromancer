@@ -15,17 +15,17 @@ typedef struct resource_manager_t {
 } resource_manager_t;
 static resource_manager_t g_resource_manager;
 
-uint8_t g_cursors[399];         /* seg009 */
-uint8_t g_background[32063];    /* seg010 */
-uint8_t g_seg011[41999];        /* seg011 */
-uint8_t g_seg012[5647];         /* seg012 */
-uint8_t g_sprites[61999];       /* seg013 */
-uint8_t g_dialog_bubbles[607];  /* seg014 */
-uint8_t g_level_bg[17055] = {   /* seg015 */
+uint8_t g_cursors[400];         /* seg009 */
+uint8_t g_background[32064];    /* seg010 */
+uint8_t g_seg011[42000];        /* seg011 */
+uint8_t g_seg012[5648];         /* seg012 */
+uint8_t g_sprites[62000];       /* seg013 */
+uint8_t g_dialog_bubbles[609];  /* seg014 */
+uint8_t g_level_bg[17056] = {   /* seg015 */
 	0x00, 0x00, 0x00, 0x00,
 	0x98, 0x00, 0x70, 0x00
 };
-uint8_t g_roompos[23967];       /* seg016 */
+uint8_t g_roompos[23968];       /* seg016 */
 
 void resource_manager_init()
 {
