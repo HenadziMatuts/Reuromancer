@@ -1,3 +1,4 @@
+#include "data.h"
 #include "globals.h"
 #include "character_control.h"
 #include "drawing_control.h"
@@ -74,6 +75,9 @@ void character_control_update()
 	if (passed - elapsed > frame_cap_ms)
 	{
 		elapsed = passed;
+
+		g_4bae.roompos_spawn_x = ch_sprite->left;
+		g_4bae.roompos_spawn_y = ch_sprite->top;
 
 		if (g_character.state == CS_IDLE)
 		{
