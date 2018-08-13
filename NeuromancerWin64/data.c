@@ -335,7 +335,7 @@ jumps_t g_4b9d[4] = {
 
 x4bae_t g_4bae = {
 	.x4bae = { 0, },
-	.x4bbe = 0xff,
+	.active_dialog_reply = 0xff,
 	.x4bbf = 0xff,
 	.active_item = 0xffff,
 	.cash_withdrawal = 0,
@@ -416,7 +416,7 @@ x4bae_t g_4bae = {
 	.x4c8d = 0,
 	.x4c8e = 0,
 	.x4c90 = 0,
-	.x4c92 = { '{', '@', 'C', 'a', 's', 'e', 0, },
+	.name = { '{', '@', 'C', 'a', 's', 'e', 0, },
 	.con = 0x7D0,
 	.level_n = 0,
 	.roompos_spawn_x = 0xA0,
@@ -455,7 +455,7 @@ neuro_window_wrapper_t g_a59e_wrapper[3] = {
 };
 
 uint8_t g_a61a = 0;
-
+uint8_t *g_a642 = NULL;
 uint16_t g_a86a = 0;
 
 a8e0_t g_a8e0 = {

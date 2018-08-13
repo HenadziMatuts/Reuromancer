@@ -450,7 +450,7 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 
 static inventory_state_t inventory_wait_for_input(inventory_state_t state)
 {
-	if (sfMouse_isButtonClicked(sfMouseLeft))
+	if (sfMouse_isLeftMouseButtonClicked())
 	{
 		switch (state) {
 		case IS_WFI_AND_CLOSE:

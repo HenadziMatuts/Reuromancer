@@ -34,6 +34,7 @@ typedef enum level_state_t {
 	LS_TEXT_OUTPUT = 0,
 	LS_NORMAL,
 	LS_INVENTORY,
+	LS_DIALOG,
 	LS_WAIT_FOR_INPUT,
 } level_state_t;
 

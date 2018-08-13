@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "data.h"
 #include "scene_control.h"
 #include "drawing_control.h"
 #include "resource_manager.h"
@@ -156,6 +157,7 @@ static neuro_scene_id_t update(sfEvent *event)
 		if (key == sfKeyReturn)
 		{
 			scene = NSID_LEVEL;
+			sprintf(g_4bae.name + 2, "%s", g_name);
 			memset(g_name, 0, 11);
 		}
 		else

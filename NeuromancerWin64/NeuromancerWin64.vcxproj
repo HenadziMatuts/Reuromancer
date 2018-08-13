@@ -123,6 +123,7 @@
   <ItemGroup>
     <ClCompile Include="bg_animation_control.c" />
     <ClCompile Include="data.c" />
+    <ClCompile Include="dialog_control.c" />
     <ClCompile Include="drawing_control.c" />
     <ClCompile Include="inventory_control.c" />
     <ClCompile Include="level_scene.c" />
@@ -138,6 +139,7 @@
     <ClInclude Include="bg_animation_control.h" />
     <ClInclude Include="character_control.h" />
     <ClInclude Include="data.h" />
+    <ClInclude Include="dialog_control.h" />
     <ClInclude Include="drawing_control.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="inventory_control.h" />

@@ -91,9 +91,9 @@ extern jumps_t g_4b9d[4];
 
 typedef struct x4bae_t {
 	uint8_t x4bae[16];
-	uint8_t x4bbe;
+	uint8_t active_dialog_reply; // 0x4BBE
 	uint8_t x4bbf;
-	uint16_t active_item;
+	uint16_t active_item;     // 0x4BC0
 	uint32_t cash_withdrawal; // 0x4BC2
 	uint16_t time_m;  // 0x4BC6
 	uint8_t time_h;   // 0x4BC8
@@ -169,7 +169,7 @@ typedef struct x4bae_t {
 	uint8_t x4c8d;
 	uint16_t x4c8e;
 	uint16_t x4c90;
-	char x4c92[13];
+	char name[13];    // 0x4C92
 	uint16_t con;     // 0x4C9F
 	uint16_t level_n; // 0x4CA1
 	uint16_t roompos_spawn_x; // 0x4CA3
@@ -215,7 +215,7 @@ extern neuro_window_t g_a59e[3];
 extern neuro_window_wrapper_t g_a59e_wrapper[3];
 
 extern uint8_t g_a61a;
-
+extern uint8_t *g_a642;
 extern uint16_t g_a86a;
 
 typedef struct a8e0_t {

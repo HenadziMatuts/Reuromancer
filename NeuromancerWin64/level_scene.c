@@ -7,6 +7,7 @@
 #include "resource_manager.h"
 #include "neuro_window_control.h"
 #include "inventory_control.h"
+#include "dialog_control.h"
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -23,13 +24,13 @@ static char *g_bih_string_ptr = NULL;
 /***************************************/
 static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...);
 
-static void sub_1342E(uint16_t opcode)
+void sub_1342E(char *str, uint16_t opcode)
 {
 	char text[256] = { 0, };
 	char *p = text;
 	int lines = 0;
 
-	while (!extract_line(&g_bih_string_ptr, p, 38))
+	while (!extract_line(&str, p, 38))
 	{
 		size_t l = strlen(p);
 
@@ -45,7 +46,7 @@ static void sub_1342E(uint16_t opcode)
 	*--p = 0;
 
 	neuro_window_setup(opcode, lines);
-	neuro_window_draw_string(text);
+	neuro_window_draw_string(text, 0, 0, 0);
 }
 
 static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
@@ -71,7 +72,7 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 	g_4bae.roompos_spawn_y = d;
 
 	/* builds dialog bubble with text */
-	sub_1342E(8);
+	sub_1342E(g_bih_string_ptr, 8);
 
 	g_4bae.roompos_spawn_x = temp_1;
 	g_4bae.roompos_spawn_y = temp_2;
@@ -114,7 +115,7 @@ static void neuro_vm(level_state_t *state)
 		uint8_t opcode = *opcode_addr;
 
 		switch (opcode) {
-		/* dialog reply */
+		/* dialog npc reply */
 		case 0x01: {
 			uint8_t string_num = *(opcode_addr + 1);
 
@@ -125,7 +126,7 @@ static void neuro_vm(level_state_t *state)
 			*state = LS_WAIT_FOR_INPUT;
 
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 2;
-			g_4bae.x4bbe = 0xFF;
+			g_4bae.active_dialog_reply = 0xFF;
 			break;
 		}
 
@@ -149,6 +150,13 @@ static void neuro_vm(level_state_t *state)
 				(uint8_t*)sub_105F6(NULL, 4, g_3f85.vm_state[vm_thread].flag & 3,
 					*(opcode_addr + 1));
 			break;
+
+		case 0x04: {
+			int16_t offset = *(int16_t*)(opcode_addr + 1);
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] += offset;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 1;
+			break;
+		}
 
 		/* conditional jump */
 		case 0x05:
@@ -213,6 +221,13 @@ static void neuro_vm(level_state_t *state)
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 3;
 			break;
 
+		/* dialog */
+		case 0x17:
+			g_dialog_escapable = 0;
+			*state = LS_DIALOG;
+			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
+			break;
+
 		default:
 			break;
 		}
@@ -253,7 +268,7 @@ static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...)
 		uint16_t level_n = va_arg(args, uint16_t);
 		va_end(args);
 
-		// mov [A642], 0x407B + 6*level_n
+		g_a642 = g_3f85.x407b + (6 * level_n);
 		g_bih_wrapper.bih = (bih_hdr_t*)g_a8e0.bih;
 		g_bih_wrapper.ctrl_struct_addr = (uint8_t*)&g_4bae;
 		// g_bih_wrapper.cb_addr = &cb;
@@ -449,7 +464,7 @@ static void init()
 	g_4bae.x4bcc = 0;
 
 	g_4bae.x4cc3 = 0;
-	g_4bae.x4bbe = 0xFF;
+	g_4bae.active_dialog_reply = 0xFF;
 	g_4bae.x4bbf = 0xFF;
 	g_4bae.active_item = 0xFFFF;
 	g_4bae.cash_withdrawal = 0xFFFFFFFF;
@@ -473,7 +488,7 @@ static void init()
 		bg_animation_control_init_tables(g_roompos + 0x488) :
 		bg_animation_control_init_tables(NULL);
 
-	sub_105F6(0, g_level_n);
+	sub_105F6(NULL, 0, g_level_n);
 
 	uint16_t u = 0;
 	neuro_vm_state_t *p = g_3f85.vm_state;
@@ -524,6 +539,11 @@ void ui_handle_mouse(level_state_t *state, neuro_button_t *button)
 		*state = LS_INVENTORY;
 		break;
 
+	case 0x02: /* dialog */
+		g_dialog_escapable = 1;
+		*state = LS_DIALOG;
+		break;
+
 	case 0x0A: /* panel date */
 		g_ui_panel_mode = UI_PM_DATE;
 		break;
@@ -547,7 +567,7 @@ void ui_handle_mouse(level_state_t *state, neuro_button_t *button)
 
 static level_state_t wait_for_input()
 {
-	if (sfMouse_isButtonClicked(sfMouseLeft))
+	if (sfMouse_isLeftMouseButtonClicked())
 	{
 		switch (g_neuro_window.mode) {
 		case 3:
@@ -596,7 +616,7 @@ static level_state_t update_text_output()
 {
 	static level_intro_state_t state = LIS_NEXT_LINE;
 	static int lines_on_screen = 0, lines_scrolled = 0;
-	static int frame_cap_ms = 12;
+	static int frame_cap_ms = 11;
 	static int elapsed = 0;
 
 	char line[18] = { 0, };
@@ -641,7 +661,7 @@ static level_state_t update_text_output()
 	}
 	else if (state == LIS_WAITING_FOR_INPUT)
 	{
-		if (sfMouse_isButtonClicked(sfMouseLeft))
+		if (sfMouse_isLeftMouseButtonClicked())
 		{
 			state = LIS_SCROLLING;
 			lines_on_screen = 0;
@@ -669,6 +689,10 @@ static neuro_scene_id_t update(sfEvent *event)
 
 	case LS_INVENTORY:
 		state = update_inventory(event);
+		break;
+
+	case LS_DIALOG:
+		state = update_dialog(event);
 		break;
 
 	case LS_WAIT_FOR_INPUT:
