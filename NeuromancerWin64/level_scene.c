@@ -280,7 +280,7 @@ static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...)
 
 	case 1:
 	case 3: {
-		uint16_t offt = g_bih_wrapper.bih->own_cb_offsets[opcode];
+		uint16_t offt = g_bih_wrapper.bih->init_obj_code_offt[opcode - 1];
 		// call (a8e8 + offt)
 		break;
 	}
@@ -292,10 +292,10 @@ static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...)
 		uint16_t y = va_arg(args, uint16_t);
 		va_end(args);
 
-		uint16_t offt = *(&g_bih_wrapper.bih->text_offset + x);
-		uint8_t *p = g_a8e0.bih + offt;
-		p = g_a8e0.bih + *(p + (y * 2));
-		return (uint64_t)p;
+		uint16_t array_offt = g_bih_wrapper.bih->bytecode_array_offt[x - 1];
+		uint8_t *array = g_a8e0.bih + array_offt;
+		uint8_t *program = g_a8e0.bih + array[y * 2];
+		return (uint64_t)program;
 	}
 
 	case SUB_105F6_OP_PLAY_LEVEL_INTRO: {
