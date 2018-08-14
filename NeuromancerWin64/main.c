@@ -38,7 +38,7 @@ static float g_scale_y = 0;
  */
 sfClock *g_timer = NULL;
 
-int cursor_menu_dialog_item_hit_test(int item, neuro_menu_dialog_t *dialog)
+int cursor_menu_dialog_item_hit_test(int item, neuro_menu_t *dialog)
 {
 	return (g_sprite_chain[SCI_CURSOR].left > dialog->items[item].left &&
 		g_sprite_chain[SCI_CURSOR].left < dialog->items[item].right &&
@@ -171,6 +171,15 @@ int main(int argc, char *argv[])
 			if (event.type == sfEvtClosed)
 			{
 				sfRenderWindow_close(g_window);
+			}
+			else if (g_scene.handle_input)
+			{
+				neuro_scene_id_t scene = g_scene.handle_input(&event);
+				if (scene != g_scene.id)
+				{
+					scene_control_setup_scene(scene);
+					break;
+				}
 			}
 		}
 

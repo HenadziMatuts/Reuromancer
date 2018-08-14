@@ -25,7 +25,7 @@ void build_text_frame(uint32_t _h, uint32_t _w, imh_hdr_t *dst)
 	}
 }
 
-void build_menu_dialog_frame(neuro_menu_dialog_t *dialog,
+void build_menu_dialog_frame(neuro_menu_t *dialog,
 		uint16_t left, uint16_t top, uint16_t w, uint16_t h,
 		uint16_t flags, uint8_t *pixels)
 {
@@ -52,7 +52,7 @@ void build_menu_dialog_frame(neuro_menu_dialog_t *dialog,
 	build_text_frame(h, w, (imh_hdr_t*)pixels);
 }
 
-void build_menu_dialog_text(neuro_menu_dialog_t *dialog,
+void build_menu_dialog_text(neuro_menu_t *dialog,
 		char *text, uint16_t x_offt, uint16_t y_offt)
 {
 	uint16_t w = dialog->width * 2;
@@ -64,7 +64,7 @@ void build_menu_dialog_text(neuro_menu_dialog_t *dialog,
 	build_string(text, w, h, l, t, p + sizeof(imh_hdr_t));
 }
 
-void build_menu_dialog_item(neuro_menu_dialog_t *dialog,
+void build_menu_dialog_item(neuro_menu_t *dialog,
 		uint16_t x_offt, uint16_t y_offt, uint16_t w,
 		uint16_t item_num, char c)
 {
@@ -87,7 +87,7 @@ void build_menu_dialog_item(neuro_menu_dialog_t *dialog,
 	dialog->items_count++;
 }
 
-void select_menu_dialog_item(neuro_menu_dialog_t *_dialog,
+void select_menu_dialog_item(neuro_menu_t *_dialog,
 		neuro_button_t *item, int select)
 {
 	imh_hdr_t *dialog = (imh_hdr_t*)_dialog->pixels;
@@ -109,7 +109,7 @@ void select_menu_dialog_item(neuro_menu_dialog_t *_dialog,
 	}
 }
 
-void unselect_menu_dialog_items(neuro_menu_dialog_t *dialog)
+void unselect_menu_dialog_items(neuro_menu_t *dialog)
 {
 	for (uint16_t i = 0; i < dialog->items_count; i++)
 	{

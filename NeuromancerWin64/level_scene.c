@@ -719,6 +719,7 @@ void setup_level_scene()
 {
 	g_scene.id = NSID_LEVEL;
 	g_scene.init = init;
+	g_scene.handle_input = NULL;
 	g_scene.update = update;
 	g_scene.deinit = deinit;
 }

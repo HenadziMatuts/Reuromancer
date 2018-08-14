@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 static uint8_t *g_dialog = NULL;
-static neuro_menu_dialog_t g_not_implemented_dialog;
+static neuro_menu_t g_not_implemented_dialog;
 static int16_t g_selected_dialog_item = -1;
 
 static void init()
@@ -106,6 +106,7 @@ void setup_not_implemented_scene()
 {
 	g_scene.id = NSID_NOT_IMPLEMENTED;
 	g_scene.init = init;
+	g_scene.handle_input = NULL;
 	g_scene.update = update;
 	g_scene.deinit = deinit;
 }
