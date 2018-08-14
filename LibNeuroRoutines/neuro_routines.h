@@ -199,21 +199,16 @@ LIBNEUROAPI void build_text_frame(uint32_t h, uint32_t w, imh_hdr_t *dst);
 /*
  * Dialog box control.
  */
-LIBNEUROAPI void build_menu_dialog_frame(neuro_menu_t *dialog,
+LIBNEUROAPI void build_neuro_menu_frame(neuro_menu_t *dialog,
 					uint16_t left, uint16_t top, uint16_t w, uint16_t h,
 					uint16_t flags, uint8_t *pixels);
 
-LIBNEUROAPI void build_menu_dialog_text(neuro_menu_t *dialog,
+LIBNEUROAPI void build_neuro_menu_text(neuro_menu_t *dialog,
 					char *text, uint16_t x_offt, uint16_t y_offt);
 
-LIBNEUROAPI void build_menu_dialog_item(neuro_menu_t *dialog,
+LIBNEUROAPI void build_neuro_menu_item(neuro_menu_t *dialog,
 					uint16_t x_offt, uint16_t y_offt, uint16_t w,
 					uint16_t item_num, char c);
-
-LIBNEUROAPI void select_menu_dialog_item(neuro_menu_t *_dialog,
-					neuro_button_t *item, int select);
-
-LIBNEUROAPI void unselect_menu_dialog_items(neuro_menu_t *dialog);
 
 /*
  * Sound stuff.

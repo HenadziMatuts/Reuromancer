@@ -57,6 +57,9 @@
     <ClCompile Include="dialog_control.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="neuro_menu_control.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h">
@@ -87,6 +90,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="dialog_control.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="neuro_menu_control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

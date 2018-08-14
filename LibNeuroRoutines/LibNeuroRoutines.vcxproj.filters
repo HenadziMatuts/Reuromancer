@@ -27,9 +27,6 @@
     <ClCompile Include="cp437.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dialog.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -37,6 +34,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="animation.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="neuro_menu.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
