@@ -698,13 +698,50 @@ void inventory_handle_kboard(inventory_state_t *state, sfEvent *event)
 	}
 }
 
-static inventory_state_t update_inventory_open_close(int open)
+static inventory_state_t update_inventory_close()
 {
 	static int frame = 0;
 	uint8_t frames[12][4] = {
 		//  w,  h,   l,   t,
-		{ 3,  2, 143, 159 },{ 7,  2, 141, 159 },{ 15,  2, 136, 159 },
-		{ 23,  2, 132, 159 },{ 45,  2, 121, 159 },{ 87,  2, 101, 159 },
+		{ 176, 64,  56, 128 },{ 176,  62,  56, 129 },{ 176, 56,  56, 132 },
+		{ 176, 48,  56, 136 },{ 176,  36,  56, 142 },{ 176, 20,  56, 150 },
+		{ 172,  2,  58, 159 },{ 164,   2,  62, 159 },{ 148,  2,  70, 159 },
+		{ 114,  2,  86, 159 },{  50,   2, 118, 159 },{   3,  2, 143, 159 },
+	};
+
+	static int frame_cap_ms = 50;
+	static int elapsed = 0;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= frame_cap_ms)
+	{
+		return IS_CLOSE_INVENTORY;
+	}
+	elapsed = passed;
+
+	if (frame == 12)
+	{
+		frame = 0;
+		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+		restore_window();
+		return IS_OPEN_INVENTORY;
+	}
+
+	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg012);
+	drawing_control_add_sprite_to_chain(g_4bae.x4ccf + 1,
+		frames[frame][2], frames[frame][3], g_seg012, 1);
+	frame++;
+
+	return IS_CLOSE_INVENTORY;
+}
+
+static inventory_state_t update_inventory_open()
+{
+	static int frame = 0;
+	uint8_t frames[12][4] = {
+		//  w,  h,   l,   t,
+		{   3,  2, 143, 159 },{   7,  2, 141, 159 },{  15,  2, 136, 159 },
+		{  23,  2, 132, 159 },{  45,  2, 121, 159 },{  87,  2, 101, 159 },
 		{ 176,  3,  56, 159 },{ 176,  5,  56, 157 },{ 176, 11,  56, 154 },
 		{ 176, 21,  56, 149 },{ 176, 33,  56, 143 },{ 176, 64,  56, 128 }
 	};
@@ -715,31 +752,23 @@ static inventory_state_t update_inventory_open_close(int open)
 
 	if (passed - elapsed <= frame_cap_ms)
 	{
-		return open ? IS_OPEN_INVENTORY : IS_CLOSE_INVENTORY;
+		return IS_OPEN_INVENTORY;
 	}
 	elapsed = passed;
 
-	if (open && frame == 12)
+	if (frame == 12)
 	{
-		frame = 11;
+		frame = 0;
 		neuro_window_setup(NWM_INVENTORY);
 		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 	}
-	else if (!open && frame == -1)
-	{
-		frame = 0;
-		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
-		restore_window();
-		return IS_OPEN_INVENTORY;
-	}
 
 	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg012);
-	drawing_control_add_sprite_to_chain(open ? g_4bae.x4ccf : g_4bae.x4ccf + 1,
+	drawing_control_add_sprite_to_chain(g_4bae.x4ccf,
 		frames[frame][2], frames[frame][3], g_seg012, 1);
+	frame++;
 
-	frame = open ? frame + 1 : frame - 1;
-
-	return open ? IS_OPEN_INVENTORY : IS_CLOSE_INVENTORY;
+	return IS_OPEN_INVENTORY;
 }
 
 level_state_t update_inventory(sfEvent *event)
@@ -748,11 +777,11 @@ level_state_t update_inventory(sfEvent *event)
 
 	switch (state) {
 	case IS_OPEN_INVENTORY:
-		state = update_inventory_open_close(1);
+		state = update_inventory_open();
 		break;
 
 	case IS_CLOSE_INVENTORY:
-		state = update_inventory_open_close(0);
+		state = update_inventory_close();
 		if (state == IS_OPEN_INVENTORY)
 		{
 			return LS_NORMAL;
