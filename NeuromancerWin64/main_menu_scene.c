@@ -12,28 +12,45 @@ typedef enum main_menu_state_t {
 	MMS_INITIAL = 0,
 	MMS_NEW,
 	MMS_LOAD,
+	MMS_TO_LEVEL_SCENE,
+	MMS_TO_NOT_IMPLEMENTED_SCENE,
 } main_menu_state_t;
 
 static main_menu_state_t g_state = MMS_INITIAL;
 
 static uint8_t *g_dialog = NULL;
 static neuro_menu_t g_menu_dialog;
-static int16_t g_selected_dialog_item = -1;
 
-static char g_name[11] = { 0, };
-
-static void main_menu_handle_kboard(neuro_scene_id_t *scene, sfEvent *event)
+static void main_menu_handle_text_enter(main_menu_state_t *state, sfTextEvent *event)
 {
-	switch (event->type) {
-	case sfEvtKeyPressed:
+	static char name[11] = { 0, };
 
-		break;
+	if (*state == MMS_NEW)
+	{
+		char input[12] = { 0x00 };
+		sfKeyCode key = handle_sfml_text_input(event->unicode, name, 11, 0);
+
+		if (key == sfKeyReturn)
+		{
+			*state = MMS_TO_LEVEL_SCENE;
+			if (strlen(name))
+			{
+				sprintf(g_4bae.name + 2, "%s", name);
+			}
+			memset(name, 0, 11);
+		}
+		else
+		{
+			sprintf(input, "%s%s", name, "<");
+			memset(input + strlen(input), 0x20, 11 - strlen(input));
+			build_menu_dialog_text(&g_menu_dialog, input, 0, 16);
+		}
 	}
 }
 
-static void main_menu_handle_mouse(neuro_scene_id_t *scene, neuro_button_t *button)
+static void main_menu_handle_button_press(main_menu_state_t *state, neuro_button_t *button)
 {
-	switch (g_state) {
+	switch (*state) {
 	case MMS_INITIAL:
 		switch (button->code) {
 		case 0: /* new */
@@ -41,7 +58,7 @@ static void main_menu_handle_mouse(neuro_scene_id_t *scene, neuro_button_t *butt
 			build_menu_dialog_text(&g_menu_dialog, "Your name?", 0, 0);
 			build_menu_dialog_text(&g_menu_dialog, "<", 0, 16);
 			drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
-			g_state = MMS_NEW;
+			*state = MMS_NEW;
 			break;
 
 		case 1: /* load */
@@ -55,7 +72,7 @@ static void main_menu_handle_mouse(neuro_scene_id_t *scene, neuro_button_t *butt
 			build_menu_dialog_item(&g_menu_dialog, 96, 16, 8, 3, '4');
 			build_menu_dialog_item(&g_menu_dialog, 48, 40, 32, 10, 'x');
 			drawing_control_add_sprite_to_chain(SCI_DIALOG, 48, 120, g_dialog, 1);
-			g_state = MMS_LOAD;
+			*state = MMS_LOAD;
 			break;
 		}
 		break;
@@ -68,19 +85,16 @@ static void main_menu_handle_mouse(neuro_scene_id_t *scene, neuro_button_t *butt
 			build_menu_dialog_item(&g_menu_dialog, 8, 0, 24, 0, 'n');
 			build_menu_dialog_item(&g_menu_dialog, 40, 0, 32, 1, 'l');
 			drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
-			g_state = MMS_INITIAL;
+			*state = MMS_INITIAL;
 			break;
 
 		case 0: /* savegame slots */
 		case 1:
 		case 2:
 		case 3:
-			*scene = NSID_NOT_IMPLEMENTED;
+			*state = MMS_TO_NOT_IMPLEMENTED_SCENE;
 			break;
 		}
-		break;
-
-	case MMS_NEW:
 		break;
 
 	default:
@@ -107,20 +121,20 @@ typedef enum neuro_menu_id_t {
 	NMID_MAIN_MENU = 0,
 } neuro_menu_id_t;
 
-static void menu_handle_kboard(neuro_menu_id_t id, int *state, sfEvent *event)
+static void menu_handle_text_enter(neuro_menu_id_t id, int *state, sfTextEvent *event)
 {
 	switch (id) {
 	case NMID_MAIN_MENU:
-		main_menu_handle_kboard((neuro_scene_id_t*)state, event);
+		main_menu_handle_text_enter((main_menu_state_t*)state, event);
 		break;
 	}
 }
 
-static void menu_handle_mouse(neuro_menu_id_t id, int *state, neuro_button_t *button)
+static void menu_handle_button_press(neuro_menu_id_t id, int *state, neuro_button_t *button)
 {
 	switch (id) {
 	case NMID_MAIN_MENU:
-		main_menu_handle_mouse((neuro_scene_id_t*)state, button);
+		main_menu_handle_button_press((main_menu_state_t*)state, button);
 		break;
 	}
 }
@@ -185,7 +199,7 @@ static void neuro_menu_handle_kboard_events(neuro_menu_id_t id, neuro_menu_t *me
 			{
 				select_menu_button(menu, hit);
 				selected = hit;
-				kboard_lock = 1;
+				*kboard_lock = 1;
 			}
 		}
 		break;
@@ -194,9 +208,14 @@ static void neuro_menu_handle_kboard_events(neuro_menu_id_t id, neuro_menu_t *me
 		if (selected)
 		{
 			unselect_menu_button(menu, selected);
+			menu_handle_button_press(id, state, selected);
 			selected = NULL;
-			kboard_lock = 0;
+			*kboard_lock = 0;
 		}
+		break;
+
+	case sfEvtTextEntered:
+		menu_handle_text_enter(id, state, &event->text);
 		break;
 
 	default:
@@ -295,7 +314,7 @@ static void neuro_menu_handle_mouse_events(neuro_menu_id_t id, neuro_menu_t *men
 
 			if (selected == menu_button_mouse_hit_test(menu))
 			{
-				menu_handle_mouse(id, state, selected);
+				menu_handle_button_press(id, state, selected);
 			}
 
 			selected = NULL;
@@ -322,7 +341,6 @@ static void neuro_menu_handle_input(neuro_menu_id_t id, neuro_menu_t *menu,
 		if (!kboard_lock)
 		{
 			 neuro_menu_handle_mouse_events(id, menu, state, event, &mouse_lock);
-			 fprintf(stdout, "%d\n", mouse_lock);
 		}
 		break;
 
@@ -340,95 +358,26 @@ static void neuro_menu_handle_input(neuro_menu_id_t id, neuro_menu_t *menu,
 	}
 }
 
-static neuro_scene_id_t handle_input(sfEvent *event)
+static void handle_input(sfEvent *event)
 {
-	neuro_scene_id_t scene = NSID_MAIN_MENU;
-
-	neuro_menu_handle_input(NMID_MAIN_MENU, &g_menu_dialog, (int*)&scene, event);
-	/*
-	switch (event->type) {
-	case sfEvtMouseButtonPressed: {
-		if (sfMouse_isButtonPressed(sfMouseLeft))
-		{
-			int selected = 0;
-
-			for (uint16_t i = 0; i < g_menu_dialog.items_count; i++)
-			{
-				if (cursor_menu_dialog_item_hit_test(i, &g_menu_dialog))
-				{
-					if (g_selected_dialog_item == -1 || g_selected_dialog_item == i)
-					{
-						select_menu_dialog_item(&g_menu_dialog, &g_menu_dialog.items[i], 1);
-						g_selected_dialog_item = i;
-						selected = 1;
-						break;
-					}
-				}
-			}
-			if (!selected)
-			{
-				unselect_menu_dialog_items(&g_menu_dialog);
-			}
-		}
-		break;
-	}
-
-	case sfEvtMouseButtonReleased: {
-		int selected = g_selected_dialog_item;
-		unselect_menu_dialog_items(&g_menu_dialog);
-		g_selected_dialog_item = -1;
-
-		for (uint16_t i = 0; i < g_menu_dialog.items_count; i++)
-		{
-			if (cursor_menu_dialog_item_hit_test(i, &g_menu_dialog))
-			{
-				if (selected == i)
-				{
-					scene = on_menu_dialog_item(g_menu_dialog.items[i].label);
-					break;
-				}
-			}
-		}
-		break;
-	}
-
-	case sfEvtTextEntered: {
-		if (g_state == MMS_NEW)
-		{
-			char input[12] = { 0x00 };
-			sfKeyCode key = handle_sfml_text_input(event->text.unicode, g_name, 11, 0);
-
-			if (key == sfKeyReturn)
-			{
-				scene = NSID_LEVEL;
-				if (strlen(g_name))
-				{
-					sprintf(g_4bae.name + 2, "%s", g_name);
-				}
-				memset(g_name, 0, 11);
-			}
-			else
-			{
-				sprintf(input, "%s%s", g_name, "<");
-				memset(input + strlen(input), 0x20, 11 - strlen(input));
-				build_menu_dialog_text(&g_menu_dialog, input, 0, 16);
-			}
-		}
-		break;
-	}
-
-	default:
-		break;
-	}
-	*/
-	return scene;
+	neuro_menu_handle_input(NMID_MAIN_MENU, &g_menu_dialog, (int*)&g_state, event);
 }
 
 static neuro_scene_id_t update(sfEvent *event)
 {
+	neuro_scene_id_t scene = NSID_MAIN_MENU;
+
 	update_cursor();
 
-	neuro_scene_id_t scene = NSID_MAIN_MENU;
+	switch (g_state) {
+	case MMS_TO_LEVEL_SCENE:
+	case MMS_TO_NOT_IMPLEMENTED_SCENE:
+		return (g_state == MMS_TO_LEVEL_SCENE) ? NSID_LEVEL : NSID_NOT_IMPLEMENTED;
+
+	default:
+		break;
+	}
+
 	return scene;
 }
 

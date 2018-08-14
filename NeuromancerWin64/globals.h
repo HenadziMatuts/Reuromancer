@@ -16,6 +16,6 @@ int extract_line(char **text, char *line, int length);
 
 int sfMouse_isLeftMouseButtonClicked();
 int sfMouse_isRightMouseButtonClicked();
-sfKeyCode ascii_toSfKeyCode(char c)
+sfKeyCode ascii_toSfKeyCode(char c);
 
 #endif

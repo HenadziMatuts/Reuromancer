@@ -174,12 +174,7 @@ int main(int argc, char *argv[])
 			}
 			else if (g_scene.handle_input)
 			{
-				neuro_scene_id_t scene = g_scene.handle_input(&event);
-				if (scene != g_scene.id)
-				{
-					scene_control_setup_scene(scene);
-					break;
-				}
+				g_scene.handle_input(&event);
 			}
 		}
 

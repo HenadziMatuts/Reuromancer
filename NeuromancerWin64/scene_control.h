@@ -12,7 +12,7 @@ typedef enum neuro_scene_id_t {
 } neuro_scene_id_t;
 
 typedef void(*pfn_init_scene)();
-typedef neuro_scene_id_t(*pfn_handle_input)(sfEvent *event);
+typedef void(*pfn_handle_input)(sfEvent *event);
 typedef neuro_scene_id_t(*pfn_update_scene)(sfEvent *event);
 typedef void(*pfn_deinit_scene)();
 
