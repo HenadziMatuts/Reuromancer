@@ -145,6 +145,14 @@ typedef struct anh_frame_hdr {
 	/* rle encoded frame bytes */
 } anh_frame_hdr;
 
+typedef struct roompos_level_t {
+	uint8_t roompos[20];
+} roompos_level_t;
+
+typedef struct roompos_t {
+	roompos_level_t roompos_level[58];
+} roompos_t;
+
 typedef struct neuro_savegame_t {
 	uint8_t unknown_area_1[1252];
 	uint8_t unknown_area_2[291];
