@@ -19,7 +19,7 @@ static uint8_t g_current_reply = 0;
 static void dialog_first_reply()
 {
 	char *reply = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
-	uint8_t first_reply = g_a642[0];
+	uint8_t first_reply = g_a642->first_dialog_reply;
 
 	for (int i = 0; i < first_reply; i++)
 	{
@@ -33,8 +33,8 @@ static void dialog_first_reply()
 static void dialog_next_reply()
 {
 	char *reply = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
-	uint8_t first_reply = g_a642[0];
-	uint8_t total_replies = g_a642[1];
+	uint8_t first_reply = g_a642->first_dialog_reply;
+	uint8_t total_replies = g_a642->total_dialog_replies;
 
 	if (++g_current_reply == total_replies)
 	{
@@ -52,7 +52,7 @@ static void dialog_next_reply()
 static void dialog_accept_reply()
 {
 	char *reply = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
-	uint8_t first_reply = g_a642[0];
+	uint8_t first_reply = g_a642->first_dialog_reply;
 
 	for (int i = 0; i < first_reply + g_current_reply; i++)
 	{
@@ -100,7 +100,7 @@ static dialog_state_t handle_dialog_wait_for_input(dialog_state_t state, sfEvent
 		if (event->type == sfEvtMouseButtonReleased ||
 			event->type == sfEvtKeyReleased)
 		{
-			g_4bae.active_dialog_reply = g_current_reply + g_a642[0];
+			g_4bae.active_dialog_reply = g_current_reply + g_a642->first_dialog_reply;
 			g_4bae.x4bae[0] = 0;
 			return DS_CLOSE_DIALOG;
 		}
@@ -165,8 +165,8 @@ static dialog_state_t update_dialog_open_close(int open)
 	static int elapsed = 0;
 	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
 
-	uint8_t first_reply = g_a642[0];
-	uint8_t total_replies = g_a642[1];
+	uint8_t first_reply = g_a642->first_dialog_reply;
+	uint8_t total_replies = g_a642->total_dialog_replies;
 
 	if (first_reply == 0xFF)
 	{

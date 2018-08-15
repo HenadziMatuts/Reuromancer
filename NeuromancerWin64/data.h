@@ -61,10 +61,16 @@ typedef struct neuro_inventory_t {
 	uint8_t software[128];
 } neuro_inventory_t;
 
+typedef struct level_info_t {
+	uint8_t first_dialog_reply;
+	uint8_t total_dialog_replies;
+	uint8_t level_transitions[4];
+} level_info_t;
+
 typedef struct x3f85_t {
 	neuro_vm_state_t vm_state[35];
 	uint8_t vm_state_end;        // 0x407A
-	uint8_t x407b[348];
+	level_info_t level_info[58]; // 0x407B
 	neuro_inventory_t inventory; // 0x41D7
 	uint8_t x42d7[402];
 } x3f85_t;
@@ -192,7 +198,7 @@ typedef struct x4bae_t {
 extern x4bae_t g_4bae;
 
 extern uint8_t g_a61a;
-extern uint8_t *g_a642;
+extern level_info_t *g_a642;
 extern uint16_t g_a86a;
 
 typedef struct a8e0_t {

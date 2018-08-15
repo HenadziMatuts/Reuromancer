@@ -206,10 +206,9 @@ static void neuro_vm(real_world_state_t *state)
 
 		/* set dialog ctrl */
 		case 0x13: {
-			uint8_t *p = g_3f85.x407b + *(opcode_addr + 1);
-			p[0] = *(opcode_addr + 2);
-			p[1] = *(opcode_addr + 3);
-
+			uint16_t level_n = *(opcode_addr + 1);
+			g_3f85.level_info[level_n].first_dialog_reply = *(opcode_addr + 2);
+			g_3f85.level_info[level_n].total_dialog_replies = *(opcode_addr + 3);
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 4;
 			break;
 		}
@@ -269,7 +268,8 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		uint16_t level_n = va_arg(args, uint16_t);
 		va_end(args);
 
-		g_a642 = g_3f85.x407b + (6 * level_n);
+		//g_a642 = g_3f85.x407b + (6 * level_n);
+		g_a642 = &g_3f85.level_info[level_n];
 		g_bih_wrapper.bih = (bih_hdr_t*)g_a8e0.bih;
 		g_bih_wrapper.ctrl_struct_addr = (uint8_t*)&g_4bae;
 		// g_bih_wrapper.cb_addr = &cb;
