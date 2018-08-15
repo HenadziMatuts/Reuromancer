@@ -6,18 +6,13 @@
 #include "drawing_control.h"
 #include "resource_manager.h"
 #include "neuro_window_control.h"
-#include "inventory_control.h"
-#include "dialog_control.h"
+#include "scene_real_world.h"
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
-typedef enum level_intro_state_t {
-	LIS_NEXT_LINE = 0,
-	LIS_SCROLLING,
-	LIS_WAIT_FOR_INPUT,
-} level_intro_state_t;
+static real_world_state_t g_state = RWS_TEXT_OUTPUT;
 
 static char *g_bih_string_ptr = NULL;
 
@@ -62,6 +57,7 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 
 	if (b != 0)
 	{
+		text_output_set_text(g_bih_string_ptr);
 		return;
 	}
 
@@ -253,6 +249,8 @@ static int setup_intro()
 		/* setup short intro */
 		while (*g_bih_string_ptr++);
 	}
+
+	text_output_set_text(g_bih_string_ptr);
 
 	return 0;
 }
@@ -536,7 +534,7 @@ static void init()
 	return;
 }
 
-void ui_handle_mouse(real_world_state_t *state, neuro_button_t *button)
+void rw_ui_handle_button_press(int *state, neuro_button_t *button)
 {
 	switch (button->code) {
 	case 0x00: /* inventory */
@@ -569,135 +567,90 @@ void ui_handle_mouse(real_world_state_t *state, neuro_button_t *button)
 	}
 }
 
-static real_world_state_t wait_for_input()
+static void handle_wait_for_input(sfEvent *event)
 {
-	if (sfMouse_isLeftMouseButtonClicked())
+	if (event->type == sfEvtMouseButtonReleased ||
+		event->type == sfEvtKeyReleased)
 	{
 		switch (g_neuro_window.mode) {
 		case NWM_NPC_DIALOG_REPLY:
 			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
-			/* restoring "window" state */
 			restore_window();
-			return RWS_NORMAL;
+			g_state = RWS_NORMAL;
 
 		default:
 			break;
 		}
 	}
-
-	return RWS_WAIT_FOR_INPUT;
 }
 
-static real_world_state_t update_normal(sfEvent *event)
+static void handle_normal_input(sfEvent *event)
+{
+	character_control_handle_input(event);
+	neuro_window_handle_input((int*)&g_state, event);
+}
+
+static void handle_input(sfEvent *event)
+{
+	switch (g_state) {
+	case RWS_TEXT_OUTPUT:
+		handle_text_output_input(event);
+		break;
+
+	case RWS_NORMAL:
+		handle_normal_input(event);
+		break;
+
+	case RWS_INVENTORY:
+		handle_inventory_input(event);
+		break;
+
+	case RWS_DIALOG:
+		handle_dialog_input(event);
+		break;
+
+	case RWS_WAIT_FOR_INPUT:
+		handle_wait_for_input(event);
+		break;
+
+	}
+}
+
+static real_world_state_t update_normal()
 {
 	real_world_state_t state = RWS_NORMAL;
-	real_world_state_t new_state = state;
-
-	window_handle_input((int*)&new_state, event);
-	if (new_state != state)
-	{
-		return new_state;
-	}
 
 	ui_panel_update();
-
-	character_control_handle_input();
 	character_control_update();
+	bg_animation_control_update();
 
 	/* execute the following VM instruction */
 	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_STEP);
-
-	bg_animation_control_update();
-
 	return state;
 }
 
-static real_world_state_t update_text_output()
+static neuro_scene_id_t update()
 {
-	static level_intro_state_t state = LIS_NEXT_LINE;
-	static int lines_on_screen = 0, lines_scrolled = 0;
-	static int frame_cap_ms = 11;
-	static int elapsed = 0;
-
-	char line[18] = { 0, };
-	uint8_t *pix = g_background + sizeof(imh_hdr_t);
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return RWS_TEXT_OUTPUT;
-	}
-	elapsed = passed;
-
-	if (state == LIS_NEXT_LINE)
-	{
-		int last = extract_line(&g_bih_string_ptr, line, 17);
-
-		neuro_window_draw_string(line);
-
-		if (last)
-		{
-			state = LIS_NEXT_LINE;
-			lines_on_screen = 0;
-			return RWS_NORMAL;
-		}
-
-		state = (++lines_on_screen == 7)
-			? LIS_WAIT_FOR_INPUT : LIS_SCROLLING;
-
-	}
-	else if (state == LIS_SCROLLING)
-	{
-		for (int i = 135, j = 134; i < 191; i++, j++)
-		{
-			memmove(&pix[160 * j + 88], &pix[160 * i + 88], 68);
-		}
-
-		if (++lines_scrolled == 8)
-		{
-			lines_scrolled = 0;
-			state = LIS_NEXT_LINE;
-		}
-	}
-	else if (state == LIS_WAIT_FOR_INPUT)
-	{
-		if (sfMouse_isLeftMouseButtonClicked())
-		{
-			state = LIS_SCROLLING;
-			lines_on_screen = 0;
-		}
-	}
-	
-	return RWS_TEXT_OUTPUT;
-}
-
-static neuro_scene_id_t update(sfEvent *event)
-{
-	static real_world_state_t state = RWS_TEXT_OUTPUT;
 	neuro_scene_id_t scene = NSID_REAL_WORLD;
 
 	update_cursor();
 
-	switch (state) {
+	switch (g_state) {
 	case RWS_TEXT_OUTPUT:
-		state = update_text_output();
+		g_state = update_text_output();
 		break;
 
 	case RWS_NORMAL:
-		state = update_normal(event);
+		g_state = update_normal();
 		break;
 
 	case RWS_INVENTORY:
-		state = update_inventory(event);
+		g_state = update_inventory();
 		break;
 
 	case RWS_DIALOG:
-		state = update_dialog(event);
-		break;
-
-	case RWS_WAIT_FOR_INPUT:
-		state = wait_for_input();
+		g_state = update_dialog();
 		break;
 
 	default:
@@ -719,7 +672,9 @@ void setup_real_world_scene()
 {
 	g_scene.id = NSID_REAL_WORLD;
 	g_scene.init = init;
-	g_scene.handle_input = NULL;
+	g_scene.handle_input = handle_input;
 	g_scene.update = update;
 	g_scene.deinit = deinit;
+
+	g_state = RWS_TEXT_OUTPUT;
 }

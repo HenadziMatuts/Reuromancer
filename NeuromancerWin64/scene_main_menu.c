@@ -123,7 +123,7 @@ static void handle_input(sfEvent *event)
 	neuro_menu_handle_input(NMID_MAIN_MENU, &g_menu_dialog, (int*)&g_state, event);
 }
 
-static neuro_scene_id_t update(sfEvent *event)
+static neuro_scene_id_t update()
 {
 	neuro_scene_id_t scene = NSID_MAIN_MENU;
 

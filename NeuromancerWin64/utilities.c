@@ -48,66 +48,6 @@ sfKeyCode ascii_toSfKeyCode(char c)
 	}
 }
 
-int sfMouse_isLeftMouseButtonClicked()
-{
-	static int state = 0;
-
-	if (state == 0)
-	{
-		if (!sfMouse_isButtonPressed(sfMouseLeft))
-		{
-			state = 1;
-		}
-	}
-	else if (state == 1)
-	{
-		if (sfMouse_isButtonPressed(sfMouseLeft))
-		{
-			state = 2;
-		}
-	}
-	else if (state == 2)
-	{
-		if (!sfMouse_isButtonPressed(sfMouseLeft))
-		{
-			state = 0;
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-int sfMouse_isRightMouseButtonClicked()
-{
-	static int state = 0;
-
-	if (state == 0)
-	{
-		if (!sfMouse_isButtonPressed(sfMouseRight))
-		{
-			state = 1;
-		}
-	}
-	else if (state == 1)
-	{
-		if (sfMouse_isButtonPressed(sfMouseRight))
-		{
-			state = 2;
-		}
-	}
-	else if (state == 2)
-	{
-		if (!sfMouse_isButtonPressed(sfMouseRight))
-		{
-			state = 0;
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
 int extract_line(char **text, char *line, int length)
 {
 	char *ps = *text, *pl = line;

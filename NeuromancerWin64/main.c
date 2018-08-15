@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include <SFML\Graphics.h>
 
 /*
@@ -152,14 +153,12 @@ int main(int argc, char *argv[])
 	reset();
 	resource_manager_init();
 	scene_control_setup_scene(NSID_MAIN_MENU);
+	srand((uint32_t)time(NULL));
 
 	while (sfRenderWindow_isOpen(g_window))
 	{
-		sfBool was_event = sfFalse;
-
 		while (sfRenderWindow_pollEvent(g_window, &event))
 		{
-			was_event = sfTrue;
 			if (event.type == sfEvtClosed)
 			{
 				sfRenderWindow_close(g_window);
@@ -170,13 +169,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if (!was_event)
-		{
-			/* no event */
-			event.type = sfEvtCount;
-		}
-
-		neuro_scene_id_t scene = g_scene.update(&event);
+		neuro_scene_id_t scene = g_scene.update();
 		if (scene != g_scene.id)
 		{
 			scene_control_setup_scene(scene);

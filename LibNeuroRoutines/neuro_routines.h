@@ -98,7 +98,8 @@ typedef struct bih_hdr_t {
 	uint16_t ctrl_struct_addr;        // a8ec
 	uint16_t text_offset;             // a8ee
 	uint16_t bytecode_array_offt[3];  // a8f0
-	uint16_t init_obj_code_offt[3];   // a8f4
+	uint16_t init_obj_code_offt[3];   // a8f6
+	uint16_t unknown[10];             // a8fc
 	/* the rest of bih file */
 } bih_hdr_t;
 

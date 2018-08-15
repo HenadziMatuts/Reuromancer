@@ -13,7 +13,7 @@ typedef enum neuro_scene_id_t {
 
 typedef void(*pfn_init_scene)();
 typedef void(*pfn_handle_input)(sfEvent *event);
-typedef neuro_scene_id_t(*pfn_update_scene)(sfEvent *event);
+typedef neuro_scene_id_t(*pfn_update_scene)();
 typedef void(*pfn_deinit_scene)();
 
 typedef struct neuro_scene_t {
@@ -31,13 +31,5 @@ void scene_control_setup_scene(neuro_scene_id_t id);
 void setup_main_menu_scene();
 void setup_not_implemented_scene();
 void setup_real_world_scene();
-
-typedef enum real_world_state_t {
-	RWS_TEXT_OUTPUT = 0,
-	RWS_NORMAL,
-	RWS_INVENTORY,
-	RWS_DIALOG,
-	RWS_WAIT_FOR_INPUT,
-} real_world_state_t;
 
 #endif

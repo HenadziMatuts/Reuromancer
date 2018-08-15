@@ -1,7 +1,7 @@
 #include "data.h"
 #include "globals.h"
 #include "resource_manager.h"
-#include "inventory_control.h"
+#include "scene_real_world.h"
 #include "neuro_window_control.h"
 #include "drawing_control.h"
 #include <neuro_routines.h>
@@ -10,6 +10,8 @@
 #include <string.h>
 
 int sub_1155A();
+
+static inventory_state_t g_state = IS_OPEN_INVENTORY;
 
 typedef enum inventory_type_t {
 	IT_ITEMS = 0,
@@ -456,25 +458,6 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 	return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 }
 
-static inventory_state_t inventory_wait_for_input(inventory_state_t state)
-{
-	if (sfMouse_isLeftMouseButtonClicked())
-	{
-		switch (state) {
-		case IS_WFI_AND_CLOSE:
-			return IS_CLOSE_INVENTORY;
-
-		case IS_WFI_AND_CONTINUE:
-			return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
-
-		default:
-			return state;
-		}
-	}
-
-	return state;
-}
-
 static inventory_state_t on_inventory_operate_software_button(neuro_button_t *button)
 {
 	inventory_state_t state;
@@ -619,7 +602,50 @@ static inventory_state_t on_inventory_item_list_button(neuro_button_t *button)
 	return IS_ITEM_LIST;
 }
 
-void inventory_handle_mouse(inventory_state_t *state, neuro_button_t *button)
+static inventory_state_t on_inventory_give_credits_kboard(sfTextEvent *event)
+{
+	static char input[9] = { 0 };
+
+	sfKeyCode key = sfHandleTextInput(event->unicode, input, 8, 1);
+
+	if (key != sfKeyReturn)
+	{
+		char credits[10] = { 0 };
+		sprintf(credits, "%s<", input);
+		memset(credits + strlen(credits), 0x20, 8 - strlen(credits));
+		neuro_window_draw_string(credits, 8, 24);
+	}
+	else
+	{
+		uint32_t val = strlen(input) ? (uint32_t)atoi(input) : 0;
+		memset(input, 0, 9);
+
+		if (val <= g_4bae.cash)
+		{
+			g_4bae.cash -= val;
+			g_4bae.x4bbf = 1;
+			g_4bae.active_item = g_c946;
+			g_4bae.cash_withdrawal = val;
+
+			return IS_CLOSE_INVENTORY;
+		}
+
+		neuro_window_draw_string("<        ", 8, 24);
+	}
+
+	return IS_GIVE_CREDITS;
+}
+
+void rw_inventory_handle_text_enter(int *state, sfTextEvent *event)
+{
+	switch (*state) {
+	case IS_GIVE_CREDITS:
+		*state = on_inventory_give_credits_kboard(event);
+		break;
+	}
+}
+
+void rw_inventory_handle_button_press(int *state, neuro_button_t *button)
 {
 	switch (*state) {
 	case IS_ITEM_LIST:
@@ -652,48 +678,40 @@ void inventory_handle_mouse(inventory_state_t *state, neuro_button_t *button)
 	}
 }
 
-static inventory_state_t on_inventory_give_credits_kboard(sfEvent *event)
+static inventory_state_t handle_inventory_wait_for_input(inventory_state_t state, sfEvent *event)
 {
-	static char input[9] = { 0 };
-
-	if (event->text.type == sfEvtTextEntered)
+	if (event->type == sfEvtMouseButtonReleased ||
+		event->type == sfEvtKeyReleased)
 	{
-		sfKeyCode key = sfHandleTextInput(event->text.unicode, input, 8, 1);
+		switch (state) {
+		case IS_WFI_AND_CLOSE:
+			return IS_CLOSE_INVENTORY;
 
-		if (key != sfKeyReturn)
-		{
-			char credits[10] = { 0 };
-			sprintf(credits, "%s<", input);
-			memset(credits + strlen(credits), 0x20, 8 - strlen(credits));
-			neuro_window_draw_string(credits, 8, 24);
-		}
-		else
-		{
-			uint32_t val = strlen(input) ? (uint32_t)atoi(input) : 0;
-			memset(input, 0, 9);
+		case IS_WFI_AND_CONTINUE:
+			return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
 
-			if (val <= g_4bae.cash)
-			{
-				g_4bae.cash -= val;
-				g_4bae.x4bbf = 1;
-				g_4bae.active_item = g_c946;
-				g_4bae.cash_withdrawal = val;
-
-				return IS_CLOSE_INVENTORY;
-			}
-
-			neuro_window_draw_string("<        ", 8, 24);
+		default:
+			return state;
 		}
 	}
 
-	return IS_GIVE_CREDITS;
+	return state;
 }
 
-void inventory_handle_kboard(inventory_state_t *state, sfEvent *event)
+void handle_inventory_input(sfEvent *event)
 {
-	switch (*state) {
-	case IS_GIVE_CREDITS:
-		*state = on_inventory_give_credits_kboard(event);
+	switch (g_state) {
+	case IS_OPEN_INVENTORY:
+	case IS_CLOSE_INVENTORY:
+		break;
+
+	case IS_WFI_AND_CLOSE:
+	case IS_WFI_AND_CONTINUE:
+		g_state = handle_inventory_wait_for_input(g_state, event);
+		break;
+
+	default:
+		neuro_window_handle_input((int*)&g_state, event);
 		break;
 	}
 }
@@ -706,7 +724,7 @@ static inventory_state_t update_inventory_close()
 		{ 176, 64,  56, 128 },{ 176,  62,  56, 129 },{ 176, 56,  56, 132 },
 		{ 176, 48,  56, 136 },{ 176,  36,  56, 142 },{ 176, 20,  56, 150 },
 		{ 172,  2,  58, 159 },{ 164,   2,  62, 159 },{ 148,  2,  70, 159 },
-		{ 114,  2,  86, 159 },{  50,   2, 118, 159 },{   3,  2, 143, 159 },
+		{ 114,  2,  86, 159 },{ 50,   2, 118, 159 },{ 3,  2, 143, 159 },
 	};
 
 	static int frame_cap_ms = 50;
@@ -740,8 +758,8 @@ static inventory_state_t update_inventory_open()
 	static int frame = 0;
 	uint8_t frames[12][4] = {
 		//  w,  h,   l,   t,
-		{   3,  2, 143, 159 },{   7,  2, 141, 159 },{  15,  2, 136, 159 },
-		{  23,  2, 132, 159 },{  45,  2, 121, 159 },{  87,  2, 101, 159 },
+		{ 3,  2, 143, 159 },{ 7,  2, 141, 159 },{ 15,  2, 136, 159 },
+		{ 23,  2, 132, 159 },{ 45,  2, 121, 159 },{ 87,  2, 101, 159 },
 		{ 176,  3,  56, 159 },{ 176,  5,  56, 157 },{ 176, 11,  56, 154 },
 		{ 176, 21,  56, 149 },{ 176, 33,  56, 143 },{ 176, 64,  56, 128 }
 	};
@@ -771,30 +789,19 @@ static inventory_state_t update_inventory_open()
 	return IS_OPEN_INVENTORY;
 }
 
-real_world_state_t update_inventory(sfEvent *event)
+real_world_state_t update_inventory()
 {
-	static inventory_state_t state = IS_OPEN_INVENTORY;
-
-	switch (state) {
+	switch (g_state) {
 	case IS_OPEN_INVENTORY:
-		state = update_inventory_open();
+		g_state = update_inventory_open();
 		break;
 
 	case IS_CLOSE_INVENTORY:
-		state = update_inventory_close();
-		if (state == IS_OPEN_INVENTORY)
+		g_state = update_inventory_close();
+		if (g_state == IS_OPEN_INVENTORY)
 		{
 			return RWS_NORMAL;
 		}
-		break;
-
-	case IS_WFI_AND_CLOSE:
-	case IS_WFI_AND_CONTINUE:
-		state = inventory_wait_for_input(state);
-		break;
-
-	default:
-		window_handle_input((int*)&state, event);
 		break;
 	}
 

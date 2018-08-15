@@ -74,6 +74,7 @@ static void neuro_menu_handle_kboard_events(neuro_menu_id_t id, neuro_menu_t *me
 {
 	neuro_button_t *hit = NULL;
 	static neuro_button_t *selected = NULL; /* selected button */
+	static sfKeyCode _selected = sfKeyUnknown;
 
 	switch (event->type) {
 	case sfEvtKeyPressed:
@@ -83,17 +84,19 @@ static void neuro_menu_handle_kboard_events(neuro_menu_id_t id, neuro_menu_t *me
 			{
 				select_menu_button(menu, hit);
 				selected = hit;
+				_selected = event->key.code;
 				*kboard_lock = 1;
 			}
 		}
 		break;
 
 	case sfEvtKeyReleased:
-		if (selected)
+		if (selected && _selected == event->key.code)
 		{
 			unselect_menu_button(menu, selected);
 			menu_handle_button_press(id, state, selected);
 			selected = NULL;
+			_selected = sfKeyUnknown;
 			*kboard_lock = 0;
 		}
 		break;

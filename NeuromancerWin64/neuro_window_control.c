@@ -3,7 +3,6 @@
 #include "resource_manager.h"
 #include "drawing_control.h"
 #include "neuro_window_control.h"
-#include "inventory_control.h"
 #include "scene_control.h"
 #include <stdarg.h>
 #include <string.h>
@@ -218,14 +217,11 @@ int neuro_window_add_button(neuro_button_t *button)
 	return 0;
 }
 
-static void window_handle_kboard(int *state, sfEvent *event)
+static void window_handle_text_enter(int *state, sfTextEvent *event)
 {
 	switch (g_neuro_window.mode) {
-	case NWM_NEURO_UI:
-		break;
-
 	case NWM_INVENTORY:
-		inventory_handle_kboard((inventory_state_t*)state, event);
+		rw_inventory_handle_text_enter(state, event);
 		break;
 
 	default:
@@ -233,17 +229,15 @@ static void window_handle_kboard(int *state, sfEvent *event)
 	}
 }
 
-void ui_handle_mouse(real_world_state_t *state, neuro_button_t *button);
-
-static void window_handle_mouse(int *state, neuro_button_t *button)
+static void window_handle_button_press(int *state, neuro_button_t *button)
 {
 	switch (g_neuro_window.mode) {
 	case NWM_NEURO_UI:
-		ui_handle_mouse((real_world_state_t*)state, button);
+		rw_ui_handle_button_press(state, button);
 		break;
 
 	case NWM_INVENTORY:
-		inventory_handle_mouse((inventory_state_t*)state, button);
+		rw_inventory_handle_button_press(state, button);
 		break;
 
 	default:
@@ -290,7 +284,68 @@ static void unselect_window_button(neuro_button_t *button)
 	select_window_button(button);
 }
 
-static neuro_button_t* window_button_hit_test()
+static neuro_button_t* window_button_kboard_hit_test()
+{
+	for (uint16_t u = 0; u < g_neuro_window.total_items; u++)
+	{
+		neuro_button_t *hit = (neuro_button_t*)g_neuro_window_wrapper.window_item[u];
+		sfKeyCode key = ascii_toSfKeyCode(hit->label);
+
+		if (key == sfKeyUnknown)
+		{
+			continue;
+		}
+
+		if (sfKeyboard_isKeyPressed(key))
+		{
+			return hit;
+		}
+	}
+
+	return NULL;
+}
+
+static void neuro_window_handle_kboard_events(int *state, sfEvent *event, int *kboard_lock)
+{
+	neuro_button_t *hit = NULL;
+	static neuro_button_t *selected = NULL; /* selected button */
+	static sfKeyCode _selected = sfKeyUnknown;
+
+	switch (event->type) {
+	case sfEvtKeyPressed:
+		if (hit = window_button_kboard_hit_test())
+		{
+			if (!selected)
+			{
+				select_window_button(hit);
+				selected = hit;
+				_selected = event->key.code;
+				*kboard_lock = 1;
+			}
+		}
+		break;
+
+	case sfEvtKeyReleased:
+		if (selected && _selected == event->key.code)
+		{
+			unselect_window_button(selected);
+			window_handle_button_press(state, selected);
+			selected = NULL;
+			_selected = sfKeyUnknown;
+			*kboard_lock = 0;
+		}
+		break;
+
+	case sfEvtTextEntered:
+		window_handle_text_enter(state, &event->text);
+		break;
+
+	default:
+		break;
+	}
+}
+
+static neuro_button_t* window_button_mouse_hit_test()
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
 
@@ -309,32 +364,68 @@ static neuro_button_t* window_button_hit_test()
 	return NULL;
 }
 
-void window_handle_input(int *state, sfEvent *event)
+static void neuro_window_handle_mouse_events(int *state, sfEvent *event, int *mouse_lock)
 {
-	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
-	neuro_button_t *button = NULL;
+	neuro_button_t *hit = NULL;
 	static neuro_button_t *selected = NULL; /* selected button */
-	static int _selected = 0; /* redrawing flag */
+	static int _selected = 0;
 
-	if (sfMouse_isButtonPressed(sfMouseLeft))
-	{
-		if (button = window_button_hit_test())
+	switch (event->type) {
+	case sfEvtMouseButtonPressed: {
+		if (sfMouse_isButtonPressed(sfMouseLeft))
 		{
-			if ((!selected || (button == selected)) && !_selected)
+			if (hit = window_button_mouse_hit_test())
 			{
-				select_window_button(button);
-				selected = button;
-				_selected = 1;
+				if (!selected)
+				{
+					select_window_button(hit);
+					selected = hit;
+					_selected = 1;
+					*mouse_lock = 1;
+				}
 			}
 		}
-		else if (selected && _selected)
-		{
-			unselect_window_button(selected);
-			_selected = 0;
-		}
+
+		break;
 	}
-	else if (event->mouseButton.type == sfEvtMouseButtonReleased)
-	{
+
+	case sfEvtMouseMoved: {
+		if (sfMouse_isButtonPressed(sfMouseLeft))
+		{
+			hit = window_button_mouse_hit_test();
+
+			if (selected)
+			{
+				if (hit != selected)
+				{
+					if (_selected)
+					{
+						unselect_window_button(selected);
+						_selected = 0;
+					}
+				}
+				else
+				{
+					if (_selected == 0)
+					{
+						select_window_button(hit);
+						_selected = 1;
+					}
+				}
+			}
+			else if (hit)
+			{
+				select_window_button(hit);
+				selected = hit;
+				_selected = 1;
+				*mouse_lock = 1;
+			}
+
+		}
+		break;
+	}
+
+	case sfEvtMouseButtonReleased: {
 		if (selected)
 		{
 			if (_selected)
@@ -343,16 +434,47 @@ void window_handle_input(int *state, sfEvent *event)
 				_selected = 0;
 			}
 
-			if (selected == window_button_hit_test())
+			if (selected == window_button_mouse_hit_test())
 			{
-				window_handle_mouse(state, selected);
+				window_handle_button_press(state, selected);
 			}
 
 			selected = NULL;
+			*mouse_lock = 0;
 		}
+		break;
 	}
-	else
-	{
-		window_handle_kboard(state, event);
+
+	default:
+		break;
+	}
+}
+
+void neuro_window_handle_input(int *state, sfEvent *event)
+{
+	static int mouse_lock = 0;
+	static int kboard_lock = 0;
+
+	switch (event->type) {
+	case sfEvtMouseButtonPressed:
+	case sfEvtMouseButtonReleased:
+	case sfEvtMouseMoved:
+		if (!kboard_lock)
+		{
+			neuro_window_handle_mouse_events(state, event, &mouse_lock);
+		}
+		break;
+
+	case sfEvtKeyPressed:
+	case sfEvtKeyReleased:
+	case sfEvtTextEntered:
+		if (!mouse_lock)
+		{
+			neuro_window_handle_kboard_events(state, event, &kboard_lock);
+		}
+		break;
+
+	default:
+		break;
 	}
 }

@@ -11,10 +11,9 @@ extern sfClock *g_timer;
 void update_cursor();
 
 sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int digits_only);
+
 int extract_line(char **text, char *line, int length);
 
-int sfMouse_isLeftMouseButtonClicked();
-int sfMouse_isRightMouseButtonClicked();
 sfKeyCode ascii_toSfKeyCode(char c);
 
 #endif
