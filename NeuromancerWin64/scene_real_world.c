@@ -453,9 +453,10 @@ static void roompos_init()
 	roompos_t *roompos = (roompos_t*)g_roompos;
 	roompos_level_t *roompos_level = &roompos->roompos_level[g_4bae.level_n];
 	uint16_t transition = 0;
+	character_dir_t dir = CD_NULL;
 
-	memmove(g_a8ae, roompos_level->roompos, 4);
-	memmove(g_8cee, roompos_level->roompos + 4, 16);
+	memmove(g_a8ae, roompos_level->roompos[0], 4);
+	memmove(g_8cee, roompos_level->roompos[1], 16);
 
 	if (g_exit_level_vm != 0)
 	{
@@ -470,6 +471,24 @@ static void roompos_init()
 		g_4bae.roompos_x = g_a8ae[1] + g_a8ae[3];
 		g_4bae.roompos_y = (g_a8ae[0] + g_a8ae[2]) >> 1;
 	}
+	else
+	{
+		g_4bae.roompos_y = (g_8cee[transition][3] >> 1) + g_8cee[transition][1];
+
+		uint16_t x1 = (g_8cee[transition][0] + g_8cee[transition][2]) << 1;
+		uint16_t x2 = g_8cee[transition][0] << 1;
+		uint16_t x3 = g_a8ae[3] << 1;
+		uint16_t x4 = g_a8ae[1] << 1;
+
+		if (x1 <= g_4bae.roompos_x || g_4bae.roompos_x <= x2 ||
+			x3 >= g_4bae.roompos_x || x4 <= g_4bae.roompos_x)
+		{
+			g_4bae.roompos_x = (g_8cee[transition][0] << 1) + g_8cee[transition][2];
+		}
+	}
+
+	dir = (transition + 2) & 3;
+	character_control_add_sprite_to_chain(g_4bae.roompos_x, g_4bae.roompos_y, dir);
 }
 
 static void init()
@@ -526,7 +545,6 @@ static void init()
 		{
 			if (g_4bae.level_n != 9 && g_4bae.level_n != 27)
 			{
-				character_control_add_sprite_to_chain(156, 110, CD_DOWN);
 				roompos_init();
 			}
 			break;

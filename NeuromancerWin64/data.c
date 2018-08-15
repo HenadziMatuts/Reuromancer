@@ -477,7 +477,9 @@ x4bae_t g_4bae = {
 	.x4ccf = 2
 };
 
-uint8_t g_8cee[16] = { 0, };
+uint8_t g_8cee[4][4] = { 
+	{ 0, }, { 0, }, { 0, }, {0, }
+};
 
 uint8_t g_a61a = 0;
 level_info_t *g_a642 = NULL;

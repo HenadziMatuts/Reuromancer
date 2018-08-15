@@ -146,7 +146,7 @@ typedef struct anh_frame_hdr {
 } anh_frame_hdr;
 
 typedef struct roompos_level_t {
-	uint8_t roompos[20];
+	uint8_t roompos[5][4];
 } roompos_level_t;
 
 typedef struct roompos_t {

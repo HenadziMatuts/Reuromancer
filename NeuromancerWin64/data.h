@@ -203,7 +203,7 @@ typedef struct x4bae_t {
 
 extern x4bae_t g_4bae;
 
-extern uint8_t g_8cee[16];
+extern uint8_t g_8cee[4][4];
 
 extern uint8_t g_a61a;
 extern level_info_t *g_a642;
