@@ -29,7 +29,7 @@ void main_menu_handle_text_enter(int *state, sfTextEvent *event)
 	if (*state == MMS_NEW)
 	{
 		char input[12] = { 0x00 };
-		sfKeyCode key = handle_sfml_text_input(event->unicode, name, 11, 0);
+		sfKeyCode key = sfHandleTextInput(event->unicode, name, 11, 0);
 
 		if (key == sfKeyReturn)
 		{
@@ -132,7 +132,7 @@ static neuro_scene_id_t update(sfEvent *event)
 	switch (g_state) {
 	case MMS_TO_LEVEL_SCENE:
 	case MMS_TO_NOT_IMPLEMENTED_SCENE:
-		return (g_state == MMS_TO_LEVEL_SCENE) ? NSID_LEVEL : NSID_NOT_IMPLEMENTED;
+		return (g_state == MMS_TO_LEVEL_SCENE) ? NSID_REAL_WORLD : NSID_NOT_IMPLEMENTED;
 
 	default:
 		break;

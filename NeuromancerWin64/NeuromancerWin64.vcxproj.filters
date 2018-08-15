@@ -30,16 +30,7 @@
     <ClCompile Include="scene_control.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="level_scene.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main_menu_scene.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="drawing_control.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="not_implemented_scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utilities.c">
@@ -58,6 +49,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="neuro_menu_control.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene_main_menu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene_not_implemented.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene_real_world.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

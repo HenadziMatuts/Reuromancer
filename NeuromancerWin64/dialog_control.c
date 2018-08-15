@@ -190,30 +190,30 @@ static dialog_state_t update_dialog_open_close(int open)
 	return open ? DS_OPEN_DIALOG : DS_CLOSE_DIALOG;
 }
 
-level_state_t update_dialog(sfEvent *event)
+real_world_state_t update_dialog(sfEvent *event)
 {
 	static dialog_state_t state = DS_OPEN_DIALOG;
 
 	switch (state) {
 	case DS_OPEN_DIALOG:
 		state = update_dialog_open_close(1);
-		return (state == DS_CLOSE_DIALOG) ? LS_NORMAL : LS_DIALOG;
+		return (state == DS_CLOSE_DIALOG) ? RWS_NORMAL : RWS_DIALOG;
 
 	case DS_CHOOSE_REPLY_WFI:
 	case DS_ACCEPT_REPLY_WFI:
 		state = dialog_wait_for_input(state, event);
-		return LS_DIALOG;
+		return RWS_DIALOG;
 
 	case DS_NEXT_REPLY:
 	case DS_ACCEPT_REPLY:
 		state = update_dialog_reply((state == DS_NEXT_REPLY) ?
 			DA_NEXT_REPLY : DA_ACCEPT_REPLY);
-		return LS_DIALOG;
+		return RWS_DIALOG;
 
 	case DS_CLOSE_DIALOG:
 		state = update_dialog_open_close(0);
-		return (state == DS_OPEN_DIALOG) ? LS_NORMAL : LS_DIALOG;
+		return (state == DS_OPEN_DIALOG) ? RWS_NORMAL : RWS_DIALOG;
 	}
 
-	return LS_DIALOG;
+	return RWS_DIALOG;
 }

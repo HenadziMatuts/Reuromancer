@@ -22,7 +22,7 @@ typedef enum level_intro_state_t {
 static char *g_bih_string_ptr = NULL;
 
 /***************************************/
-static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...);
+static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...);
 
 void sub_1342E(char *str, uint16_t mode)
 {
@@ -102,7 +102,7 @@ static void bih_call(uint16_t offt)
 }
 
 /* sub_10735 */
-static void neuro_vm(level_state_t *state)
+static void neuro_vm(real_world_state_t *state)
 {
 	for (int i = 3; i >= 0; i--)
 	{
@@ -123,7 +123,7 @@ static void neuro_vm(level_state_t *state)
 				g_3f85.vm_state[vm_thread].var_1,
 				g_3f85.vm_state[vm_thread].var_2);
 
-			*state = LS_WAIT_FOR_INPUT;
+			*state = RWS_WAIT_FOR_INPUT;
 
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 2;
 			g_4bae.active_dialog_reply = 0xFF;
@@ -138,7 +138,7 @@ static void neuro_vm(level_state_t *state)
 			sub_10A5B(string_num, 1, 0, 0);
 			if (g_neuro_window.mode == NWM_NEURO_UI)
 			{
-				*state = LS_TEXT_OUTPUT;
+				*state = RWS_TEXT_OUTPUT;
 			}
 
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 2;
@@ -226,7 +226,7 @@ static void neuro_vm(level_state_t *state)
 
 		/* dialog */
 		case 0x17:
-			*state = LS_DIALOG;
+			*state = RWS_DIALOG;
 			g_dialog_escapable = 0;
 			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
 			break;
@@ -262,7 +262,7 @@ typedef enum sub_105f6_opcodes_t {
 	SUB_105F6_OP_NEURO_VM_STEP,
 } sub_105f6_opcodes_t;
 
-static uint64_t sub_105F6(level_state_t *state, uint16_t opcode, ...)
+static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 {
 	switch (opcode) {
 	case 0: {
@@ -536,16 +536,16 @@ static void init()
 	return;
 }
 
-void ui_handle_mouse(level_state_t *state, neuro_button_t *button)
+void ui_handle_mouse(real_world_state_t *state, neuro_button_t *button)
 {
 	switch (button->code) {
 	case 0x00: /* inventory */
-		*state = LS_INVENTORY;
+		*state = RWS_INVENTORY;
 		break;
 
 	case 0x02: /* dialog */
 		g_dialog_escapable = 1;
-		*state = LS_DIALOG;
+		*state = RWS_DIALOG;
 		break;
 
 	case 0x0A: /* panel date */
@@ -569,7 +569,7 @@ void ui_handle_mouse(level_state_t *state, neuro_button_t *button)
 	}
 }
 
-static level_state_t wait_for_input()
+static real_world_state_t wait_for_input()
 {
 	if (sfMouse_isLeftMouseButtonClicked())
 	{
@@ -579,20 +579,20 @@ static level_state_t wait_for_input()
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
 			/* restoring "window" state */
 			restore_window();
-			return LS_NORMAL;
+			return RWS_NORMAL;
 
 		default:
 			break;
 		}
 	}
 
-	return LS_WAIT_FOR_INPUT;
+	return RWS_WAIT_FOR_INPUT;
 }
 
-static level_state_t update_normal(sfEvent *event)
+static real_world_state_t update_normal(sfEvent *event)
 {
-	level_state_t state = LS_NORMAL;
-	level_state_t new_state = state;
+	real_world_state_t state = RWS_NORMAL;
+	real_world_state_t new_state = state;
 
 	window_handle_input((int*)&new_state, event);
 	if (new_state != state)
@@ -613,7 +613,7 @@ static level_state_t update_normal(sfEvent *event)
 	return state;
 }
 
-static level_state_t update_text_output()
+static real_world_state_t update_text_output()
 {
 	static level_intro_state_t state = LIS_NEXT_LINE;
 	static int lines_on_screen = 0, lines_scrolled = 0;
@@ -626,7 +626,7 @@ static level_state_t update_text_output()
 
 	if (passed - elapsed <= frame_cap_ms)
 	{
-		return LS_TEXT_OUTPUT;
+		return RWS_TEXT_OUTPUT;
 	}
 	elapsed = passed;
 
@@ -640,7 +640,7 @@ static level_state_t update_text_output()
 		{
 			state = LIS_NEXT_LINE;
 			lines_on_screen = 0;
-			return LS_NORMAL;
+			return RWS_NORMAL;
 		}
 
 		state = (++lines_on_screen == 7)
@@ -669,34 +669,34 @@ static level_state_t update_text_output()
 		}
 	}
 	
-	return LS_TEXT_OUTPUT;
+	return RWS_TEXT_OUTPUT;
 }
 
 static neuro_scene_id_t update(sfEvent *event)
 {
-	static level_state_t state = LS_TEXT_OUTPUT;
-	neuro_scene_id_t scene = NSID_LEVEL;
+	static real_world_state_t state = RWS_TEXT_OUTPUT;
+	neuro_scene_id_t scene = NSID_REAL_WORLD;
 
 	update_cursor();
 
 	switch (state) {
-	case LS_TEXT_OUTPUT:
+	case RWS_TEXT_OUTPUT:
 		state = update_text_output();
 		break;
 
-	case LS_NORMAL:
+	case RWS_NORMAL:
 		state = update_normal(event);
 		break;
 
-	case LS_INVENTORY:
+	case RWS_INVENTORY:
 		state = update_inventory(event);
 		break;
 
-	case LS_DIALOG:
+	case RWS_DIALOG:
 		state = update_dialog(event);
 		break;
 
-	case LS_WAIT_FOR_INPUT:
+	case RWS_WAIT_FOR_INPUT:
 		state = wait_for_input();
 		break;
 
@@ -715,9 +715,9 @@ static void deinit()
 	g_bih_string_ptr = NULL;
 }
 
-void setup_level_scene()
+void setup_real_world_scene()
 {
-	g_scene.id = NSID_LEVEL;
+	g_scene.id = NSID_REAL_WORLD;
 	g_scene.init = init;
 	g_scene.handle_input = NULL;
 	g_scene.update = update;

@@ -48,7 +48,7 @@ typedef enum inventory_state_t {
 	IS_CLOSE_INVENTORY,
 } inventory_state_t;
 
-level_state_t update_inventory(sfEvent *event);
+real_world_state_t update_inventory(sfEvent *event);
 
 void inventory_handle_mouse(inventory_state_t *state, neuro_button_t *button);
 void inventory_handle_kboard(inventory_state_t *state, sfEvent *event);

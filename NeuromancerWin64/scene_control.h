@@ -7,7 +7,7 @@
 typedef enum neuro_scene_id_t {
 	NSID_NONE = -1,
 	NSID_MAIN_MENU = 0,
-	NSID_LEVEL = 1,
+	NSID_REAL_WORLD = 1,
 	NSID_NOT_IMPLEMENTED = 255,
 } neuro_scene_id_t;
 
@@ -30,14 +30,14 @@ void scene_control_setup_scene(neuro_scene_id_t id);
 
 void setup_main_menu_scene();
 void setup_not_implemented_scene();
-void setup_level_scene();
+void setup_real_world_scene();
 
-typedef enum level_state_t {
-	LS_TEXT_OUTPUT = 0,
-	LS_NORMAL,
-	LS_INVENTORY,
-	LS_DIALOG,
-	LS_WAIT_FOR_INPUT,
-} level_state_t;
+typedef enum real_world_state_t {
+	RWS_TEXT_OUTPUT = 0,
+	RWS_NORMAL,
+	RWS_INVENTORY,
+	RWS_DIALOG,
+	RWS_WAIT_FOR_INPUT,
+} real_world_state_t;
 
 #endif

@@ -15,6 +15,6 @@ typedef enum dialog_state_t {
 
 extern uint8_t g_dialog_escapable;
 
-level_state_t update_dialog(sfEvent *event);
+real_world_state_t update_dialog(sfEvent *event);
 
 #endif

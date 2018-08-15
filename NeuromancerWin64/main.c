@@ -38,14 +38,6 @@ static float g_scale_y = 0;
  */
 sfClock *g_timer = NULL;
 
-int cursor_menu_dialog_item_hit_test(int item, neuro_menu_t *dialog)
-{
-	return (g_sprite_chain[SCI_CURSOR].left > dialog->items[item].left &&
-		g_sprite_chain[SCI_CURSOR].left < dialog->items[item].right &&
-		g_sprite_chain[SCI_CURSOR].top > dialog->items[item].top &&
-		g_sprite_chain[SCI_CURSOR].top < dialog->items[item].bottom) ? 1 : 0;
-}
-
 void update_cursor()
 {
 	sfVector2i mouse_pos = sfMouse_getPositionRenderWindow(g_window);
@@ -74,7 +66,7 @@ void update_cursor()
 	g_sprite_chain[SCI_CURSOR].top = (uint16_t)mouse_pos_y;
 }
 
-sfKeyCode handle_sfml_text_input(uint32_t u32_char, char *string, uint32_t size, int digits_only)
+sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int digits_only)
 {
 	size_t l = strlen(string);
 

@@ -233,13 +233,13 @@ static void window_handle_kboard(int *state, sfEvent *event)
 	}
 }
 
-void ui_handle_mouse(level_state_t *state, neuro_button_t *button);
+void ui_handle_mouse(real_world_state_t *state, neuro_button_t *button);
 
 static void window_handle_mouse(int *state, neuro_button_t *button)
 {
 	switch (g_neuro_window.mode) {
 	case NWM_NEURO_UI:
-		ui_handle_mouse((level_state_t*)state, button);
+		ui_handle_mouse((real_world_state_t*)state, button);
 		break;
 
 	case NWM_INVENTORY:

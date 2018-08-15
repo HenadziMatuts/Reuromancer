@@ -658,7 +658,7 @@ static inventory_state_t on_inventory_give_credits_kboard(sfEvent *event)
 
 	if (event->text.type == sfEvtTextEntered)
 	{
-		sfKeyCode key = handle_sfml_text_input(event->text.unicode, input, 8, 1);
+		sfKeyCode key = sfHandleTextInput(event->text.unicode, input, 8, 1);
 
 		if (key != sfKeyReturn)
 		{
@@ -771,7 +771,7 @@ static inventory_state_t update_inventory_open()
 	return IS_OPEN_INVENTORY;
 }
 
-level_state_t update_inventory(sfEvent *event)
+real_world_state_t update_inventory(sfEvent *event)
 {
 	static inventory_state_t state = IS_OPEN_INVENTORY;
 
@@ -784,7 +784,7 @@ level_state_t update_inventory(sfEvent *event)
 		state = update_inventory_close();
 		if (state == IS_OPEN_INVENTORY)
 		{
-			return LS_NORMAL;
+			return RWS_NORMAL;
 		}
 		break;
 
@@ -798,5 +798,5 @@ level_state_t update_inventory(sfEvent *event)
 		break;
 	}
 
-	return LS_INVENTORY;
+	return RWS_INVENTORY;
 }
