@@ -18,8 +18,8 @@ void scene_control_setup_scene(neuro_scene_id_t id)
 		setup_main_menu_scene();
 		break;
 
-	case NSID_LEVEL:
-		setup_level_scene();
+	case NSID_REAL_WORLD:
+		setup_real_world_scene();
 		break;
 
 	case NSID_NOT_IMPLEMENTED:

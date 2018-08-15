@@ -140,15 +140,17 @@ void character_control_update()
 	return;
 }
 
-static character_dir_t character_control_handle_mouse()
+static character_dir_t character_control_handle_mouse(sfEvent *event, int *lock)
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
 	sprite_layer_t *character = &g_sprite_chain[SCI_CHARACTER];
 
-	if (sfMouse_isButtonPressed(sfMouseLeft))
+	if ((event->type == sfEvtMouseButtonPressed || event->type == sfEvtMouseMoved) &&
+		sfMouse_isButtonPressed(sfMouseLeft))
 	{
 		/* mouse input */
 		g_character.state = CS_MOVING;
+		*lock = 1;
 
 		if (cursor->left < character->left - character->sprite_hdr.dx)
 		{
@@ -180,59 +182,91 @@ static character_dir_t character_control_handle_mouse()
 			}
 		}
 	}
+	else if (event->type == sfEvtMouseButtonReleased)
+	{
+		*lock = 0;
+		g_character.state = CS_IDLE;
+	}
 
 	return CD_NULL;
 }
 
-static character_dir_t character_control_handle_kboard()
+static character_dir_t character_control_handle_kboard(sfEvent *event, int *lock)
 {
-	g_character.state = CS_MOVING;
+	character_dir_t dir = CD_NULL;
 
 	if (sfKeyboard_isKeyPressed(sfKeyLeft))
 	{
-		return CD_LEFT;
+		dir = CD_LEFT;
 	}
 	else if (sfKeyboard_isKeyPressed(sfKeyRight))
 	{
-		return CD_RIGHT;
+		dir = CD_RIGHT;
 	}
 	else if (sfKeyboard_isKeyPressed(sfKeyUp))
 	{
-		return CD_UP;
+		dir = CD_UP;
 	}
 	else if (sfKeyboard_isKeyPressed(sfKeyDown))
 	{
-		return CD_DOWN;
+		dir = CD_DOWN;
 	}
 
-	g_character.state = CS_IDLE;
-	return CD_NULL;
+	if (dir != CD_NULL)
+	{
+		g_character.state = CS_MOVING;
+		*lock = 1;
+		return dir;
+	}
+	else if (event->type == sfEvtKeyReleased)
+	{
+		*lock = 0;
+		g_character.state = CS_IDLE;
+	}
+
+	return dir;
 }
 
-void character_control_handle_input()
+int character_control_handle_input(sfEvent *event)
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
 	sprite_layer_t *character = &g_sprite_chain[SCI_CHARACTER];
 	character_dir_t new_dir = CD_NULL;
-	g_character.state = CS_IDLE;
+	static int mouse_lock = 0, kboard_lock = 0;
 
-	/* scene area */
-	if (cursor->left > 0 && cursor->left < 320 &&
-		cursor->top > 0 && cursor->top < 140)
-	{
-		/* mouse input */
-		new_dir = character_control_handle_mouse();
-	}
-	if (new_dir == CD_NULL)
-	{
-		/* keyboard input */
-		new_dir = character_control_handle_kboard();
+	switch (event->type) {
+	case sfEvtMouseButtonPressed:
+	case sfEvtMouseMoved:
+	case sfEvtMouseButtonReleased:
+		if (!kboard_lock)
+		{
+			if (cursor->top > 0 && cursor->top < 140)
+			{
+				new_dir = character_control_handle_mouse(event, &mouse_lock);
+			}
+			else
+			{
+				g_character.state = CS_IDLE;
+				if (event->type == sfEvtMouseButtonReleased)
+				{
+					mouse_lock = 0;
+				}
+			}
+		}
+		break;
+
+	case sfEvtKeyPressed:
+	case sfEvtKeyReleased:
+		if (!mouse_lock)
+		{
+			new_dir = character_control_handle_kboard(event, &kboard_lock);
+		}
+		break;
 	}
 
 	if (new_dir != CD_NULL && new_dir != g_character.dir)
 	{
-		switch (new_dir)
-		{
+		switch (new_dir) {
 		case CD_LEFT:
 			g_character.dir = CD_LEFT;
 			g_character.frame = 0;
@@ -259,4 +293,6 @@ void character_control_handle_input()
 			break;
 		}
 	}
+
+	return mouse_lock || kboard_lock;
 }

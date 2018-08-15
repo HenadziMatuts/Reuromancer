@@ -30,16 +30,7 @@
     <ClCompile Include="scene_control.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="level_scene.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main_menu_scene.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="drawing_control.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="not_implemented_scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utilities.c">
@@ -51,10 +42,25 @@
     <ClCompile Include="neuro_window_control.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inventory_control.c">
+    <ClCompile Include="neuro_menu_control.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dialog_control.c">
+    <ClCompile Include="scene_main_menu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene_not_implemented.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene_real_world.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_state_text_output.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_state_inventory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_state_dialog.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,10 +89,10 @@
     <ClInclude Include="neuro_window_control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inventory_control.h">
+    <ClInclude Include="neuro_menu_control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dialog_control.h">
+    <ClInclude Include="scene_real_world.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -67,7 +67,7 @@ typedef struct neuro_button_t {
 	uint8_t padding;
 } neuro_button_t;
 
-typedef struct neuro_menu_dialog_t {
+typedef struct neuro_menu_t {
 	uint16_t left;
 	uint16_t top;
 	uint16_t right;
@@ -90,7 +90,7 @@ typedef struct neuro_menu_dialog_t {
 
 	uint16_t width;
 	uint8_t *pixels;
-} neuro_menu_dialog_t;
+} neuro_menu_t;
 
 typedef struct bih_hdr_t {
 	uint16_t cb_offt;                 // a8e8
@@ -98,7 +98,8 @@ typedef struct bih_hdr_t {
 	uint16_t ctrl_struct_addr;        // a8ec
 	uint16_t text_offset;             // a8ee
 	uint16_t bytecode_array_offt[3];  // a8f0
-	uint16_t init_obj_code_offt[3];   // a8f4
+	uint16_t init_obj_code_offt[3];   // a8f6
+	uint16_t unknown[10];             // a8fc
 	/* the rest of bih file */
 } bih_hdr_t;
 
@@ -199,21 +200,16 @@ LIBNEUROAPI void build_text_frame(uint32_t h, uint32_t w, imh_hdr_t *dst);
 /*
  * Dialog box control.
  */
-LIBNEUROAPI void build_menu_dialog_frame(neuro_menu_dialog_t *dialog,
+LIBNEUROAPI void build_neuro_menu_frame(neuro_menu_t *dialog,
 					uint16_t left, uint16_t top, uint16_t w, uint16_t h,
 					uint16_t flags, uint8_t *pixels);
 
-LIBNEUROAPI void build_menu_dialog_text(neuro_menu_dialog_t *dialog,
+LIBNEUROAPI void build_neuro_menu_text(neuro_menu_t *dialog,
 					char *text, uint16_t x_offt, uint16_t y_offt);
 
-LIBNEUROAPI void build_menu_dialog_item(neuro_menu_dialog_t *dialog,
+LIBNEUROAPI void build_neuro_menu_item(neuro_menu_t *dialog,
 					uint16_t x_offt, uint16_t y_offt, uint16_t w,
 					uint16_t item_num, char c);
-
-LIBNEUROAPI void select_menu_dialog_item(neuro_menu_dialog_t *_dialog,
-					neuro_button_t *item, int select);
-
-LIBNEUROAPI void unselect_menu_dialog_items(neuro_menu_dialog_t *dialog);
 
 /*
  * Sound stuff.

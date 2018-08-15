@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include <SFML\Graphics.h>
 
 /*
@@ -38,14 +39,6 @@ static float g_scale_y = 0;
  */
 sfClock *g_timer = NULL;
 
-int cursor_menu_dialog_item_hit_test(int item, neuro_menu_dialog_t *dialog)
-{
-	return (g_sprite_chain[SCI_CURSOR].left > dialog->items[item].left &&
-		g_sprite_chain[SCI_CURSOR].left < dialog->items[item].right &&
-		g_sprite_chain[SCI_CURSOR].top > dialog->items[item].top &&
-		g_sprite_chain[SCI_CURSOR].top < dialog->items[item].bottom) ? 1 : 0;
-}
-
 void update_cursor()
 {
 	sfVector2i mouse_pos = sfMouse_getPositionRenderWindow(g_window);
@@ -74,7 +67,7 @@ void update_cursor()
 	g_sprite_chain[SCI_CURSOR].top = (uint16_t)mouse_pos_y;
 }
 
-sfKeyCode handle_sfml_text_input(uint32_t u32_char, char *string, uint32_t size, int digits_only)
+sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int digits_only)
 {
 	size_t l = strlen(string);
 
@@ -160,27 +153,23 @@ int main(int argc, char *argv[])
 	reset();
 	resource_manager_init();
 	scene_control_setup_scene(NSID_MAIN_MENU);
+	srand((uint32_t)time(NULL));
 
 	while (sfRenderWindow_isOpen(g_window))
 	{
-		sfBool was_event = sfFalse;
-
 		while (sfRenderWindow_pollEvent(g_window, &event))
 		{
-			was_event = sfTrue;
 			if (event.type == sfEvtClosed)
 			{
 				sfRenderWindow_close(g_window);
 			}
+			else if (g_scene.handle_input)
+			{
+				g_scene.handle_input(&event);
+			}
 		}
 
-		if (!was_event)
-		{
-			/* no event */
-			event.type = sfEvtCount;
-		}
-
-		neuro_scene_id_t scene = g_scene.update(&event);
+		neuro_scene_id_t scene = g_scene.update();
 		if (scene != g_scene.id)
 		{
 			scene_control_setup_scene(scene);

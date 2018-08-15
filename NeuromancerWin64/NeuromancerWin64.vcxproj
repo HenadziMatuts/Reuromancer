@@ -123,14 +123,16 @@
   <ItemGroup>
     <ClCompile Include="bg_animation_control.c" />
     <ClCompile Include="data.c" />
-    <ClCompile Include="dialog_control.c" />
+    <ClCompile Include="rw_state_dialog.c" />
     <ClCompile Include="drawing_control.c" />
-    <ClCompile Include="inventory_control.c" />
-    <ClCompile Include="level_scene.c" />
+    <ClCompile Include="rw_state_inventory.c" />
+    <ClCompile Include="rw_state_text_output.c" />
+    <ClCompile Include="scene_real_world.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="main_menu_scene.c" />
+    <ClCompile Include="scene_main_menu.c" />
+    <ClCompile Include="neuro_menu_control.c" />
     <ClCompile Include="neuro_window_control.c" />
-    <ClCompile Include="not_implemented_scene.cpp" />
+    <ClCompile Include="scene_not_implemented.cpp" />
     <ClCompile Include="resource_manager.c" />
     <ClCompile Include="scene_control.c" />
     <ClCompile Include="utilities.c" />
@@ -139,13 +141,13 @@
     <ClInclude Include="bg_animation_control.h" />
     <ClInclude Include="character_control.h" />
     <ClInclude Include="data.h" />
-    <ClInclude Include="dialog_control.h" />
     <ClInclude Include="drawing_control.h" />
     <ClInclude Include="globals.h" />
-    <ClInclude Include="inventory_control.h" />
+    <ClInclude Include="neuro_menu_control.h" />
     <ClInclude Include="neuro_window_control.h" />
     <ClInclude Include="resource_manager.h" />
     <ClInclude Include="scene_control.h" />
+    <ClInclude Include="scene_real_world.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="character_control.c">

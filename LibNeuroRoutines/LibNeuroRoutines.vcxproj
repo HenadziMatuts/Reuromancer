@@ -126,7 +126,7 @@
     <ClCompile Include="animation.c" />
     <ClCompile Include="cp437.c" />
     <ClCompile Include="decompression.c" />
-    <ClCompile Include="dialog.c" />
+    <ClCompile Include="neuro_menu.c" />
     <ClCompile Include="huffman_decompression.c" />
     <ClCompile Include="resources_lists.c" />
   </ItemGroup>

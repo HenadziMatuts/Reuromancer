@@ -3,11 +3,13 @@
 #include "resource_manager.h"
 #include "drawing_control.h"
 #include "neuro_window_control.h"
-#include "dialog_control.h"
+#include "scene_real_world.h"
 #include <neuro_routines.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+
+static dialog_state_t g_state = DS_OPEN_DIALOG;
 
 void sub_1342E(char *str, uint16_t opcode);
 
@@ -62,35 +64,58 @@ static void dialog_accept_reply()
 	sub_1342E(reply, NWM_PLAYER_DIALOG_REPLY);
 }
 
-static dialog_state_t dialog_wait_for_input(dialog_state_t state, sfEvent *event)
+static dialog_state_t handle_dialog_wait_for_input(dialog_state_t state, sfEvent *event)
 {
-	switch (state) {
-	case DS_CHOOSE_REPLY_WFI:
-		if (sfMouse_isLeftMouseButtonClicked())
+	if (state == DS_CHOOSE_REPLY_WFI)
+	{
+		if (event->type == sfEvtMouseButtonReleased)
 		{
-			return DS_NEXT_REPLY;
+			if (event->mouseButton.button == sfMouseLeft)
+			{
+				return DS_NEXT_REPLY;
+			}
+			else if (event->mouseButton.button == sfMouseRight)
+			{
+				return DS_ACCEPT_REPLY;
+			}
 		}
-		else if (sfMouse_isRightMouseButtonClicked())
+		else if (event->type == sfEvtKeyReleased)
 		{
-			return DS_ACCEPT_REPLY;
+			if (event->key.code == sfKeyEscape && g_dialog_escapable)
+			{
+				return DS_CLOSE_DIALOG;
+			}
+			else if (event->key.code == sfKeyReturn)
+			{
+				return DS_ACCEPT_REPLY;
+			}
+			else
+			{
+				return DS_NEXT_REPLY;
+			}
 		}
-		else if (g_dialog_escapable && event->key.code == sfKeyEscape)
-		{
-			return DS_CLOSE_DIALOG;
-		}
-		break;
-
-	case DS_ACCEPT_REPLY_WFI:
-		if (sfMouse_isLeftMouseButtonClicked())
+	}
+	else if (state == DS_ACCEPT_REPLY_WFI)
+	{
+		if (event->type == sfEvtMouseButtonReleased ||
+			event->type == sfEvtKeyReleased)
 		{
 			g_4bae.active_dialog_reply = g_current_reply + g_a642[0];
 			g_4bae.x4bae[0] = 0;
 			return DS_CLOSE_DIALOG;
 		}
-		break;
 	}
 
 	return state;
+}
+
+void handle_dialog_input(sfEvent *event)
+{
+	switch (g_state) {
+	case DS_CHOOSE_REPLY_WFI:
+	case DS_ACCEPT_REPLY_WFI:
+		g_state = handle_dialog_wait_for_input(g_state, event);
+	}
 }
 
 typedef enum dialog_action_t {
@@ -190,30 +215,23 @@ static dialog_state_t update_dialog_open_close(int open)
 	return open ? DS_OPEN_DIALOG : DS_CLOSE_DIALOG;
 }
 
-level_state_t update_dialog(sfEvent *event)
+real_world_state_t update_dialog()
 {
-	static dialog_state_t state = DS_OPEN_DIALOG;
-
-	switch (state) {
+	switch (g_state) {
 	case DS_OPEN_DIALOG:
-		state = update_dialog_open_close(1);
-		return (state == DS_CLOSE_DIALOG) ? LS_NORMAL : LS_DIALOG;
-
-	case DS_CHOOSE_REPLY_WFI:
-	case DS_ACCEPT_REPLY_WFI:
-		state = dialog_wait_for_input(state, event);
-		return LS_DIALOG;
+		g_state = update_dialog_open_close(1);
+		return (g_state == DS_CLOSE_DIALOG) ? RWS_NORMAL : RWS_DIALOG;
 
 	case DS_NEXT_REPLY:
 	case DS_ACCEPT_REPLY:
-		state = update_dialog_reply((state == DS_NEXT_REPLY) ?
+		g_state = update_dialog_reply((g_state == DS_NEXT_REPLY) ?
 			DA_NEXT_REPLY : DA_ACCEPT_REPLY);
-		return LS_DIALOG;
+		return RWS_DIALOG;
 
 	case DS_CLOSE_DIALOG:
-		state = update_dialog_open_close(0);
-		return (state == DS_OPEN_DIALOG) ? LS_NORMAL : LS_DIALOG;
+		g_state = update_dialog_open_close(0);
+		return (g_state == DS_OPEN_DIALOG) ? RWS_NORMAL : RWS_DIALOG;
 	}
 
-	return LS_DIALOG;
+	return RWS_DIALOG;
 }
