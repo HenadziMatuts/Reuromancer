@@ -7,6 +7,12 @@ uint8_t g_004e[8] = {
 	0x00,
 };
 
+/* 0x1E46 */
+int16_t g_exit_point = 2;
+
+/* 0x1E4A */
+uint16_t g_exit_level_vm = 0;
+
 /* 0x1FA2 */
 neuro_ui_buttons_t g_ui_buttons = {
 	.inventory = {
@@ -452,8 +458,8 @@ x4bae_t g_4bae = {
 	.name = { '{', '@', 'C', 'a', 's', 'e', 0, },
 	.con = 0x7D0,
 	.level_n = 0,
-	.roompos_spawn_x = 0xA0,
-	.roompos_spawn_y = 0x69,
+	.roompos_x = 0xA0,
+	.roompos_y = 0x69,
 	.x4ca7 = 0,
 	.x4ca9 = {
 		0x40, 0, 0x78, 0, 0, 0, 0x40, 0, 0x38, 0, 0, 0,
@@ -471,9 +477,12 @@ x4bae_t g_4bae = {
 	.x4ccf = 2
 };
 
+uint8_t g_8cee[16] = { 0, };
+
 uint8_t g_a61a = 0;
 level_info_t *g_a642 = NULL;
 uint16_t g_a86a = 0;
+uint8_t g_a8ae[4] = { 0, };
 
 a8e0_t g_a8e0 = {
 	{ 0, }, { 0, }

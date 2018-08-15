@@ -76,8 +76,8 @@ void character_control_update()
 	{
 		elapsed = passed;
 
-		g_4bae.roompos_spawn_x = ch_sprite->left;
-		g_4bae.roompos_spawn_y = ch_sprite->top;
+		g_4bae.roompos_x = ch_sprite->left;
+		g_4bae.roompos_y = ch_sprite->top;
 
 		if (g_character.state == CS_IDLE)
 		{

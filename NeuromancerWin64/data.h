@@ -24,6 +24,12 @@ typedef struct neuro_ui_buttons_t {
 	neuro_button_t con;
 } neuro_ui_buttons_t;
 
+/* 0x1E46 */
+extern int16_t g_exit_point;
+
+/* 0x1E4A */
+extern uint16_t g_exit_level_vm;
+
 /* 0x1FA2 */
 extern neuro_ui_buttons_t g_ui_buttons;
 
@@ -179,8 +185,8 @@ typedef struct x4bae_t {
 	char name[13];    // 0x4C92
 	uint16_t con;     // 0x4C9F
 	uint16_t level_n; // 0x4CA1
-	uint16_t roompos_spawn_x; // 0x4CA3
-	uint16_t roompos_spawn_y; // 0x4CA5
+	uint16_t roompos_x; // 0x4CA3
+	uint16_t roompos_y; // 0x4CA5
 	uint16_t x4ca7;
 	uint8_t x4ca9[24];
 	uint16_t ui_type; // 0x4CC1
@@ -197,9 +203,12 @@ typedef struct x4bae_t {
 
 extern x4bae_t g_4bae;
 
+extern uint8_t g_8cee[16];
+
 extern uint8_t g_a61a;
 extern level_info_t *g_a642;
 extern uint16_t g_a86a;
+extern uint8_t g_a8ae[4];
 
 typedef struct a8e0_t {
 	uint16_t a8e0[4];

@@ -61,17 +61,17 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 		return;
 	}
 
-	uint16_t temp_1 = g_4bae.roompos_spawn_x;
-	uint16_t temp_2 = g_4bae.roompos_spawn_y;
+	uint16_t temp_1 = g_4bae.roompos_x;
+	uint16_t temp_2 = g_4bae.roompos_y;
 
-	g_4bae.roompos_spawn_x = c * 2;
-	g_4bae.roompos_spawn_y = d;
+	g_4bae.roompos_x = c * 2;
+	g_4bae.roompos_y = d;
 
 	/* builds dialog bubble with text */
 	sub_1342E(g_bih_string_ptr, NWM_NPC_DIALOG_REPLY);
 
-	g_4bae.roompos_spawn_x = temp_1;
-	g_4bae.roompos_spawn_y = temp_2;
+	g_4bae.roompos_x = temp_1;
+	g_4bae.roompos_y = temp_2;
 
 	return;
 }
@@ -448,6 +448,30 @@ static void ui_panel_update()
 	}
 }
 
+static void roompos_init()
+{
+	roompos_t *roompos = (roompos_t*)g_roompos;
+	roompos_level_t *roompos_level = &roompos->roompos_level[g_4bae.level_n];
+	uint16_t transition = 0;
+
+	memmove(g_a8ae, roompos_level->roompos, 4);
+	memmove(g_8cee, roompos_level->roompos + 4, 16);
+
+	if (g_exit_level_vm != 0)
+	{
+		g_exit_point = -1;
+	}
+
+	transition = (g_exit_point == -1) ? 2 :
+		(g_exit_point + 2) & 3;
+
+	if (g_a642->level_transitions[transition] == 0xFF)
+	{
+		g_4bae.roompos_x = g_a8ae[1] + g_a8ae[3];
+		g_4bae.roompos_y = (g_a8ae[0] + g_a8ae[2]) >> 1;
+	}
+}
+
 static void init()
 {
 	char resource[32] = { 0, };
@@ -503,6 +527,7 @@ static void init()
 			if (g_4bae.level_n != 9 && g_4bae.level_n != 27)
 			{
 				character_control_add_sprite_to_chain(156, 110, CD_DOWN);
+				roompos_init();
 			}
 			break;
 		}
@@ -529,6 +554,8 @@ static void init()
 	sub_105F6(NULL, 1);
 	setup_ui_buttons();
 	sub_105F6(NULL, SUB_105F6_OP_PLAY_LEVEL_INTRO);
+
+	g_exit_point = -1;
 
 	ui_panel_update();
 	return;

@@ -114,28 +114,28 @@ int neuro_window_setup(uint16_t mode, ...)
 		{
 			if (g_neuro_window.mode == NWM_PLAYER_DIALOG_CHOICE)
 			{
-				if (g_4bae.roompos_spawn_x < 0xA0)
+				if (g_4bae.roompos_x < 0xA0)
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x1A2, 0);
+						g_4bae.roompos_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x1A2, 0);
 				}
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0xDC, 0);
+						g_4bae.roompos_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0xDC, 0);
 				}
 			}
 			else
 			{
-				if (g_4bae.roompos_spawn_x < 0xA0)
+				if (g_4bae.roompos_x < 0xA0)
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x6E, 0);
+						g_4bae.roompos_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x6E, 0);
 				}
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_spawn_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles, 0);
+						g_4bae.roompos_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles, 0);
 				}
 			}
 		}
