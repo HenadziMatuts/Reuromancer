@@ -122,11 +122,11 @@ static void neuro_vm(real_world_state_t *state)
 			break;
 		}
 
-		/* call */
+		/* load program */
 		case 0x03:
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] =
-				(uint8_t*)sub_105F6(NULL, 4, g_3f85.vm_state[vm_thread].flag & 3,
-					*(opcode_addr + 1));
+				(uint8_t*)sub_105F6(NULL, SUB_105F6_OP_GET_VM_PROG_ADDR,
+					g_3f85.vm_state[vm_thread].flag & 3, *(opcode_addr + 1));
 			break;
 
 		/* goto */
@@ -269,14 +269,19 @@ void init_deinit_neuro_cb(int cmd)
 }
 
 typedef enum sub_105f6_opcodes_t {
-	SUB_105F6_OP_PLAY_LEVEL_INTRO = 5,
-	SUB_105F6_OP_NEURO_VM_STEP,
+	SUB_105F6_OP_PREPARE_BIH = 0,
+	SUB_105F6_OP_INIT_LEVEL,
+	SUB_105F6_OP_UPDATE_LEVEL,
+	SUB_105F6_OP_DEINIT_LEVEL,
+	SUB_105F6_OP_GET_VM_PROG_ADDR,
+	SUB_105F6_OP_PLAY_LEVEL_INTRO,
+	SUB_105F6_OP_NEURO_VM_CYCLE,
 } sub_105f6_opcodes_t;
 
 static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 {
 	switch (opcode) {
-	case 0: {
+	case SUB_105F6_OP_PREPARE_BIH: {
 		va_list args;
 		va_start(args, opcode);
 		uint16_t level_n = va_arg(args, uint16_t);
@@ -289,14 +294,16 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		break;
 	}
 
-	case 1: /* enter/exit level bih call */
-	case 3: {
+	case SUB_105F6_OP_UPDATE_LEVEL:
+		/* update bg animation */
+	case SUB_105F6_OP_INIT_LEVEL: /* enter/exit level bih call */
+	case SUB_105F6_OP_DEINIT_LEVEL: {
 		uint16_t offt = g_bih_wrapper.bih->init_obj_code_offt[opcode - 1];
 		sub105F6_bih_call(offt);
 		break;
 	}
 
-	case 4: {
+	case SUB_105F6_OP_GET_VM_PROG_ADDR: {
 		va_list args;
 		va_start(args, opcode);
 		uint16_t x = va_arg(args, uint16_t);
@@ -315,7 +322,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		break;
 	}
 
-	case SUB_105F6_OP_NEURO_VM_STEP:
+	case SUB_105F6_OP_NEURO_VM_CYCLE:
 		neuro_vm(state);
 		break;
 
@@ -518,7 +525,7 @@ static void init()
 
 	if (g_level_n >= 0 && g_4bae.x4bcc == 0)
 	{
-		sub_105F6(NULL, 3);
+		sub_105F6(NULL, SUB_105F6_OP_DEINIT_LEVEL);
 	}
 
 	g_4bae.x4bcc = 0;
@@ -546,7 +553,7 @@ static void init()
 		bg_animation_control_init_tables(g_roompos + 0x488) :
 		bg_animation_control_init_tables(NULL);
 
-	sub_105F6(NULL, 0, g_level_n);
+	sub_105F6(NULL, SUB_105F6_OP_PREPARE_BIH, g_level_n);
 
 	uint16_t u = 0;
 	neuro_vm_state_t *p = g_3f85.vm_state;
@@ -571,7 +578,9 @@ static void init()
 		if (p->mark == 0xFF)
 		{
 			p->mark = 0;
-			g_3f85_wrapper.vm_next_op_addr[u] = (uint8_t*)sub_105F6(NULL, 4, p->flag & 3, 0);
+			g_3f85_wrapper.vm_next_op_addr[u] =
+				(uint8_t*)sub_105F6(NULL,
+					SUB_105F6_OP_GET_VM_PROG_ADDR, p->flag & 3, 0);
 		}
 
 		uint16_t offt = p->flag & 3;
@@ -582,7 +591,7 @@ static void init()
 		u++;
 	}
 
-	sub_105F6(NULL, 1);
+	sub_105F6(NULL, SUB_105F6_OP_INIT_LEVEL);
 	setup_ui_buttons();
 	sub_105F6(&g_state, SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
@@ -762,7 +771,7 @@ static real_world_state_t update_normal()
 	bg_animation_control_update();
 
 	/* execute the following VM instruction */
-	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_STEP);
+	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_CYCLE);
 
 	if (!g_update_hold)
 	{
