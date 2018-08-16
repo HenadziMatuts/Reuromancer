@@ -104,8 +104,9 @@ typedef struct bih_hdr_t {
 } bih_hdr_t;
 
 /* wraps bih_hdr_t addresses */
+typedef void(*init_deinit)(int cmd);
 typedef struct bih_hdr_wrapper_t {
-	uint8_t *cb_addr;
+	init_deinit init_deinit_cb;
 	uint8_t *ctrl_struct_addr;
 	bih_hdr_t *bih;
 } bih_hdr_wrapper_t;

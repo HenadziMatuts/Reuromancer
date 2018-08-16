@@ -194,6 +194,15 @@ static void neuro_vm(real_world_state_t *state)
 			break;
 		}
 
+		/* load level */
+		case 0x10: {
+			g_load_level_vm = 1;
+			uint8_t level = *(uint8_t*)(opcode_addr + 1);
+			g_4bae.level_n = level;
+			*state = RWS_RELOAD_LEVEL;
+			break;
+		}
+
 		case 0x11:
 			g_update_hold++;
 			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
@@ -254,6 +263,111 @@ static int setup_intro()
 	return 0;
 }
 
+/* 0xBCF */
+void init_deinit_neuro_cb(int cmd)
+{
+	switch (cmd) {
+	case 0: { /* reset vm state */
+		for (int i = 0; i < 4; i++)
+		{
+			uint16_t n = g_a8e0.a8e0[i];
+			if (n == 0xffff) {
+				continue;
+			}
+
+			g_3f85.vm_state[n].mark = 0xFF;
+		}
+		break;
+	}
+
+	default:
+		break;
+	}
+}
+
+void init_deinit_level_2(uint16_t offt)
+{
+	switch (offt) {
+	case 0x16F: {
+		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
+		int enough_cash = (ctl->cash - 250 < 0) ? 0 : 1;
+		
+		ctl->x4c7c = enough_cash;
+		uint8_t day = ctl->date_day + 1;
+
+		ctl->x4bcd[33]++;
+		if (ctl->x4bcd[33] == 4)
+		{
+			ctl->x4c59[1] = day;
+		}
+		else if (ctl->x4bcd[33] == 1)
+		{
+			ctl->x4c59[0] = day;
+		}
+
+		break;
+	}
+
+	case 0x1AF: {
+		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
+		ctl->x4bcd[30] = 1;
+
+		g_bih_wrapper.init_deinit_cb(0);
+		break;
+	}
+
+	default:
+		break;
+	}
+}
+
+void init_deinit_level_1(uint16_t offt)
+{
+	switch (offt) {
+	case 0x3F:
+		return;
+
+	case 0x40:
+		g_bih_wrapper.init_deinit_cb(0);
+		return;
+	
+	default:
+		break;
+	}
+}
+
+void init_deinit_level_0(uint16_t offt)
+{
+	switch (offt) {
+	case 0xFB:
+	case 0xFC:
+		return;
+
+	default:
+		break;
+	}
+}
+
+void init_deinit_bih_call(uint16_t offt)
+{
+	switch (g_level_n) {
+	case 0:
+		init_deinit_level_0(offt);
+		break;
+
+	case 1:
+		init_deinit_level_1(offt);
+		break;
+
+	case 2:
+		init_deinit_level_2(offt);
+		break;
+
+	default:
+		break;
+	}
+}
+
 typedef enum sub_105f6_opcodes_t {
 	SUB_105F6_OP_PLAY_LEVEL_INTRO = 5,
 	SUB_105F6_OP_NEURO_VM_STEP,
@@ -268,18 +382,17 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		uint16_t level_n = va_arg(args, uint16_t);
 		va_end(args);
 
-		//g_a642 = g_3f85.x407b + (6 * level_n);
 		g_a642 = &g_3f85.level_info[level_n];
 		g_bih_wrapper.bih = (bih_hdr_t*)g_a8e0.bih;
 		g_bih_wrapper.ctrl_struct_addr = (uint8_t*)&g_4bae;
-		// g_bih_wrapper.cb_addr = &cb;
+		g_bih_wrapper.init_deinit_cb = init_deinit_neuro_cb;
 		break;
 	}
 
-	case 1:
+	case 1: /* enter/exit level bih call */
 	case 3: {
 		uint16_t offt = g_bih_wrapper.bih->init_obj_code_offt[opcode - 1];
-		// call (a8e8 + offt)
+		init_deinit_bih_call(offt);
 		break;
 	}
 
@@ -742,20 +855,23 @@ static real_world_state_t update_normal()
 	/* execute the following VM instruction */
 	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_STEP);
 
-	if (g_load_level_vm)
+	if (!g_update_hold)
 	{
-		roompos_init();
-		g_load_level_vm = 0;
-	}
-	else if (dir != CD_NULL /*&& !g_update_hold */)
-	{
-		g_exit_point = (int16_t)dir;
-		int level = roompos_hit_exit_zone();
-		if (level != -1)
+		if (g_load_level_vm)
 		{
-			/* reload level */
-			state = RWS_RELOAD_LEVEL;
-			g_4bae.level_n = level;
+			roompos_init();
+			g_load_level_vm = 0;
+		}
+		else if (dir != CD_NULL)
+		{
+			g_exit_point = (int16_t)dir;
+			int level = roompos_hit_exit_zone();
+			if (level != -1)
+			{
+				/* reload level */
+				state = RWS_RELOAD_LEVEL;
+				g_4bae.level_n = level;
+			}
 		}
 	}
 
