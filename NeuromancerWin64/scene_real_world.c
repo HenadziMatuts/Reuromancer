@@ -7,12 +7,14 @@
 #include "resource_manager.h"
 #include "neuro_window_control.h"
 #include "scene_real_world.h"
+#include "bih_code.h"
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
 static real_world_state_t g_state = RWS_TEXT_OUTPUT;
+static int g_wfi_press = 0;
 
 static char *g_bih_string_ptr = NULL;
 
@@ -74,27 +76,6 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 	g_4bae.roompos_y = temp_2;
 
 	return;
-}
-
-/* just a stub */
-static void bih_call(uint16_t offt)
-{
-	if (g_4bae.level_n != 0)
-	{
-		return;
-	}
-
-	switch (offt) {
-	case 0xDB: {
-		x4bae_t *s = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
-		s->cash += s->cash_withdrawal;
-		break;
-	}
-
-	default:
-		break;
-	}
-
 }
 
 /* sub_10735 */
@@ -223,10 +204,12 @@ static void neuro_vm(real_world_state_t *state)
 		}
 
 		/* exec */
-		case 0x16:
-			bih_call(*(uint16_t*)(opcode_addr + 1));
+		case 0x16: {
+			uint16_t offt = *(uint16_t*)(opcode_addr + 1);
+			vm_bih_call(offt);
 			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 3;
 			break;
+		}
 
 		/* dialog */
 		case 0x17:
@@ -285,89 +268,6 @@ void init_deinit_neuro_cb(int cmd)
 	}
 }
 
-void init_deinit_level_2(uint16_t offt)
-{
-	switch (offt) {
-	case 0x16F: {
-		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
-		int enough_cash = (ctl->cash - 250 < 0) ? 0 : 1;
-		
-		ctl->x4c7c = enough_cash;
-		uint8_t day = ctl->date_day + 1;
-
-		ctl->x4bcd[33]++;
-		if (ctl->x4bcd[33] == 4)
-		{
-			ctl->x4c59[1] = day;
-		}
-		else if (ctl->x4bcd[33] == 1)
-		{
-			ctl->x4c59[0] = day;
-		}
-
-		break;
-	}
-
-	case 0x1AF: {
-		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
-		ctl->x4bcd[30] = 1;
-
-		g_bih_wrapper.init_deinit_cb(0);
-		break;
-	}
-
-	default:
-		break;
-	}
-}
-
-void init_deinit_level_1(uint16_t offt)
-{
-	switch (offt) {
-	case 0x3F:
-		return;
-
-	case 0x40:
-		g_bih_wrapper.init_deinit_cb(0);
-		return;
-	
-	default:
-		break;
-	}
-}
-
-void init_deinit_level_0(uint16_t offt)
-{
-	switch (offt) {
-	case 0xFB:
-	case 0xFC:
-		return;
-
-	default:
-		break;
-	}
-}
-
-void init_deinit_bih_call(uint16_t offt)
-{
-	switch (g_level_n) {
-	case 0:
-		init_deinit_level_0(offt);
-		break;
-
-	case 1:
-		init_deinit_level_1(offt);
-		break;
-
-	case 2:
-		init_deinit_level_2(offt);
-		break;
-
-	default:
-		break;
-	}
-}
-
 typedef enum sub_105f6_opcodes_t {
 	SUB_105F6_OP_PLAY_LEVEL_INTRO = 5,
 	SUB_105F6_OP_NEURO_VM_STEP,
@@ -392,7 +292,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 	case 1: /* enter/exit level bih call */
 	case 3: {
 		uint16_t offt = g_bih_wrapper.bih->init_obj_code_offt[opcode - 1];
-		init_deinit_bih_call(offt);
+		sub105F6_bih_call(offt);
 		break;
 	}
 
@@ -686,6 +586,7 @@ static void init()
 	sub_105F6(&g_state, SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
 	g_exit_point = -1;
+	g_wfi_press = 0;
 
 	ui_panel_update();
 	return;
@@ -734,8 +635,15 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button)
 
 static void handle_wait_for_input(sfEvent *event)
 {
-	if (event->type == sfEvtMouseButtonReleased ||
-		event->type == sfEvtKeyReleased)
+	if (event->type == sfEvtMouseButtonPressed ||
+		event->type == sfEvtKeyPressed)
+	{
+		g_wfi_press = 1;
+	}
+
+	if (g_wfi_press &&
+		(event->type == sfEvtMouseButtonReleased ||
+		event->type == sfEvtKeyReleased))
 	{
 		switch (g_neuro_window.mode) {
 		case NWM_NPC_DIALOG_REPLY:

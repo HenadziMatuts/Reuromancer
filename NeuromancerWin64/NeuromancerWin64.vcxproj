@@ -122,6 +122,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bg_animation_control.c" />
+    <ClCompile Include="bih_code.c" />
     <ClCompile Include="data.c" />
     <ClCompile Include="rw_state_dialog.c" />
     <ClCompile Include="drawing_control.c" />
@@ -139,6 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h" />
+    <ClInclude Include="bih_code.h" />
     <ClInclude Include="character_control.h" />
     <ClInclude Include="data.h" />
     <ClInclude Include="drawing_control.h" />
