@@ -12,8 +12,11 @@ void update_cursor();
 
 sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int digits_only);
 
+void sfSetKeyRepeat(int enabled);
+
 int extract_line(char **text, char *line, int length);
 
 sfKeyCode ascii_toSfKeyCode(char c);
+
 
 #endif

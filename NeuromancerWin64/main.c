@@ -104,6 +104,11 @@ sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int 
 	return sfKeyCount;
 }
 
+void sfSetKeyRepeat(int enabled)
+{
+	sfRenderWindow_setKeyRepeatEnabled(g_window, (sfBool)enabled);
+}
+
 static void render()
 {
 	drawing_control_draw_sprite_chain_to_vga();
@@ -154,6 +159,7 @@ int main(int argc, char *argv[])
 	resource_manager_init();
 	scene_control_setup_scene(NSID_MAIN_MENU);
 	srand((uint32_t)time(NULL));
+	sfSetKeyRepeat(0);
 
 	while (sfRenderWindow_isOpen(g_window))
 	{

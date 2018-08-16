@@ -295,6 +295,7 @@ static inventory_state_t inventory_give_item()
 		sprintf(credits, "Credits %d", g_4bae.cash);
 		neuro_window_draw_string(credits, 8, 8);
 		neuro_window_draw_string("<", 8, 24);
+		sfSetKeyRepeat(1);
 		return IS_GIVE_CREDITS;
 	}
 	else
@@ -627,6 +628,7 @@ static inventory_state_t on_inventory_give_credits_kboard(sfTextEvent *event)
 			g_4bae.active_item = g_c946;
 			g_4bae.cash_withdrawal = val;
 
+			sfSetKeyRepeat(0);
 			return IS_CLOSE_INVENTORY;
 		}
 
