@@ -19,9 +19,9 @@ typedef void(*pfn_deinit_scene)();
 typedef struct neuro_scene_t {
 	neuro_scene_id_t id;
 	pfn_init_scene init;
+	pfn_deinit_scene deinit;
 	pfn_handle_input handle_input;
 	pfn_update_scene update;
-	pfn_deinit_scene deinit;
 } neuro_scene_t;
 
 extern neuro_scene_t g_scene;

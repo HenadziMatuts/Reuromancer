@@ -7,6 +7,7 @@ typedef enum real_world_state_t {
 	RWS_INVENTORY,
 	RWS_DIALOG,
 	RWS_WAIT_FOR_INPUT,
+	RWS_RELOAD_LEVEL,
 } real_world_state_t;
 
 typedef enum text_output_state_t {

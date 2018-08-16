@@ -195,12 +195,12 @@ static void neuro_vm(real_world_state_t *state)
 		}
 
 		case 0x11:
-			// inc [0x152C]
+			g_update_hold++;
 			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
 			break;
 
 		case 0x12:
-			// mov [0x152C], 0
+			g_update_hold = 0;
 			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
 			break;
 
@@ -297,6 +297,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 	}
 
 	case SUB_105F6_OP_PLAY_LEVEL_INTRO: {
+		*state = RWS_TEXT_OUTPUT;
 		setup_intro();
 		break;
 	}
@@ -458,7 +459,7 @@ static void roompos_init()
 	memmove(g_a8ae, roompos_level->roompos[0], 4);
 	memmove(g_8cee, roompos_level->roompos[1], 16);
 
-	if (g_exit_level_vm != 0)
+	if (g_load_level_vm != 0)
 	{
 		g_exit_point = -1;
 	}
@@ -469,18 +470,18 @@ static void roompos_init()
 	if (g_a642->level_transitions[transition] == 0xFF)
 	{
 		g_4bae.roompos_x = g_a8ae[1] + g_a8ae[3];
-		g_4bae.roompos_y = (g_a8ae[0] + g_a8ae[2]) >> 1;
+		g_4bae.roompos_y = (g_a8ae[0] + g_a8ae[2]) / 2 ;
 	}
 	else
 	{
-		g_4bae.roompos_y = (g_8cee[transition][3] >> 1) + g_8cee[transition][1];
+		g_4bae.roompos_y = (g_8cee[transition][3] / 2) + g_8cee[transition][1];
 
-		uint16_t x1 = (g_8cee[transition][0] + g_8cee[transition][2]) << 1;
-		uint16_t x2 = g_8cee[transition][0] << 1;
+		uint16_t r = (g_8cee[transition][0] + g_8cee[transition][2]) << 1;
+		uint16_t l = g_8cee[transition][0] << 1;
 		uint16_t x3 = g_a8ae[3] << 1;
 		uint16_t x4 = g_a8ae[1] << 1;
 
-		if (x1 <= g_4bae.roompos_x || g_4bae.roompos_x <= x2 ||
+		if (g_4bae.roompos_x <= l || g_4bae.roompos_x >= r ||
 			x3 >= g_4bae.roompos_x || x4 <= g_4bae.roompos_x)
 		{
 			g_4bae.roompos_x = (g_8cee[transition][0] << 1) + g_8cee[transition][2];
@@ -503,7 +504,7 @@ static void init()
 
 	if (g_level_n >= 0 && g_4bae.x4bcc == 0)
 	{
-		/* sub_105F6(3) */
+		sub_105F6(NULL, 3);
 	}
 
 	g_4bae.x4bcc = 0;
@@ -513,10 +514,8 @@ static void init()
 	g_4bae.x4bbf = 0xFF;
 	g_4bae.active_item = 0xFFFF;
 	g_4bae.cash_withdrawal = 0xFFFFFFFF;
-	// mov [152C], 0
+	g_update_hold = 0;
 	g_4bae.x4bf4 = 0xFF;
-	// mov [1E34], 0
-	// mov [1E44], 0
 
 	memset(g_a8e0.a8e0, 0xFFFF, 8);
 	g_level_n = g_4bae.level_n;
@@ -571,12 +570,20 @@ static void init()
 
 	sub_105F6(NULL, 1);
 	setup_ui_buttons();
-	sub_105F6(NULL, SUB_105F6_OP_PLAY_LEVEL_INTRO);
+	sub_105F6(&g_state, SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
 	g_exit_point = -1;
 
 	ui_panel_update();
 	return;
+}
+
+static void deinit()
+{
+	drawing_control_remove_sprite_from_chain(SCI_LEVEL_BG);
+	drawing_control_remove_sprite_from_chain(SCI_BACKGRND);
+	drawing_control_remove_sprite_from_chain(SCI_CHARACTER);
+	g_bih_string_ptr = NULL;
 }
 
 void rw_ui_handle_button_press(int *state, neuro_button_t *button)
@@ -662,16 +669,96 @@ static void handle_input(sfEvent *event)
 	}
 }
 
+int roompos_hit_exit_zone()
+{
+	if (g_a642->level_transitions[g_exit_point] == 0xFF)
+	{
+		return -1;
+	}
+
+	uint8_t *exit_zone = g_8cee[g_exit_point];
+	uint16_t l = exit_zone[0] * 2;
+	uint16_t t = exit_zone[1];
+	uint16_t r = l + (exit_zone[2] * 2);
+	uint16_t b = t + exit_zone[3];
+
+	if (g_exit_point & 1)
+	{
+		if (g_4bae.roompos_y < t || g_4bae.roompos_y > b)
+		{
+			return -1;
+		}
+		
+		if (g_exit_point == 1)
+		{
+			if (g_4bae.roompos_x < l)
+			{
+				return -1;
+			}
+		}
+		else
+		{
+			if (g_4bae.roompos_x > r)
+			{
+				return -1;
+			}
+		}
+	}
+	else
+	{
+		if (g_4bae.roompos_x < l || g_4bae.roompos_x > r)
+		{
+			return -1;
+		}
+
+		if (g_exit_point == 2)
+		{
+			if (g_4bae.roompos_y < t)
+			{
+				return -1;
+			}
+		}
+		else
+		{
+			if (g_4bae.roompos_y > b)
+			{
+				return -1;
+			}
+		}
+	}
+
+	return g_a642->level_transitions[g_exit_point];
+}
+
 static real_world_state_t update_normal()
 {
 	real_world_state_t state = RWS_NORMAL;
+	character_dir_t dir = CD_NULL;
 
 	ui_panel_update();
-	character_control_update();
+	dir = character_control_update();
 	bg_animation_control_update();
 
 	/* execute the following VM instruction */
 	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_STEP);
+
+	if (g_load_level_vm)
+	{
+		roompos_init();
+		g_load_level_vm = 0;
+	}
+	else if (dir != CD_NULL /*&& !g_update_hold */)
+	{
+		g_exit_point = (int16_t)dir;
+		int level = roompos_hit_exit_zone();
+		if (level != -1)
+		{
+			/* reload level */
+			state = RWS_RELOAD_LEVEL;
+			g_4bae.level_n = level;
+		}
+	}
+
 	return state;
 }
 
@@ -698,6 +785,11 @@ static neuro_scene_id_t update()
 		g_state = update_dialog();
 		break;
 
+	case RWS_RELOAD_LEVEL:
+		deinit();
+		init();
+		break;
+
 	default:
 		break;
 	}
@@ -705,21 +797,13 @@ static neuro_scene_id_t update()
 	return scene;
 }
 
-static void deinit()
-{
-	drawing_control_remove_sprite_from_chain(SCI_LEVEL_BG);
-	drawing_control_remove_sprite_from_chain(SCI_BACKGRND);
-	drawing_control_remove_sprite_from_chain(SCI_CHARACTER);
-	g_bih_string_ptr = NULL;
-}
-
 void setup_real_world_scene()
 {
 	g_scene.id = NSID_REAL_WORLD;
 	g_scene.init = init;
+	g_scene.deinit = deinit;
 	g_scene.handle_input = handle_input;
 	g_scene.update = update;
-	g_scene.deinit = deinit;
 
 	g_state = RWS_TEXT_OUTPUT;
 }

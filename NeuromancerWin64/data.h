@@ -11,6 +11,15 @@ extern int g_level_n;
 
 extern uint8_t g_004e[8];
 
+/* 0x152C */
+extern uint16_t g_update_hold;
+
+/* 0x1E46 */
+extern int16_t g_exit_point;
+
+/* 0x1E4A */
+extern uint16_t g_load_level_vm;
+
 typedef struct neuro_ui_buttons_t {
 	neuro_button_t inventory;
 	neuro_button_t pax;
@@ -23,12 +32,6 @@ typedef struct neuro_ui_buttons_t {
 	neuro_button_t cash;
 	neuro_button_t con;
 } neuro_ui_buttons_t;
-
-/* 0x1E46 */
-extern int16_t g_exit_point;
-
-/* 0x1E4A */
-extern uint16_t g_exit_level_vm;
 
 /* 0x1FA2 */
 extern neuro_ui_buttons_t g_ui_buttons;

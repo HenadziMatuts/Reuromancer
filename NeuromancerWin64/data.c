@@ -7,11 +7,14 @@ uint8_t g_004e[8] = {
 	0x00,
 };
 
+/* 0x152C */
+uint16_t g_update_hold = 0;
+
 /* 0x1E46 */
 int16_t g_exit_point = 2;
 
 /* 0x1E4A */
-uint16_t g_exit_level_vm = 0;
+uint16_t g_load_level_vm = 0;
 
 /* 0x1FA2 */
 neuro_ui_buttons_t g_ui_buttons = {
