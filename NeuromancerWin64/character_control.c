@@ -91,7 +91,7 @@ character_dir_t character_control_update()
 		case CD_LEFT:
 			left = (int)ch_sprite->left -
 				ch_sprite->sprite_hdr.dx - speed_hort_pix;
-			if (left > 20)
+			if (left > 8)
 			{
 				ch_sprite->left -= speed_hort_pix;
 			}
@@ -103,7 +103,7 @@ character_dir_t character_control_update()
 		case CD_RIGHT:
 			left = ch_sprite->left - ch_sprite->sprite_hdr.dx +
 				(ch_sprite->sprite_hdr.width * 2) + speed_hort_pix;
-			if (left < 300)
+			if (left < 312)
 			{
 				ch_sprite->left += speed_hort_pix;
 			}
@@ -125,7 +125,7 @@ character_dir_t character_control_update()
 
 		case CD_DOWN:
 			top = ch_sprite->top + speed_vert_pix;
-			if (top < 116)
+			if (top < 120)
 			{
 				ch_sprite->top += speed_vert_pix;
 			}
