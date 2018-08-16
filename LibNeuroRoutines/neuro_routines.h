@@ -176,7 +176,7 @@ typedef enum ui_panel_mode_t {
  */
 LIBNEUROAPI extern resource_t g_res_imh[29];
 LIBNEUROAPI extern resource_t g_res_pic[56];
-LIBNEUROAPI extern resource_t g_res_bih[10];
+LIBNEUROAPI extern resource_t g_res_bih[60];
 LIBNEUROAPI extern resource_t g_res_anh[22];
 
 /*
