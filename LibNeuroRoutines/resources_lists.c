@@ -261,13 +261,7 @@ resource_t g_res_pic[56] = {
 	}
 };
 
-resource_t g_res_bih[10] = {
-	{
-		0, "CORNERS.BIH", 0x3526D, 0x21
-	},
-	{
-		0, "ROOMPOS.BIH", 0x3528E, 0x336
-	},
+resource_t g_res_bih[60] = {
 	{
 		0, "R1.BIH", 0, 0x5EE
 	},
@@ -275,13 +269,173 @@ resource_t g_res_bih[10] = {
 		0, "R2.BIH", 0x1C19, 0xC7
 	},
 	{
+		0, "R3.BIH", 0x3CD3 , 0x87F 
+	},
+	{
+		0, "R4.BIH", 0x60D0 , 0x47A
+	},
+	{
+		0, "R5.BIH", 0x911F , 0x2D
+	},
+	{
+		0, "R6.BIH", 0xA54B , 0x7EB
+	},
+	{
+		0, "R7.BIH", 0xCAAE , 0x2A7
+	},
+	{
+		0, "R8.BIH", 0xE827 , 0x9A4
+	},
+	{
+		0, "R9.BIH", 0x10C02 , 0x4A4
+	},
+	{
+		0, "R10.BIH", 0x1319E , 0x3C3
+	},
+	{
+		0, "R11.BIH", 0x145B2 , 0x79C
+	},
+	{
+		0, "R12.BIH", 0x1629C , 0x94C
+	},
+	{
+		0, "R13.BIH", 0x19185 , 0x2D
+	},
+	{
+		0, "R14.BIH", 0x1AC51 , 0x2D
+	},
+	{
+		0, "R15.BIH", 0x1CA7C , 0x2D
+	},
+	{
+		0, "R16.BIH", 0x1E7B4 , 0x2D
+	},
+	{
 		0, "R17.BIH", 0x204A1, 0xB9
 	},
 	{
-		1, "COPEN1.BIH", 0x3D2, 0x39B
+		0, "R18.BIH", 0x2206D , 0x2D
 	},
 	{
-		1, "DB0.BIH", 0x76D, 0x9F2
+		0, "R19.BIH", 0x237CA , 0x499
+	},
+	{
+		0, "R20.BIH", 0x26DCC , 0x64A
+	},
+	{
+		0, "R21.BIH", 0x28A62 , 0x26
+	},
+	{
+		0, "R22.BIH", 0x294DB , 0x293
+	},
+	{
+		0, "R23.BIH", 0x29EA7 , 0x817
+	},
+	{
+		0, "R24.BIH", 0x2C156 , 0x583
+	},
+	{
+		0, "R25.BIH", 0x2F052 , 0x3E4
+	},
+	{
+		0, "R26.BIH", 0x2FF8F , 0x813
+	},
+	{
+		0, "R27.BIH", 0x33100 , 0x7EB
+	},
+	{
+		0, "R28.BIH", 0x34E5B , 0x412
+	},
+	{
+		0, "CORNERS.BIH", 0x3526D, 0x21
+	},
+	{
+		0, "ROOMPOS.BIH", 0x3528E, 0x336
+	},
+	/* more bihs */
+	{
+		1, "R29.BIH", 0x32BB3 , 0x45D
+	},
+	{
+		1, "R30.BIH", 0x3427A , 0x26
+	},
+	{
+		1, "R31.BIH", 0x34F59 , 0x2D
+	},
+	{
+		1, "R32.BIH", 0x362C1 , 0x68B
+	},
+	{
+		1, "R33.BIH", 0x37575 , 0x26
+	},
+	{
+		1, "R34.BIH", 0x37FD5 , 0x498
+	},
+	{
+		1, "R35.BIH", 0x38E5C , 0xC8
+	},
+	{
+		1, "R36.BIH", 0x39962 , 0x589
+	},
+	{
+		1, "R37.BIH", 0x3C0E0 , 0x2D
+	},
+	{
+		1, "R38.BIH", 0x3D360 , 0x2D
+	},
+	{
+		1, "R39.BIH", 0x3E8FD , 0x2D
+	},
+	{
+		1, "R40.BIH", 0x3FD27 , 0x532
+	},
+	{
+		1, "R41.BIH", 0x40F92 , 0x284
+	},
+	{
+		1, "R42.BIH", 0x41A5B , 0x12E
+	},
+	{
+		1, "R44.BIH", 0x424F6 , 0x918
+	},
+	{
+		1, "R45.BIH", 0x444CF , 0xD8
+	},
+	{
+		1, "R46.BIH", 0x460DA , 0x7F7
+	},
+	{
+		1, "R47.BIH", 0x473B3 , 0xAF
+	},
+	{
+		1, "R49.BIH", 0x487FE , 0x2D
+	},
+	{
+		1, "R50.BIH", 0x49CE2 , 0x5E7
+	},
+	{
+		1, "R51.BIH", 0x4CB0A , 0xBF
+	},
+	{
+		1, "R52.BIH", 0x4D68C , 0x466
+	},
+	{
+		1, "R53.BIH", 0x4FF5E , 0x510
+	},
+	{
+		1, "R54.BIH", 0x5142F , 0x26
+	},
+	{
+		1, "R55.BIH", 0x527EB , 0x26
+	},
+	{
+		1, "R56.BIH", 0x53BC2 , 0x388
+	},
+	{
+		1, "R57.BIH", 0x5555C , 0x209
+	},
+	{
+		1, "R58.BIH", 0x56D5C , 0xB3
 	},
 	{
 		-1, NULL, 0, 0
