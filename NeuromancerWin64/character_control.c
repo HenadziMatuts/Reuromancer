@@ -62,6 +62,66 @@ void character_control_add_sprite_to_chain(int left, int top, character_dir_t di
 	g_character.frame = 0;
 }
 
+static uint16_t g_level_borders[55][4] = {
+	// l    r    t    b
+	{ 24, 294,  96, 118 }, // r1 - bar
+	{ 42, 294, 102, 118 }, // r2 - outside the bar 
+	{ 88, 264,  98, 118 }, // r3 - justice court
+	{ 24, 238, 102, 118 }, // r4 - body shop
+	{ 24, 294, 102, 118 }, // r5 - outside the donuts and body shop
+	// ---
+	{ 24, 294,  96, 118 }, // r6 - donut world
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+	{ 24, 294,  96, 118 },
+};
+
 character_dir_t character_control_update()
 {
 	static int frame_cap_ms = 100;
@@ -89,9 +149,8 @@ character_dir_t character_control_update()
 		switch (g_character.dir)
 		{
 		case CD_LEFT:
-			left = (int)ch_sprite->left -
-				ch_sprite->sprite_hdr.dx - speed_hort_pix;
-			if (left > 8)
+			left = (int)ch_sprite->left - speed_hort_pix;
+			if (left > g_level_borders[g_level_n][0])
 			{
 				ch_sprite->left -= speed_hort_pix;
 			}
@@ -101,9 +160,8 @@ character_dir_t character_control_update()
 			break;
 
 		case CD_RIGHT:
-			left = ch_sprite->left - ch_sprite->sprite_hdr.dx +
-				(ch_sprite->sprite_hdr.width * 2) + speed_hort_pix;
-			if (left < 312)
+			left = ch_sprite->left + speed_hort_pix;
+			if (left < g_level_borders[g_level_n][1])
 			{
 				ch_sprite->left += speed_hort_pix;
 			}
@@ -114,7 +172,7 @@ character_dir_t character_control_update()
 
 		case CD_UP:
 			top = ch_sprite->top - speed_vert_pix;
-			if (top > 94)
+			if (top >  g_level_borders[g_level_n][2])
 			{
 				ch_sprite->top -= speed_vert_pix;
 			}
@@ -125,7 +183,7 @@ character_dir_t character_control_update()
 
 		case CD_DOWN:
 			top = ch_sprite->top + speed_vert_pix;
-			if (top < 120)
+			if (top <  g_level_borders[g_level_n][3])
 			{
 				ch_sprite->top += speed_vert_pix;
 			}
