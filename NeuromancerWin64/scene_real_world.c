@@ -19,6 +19,17 @@ static int g_wfi_press = 0;
 static char *g_bih_string_ptr = NULL;
 
 /***************************************/
+
+typedef enum sub_105f6_opcodes_t {
+	SUB_105F6_OP_PREPARE_BIH = 0,
+	SUB_105F6_OP_INIT_LEVEL,
+	SUB_105F6_OP_UPDATE_LEVEL,
+	SUB_105F6_OP_DEINIT_LEVEL,
+	SUB_105F6_OP_GET_VM_PROG_ADDR,
+	SUB_105F6_OP_PLAY_LEVEL_INTRO,
+	SUB_105F6_OP_NEURO_VM_CYCLE,
+} sub_105f6_opcodes_t;
+
 static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...);
 
 void sub_1342E(char *str, uint16_t mode)
@@ -267,16 +278,6 @@ void init_deinit_neuro_cb(int cmd)
 		break;
 	}
 }
-
-typedef enum sub_105f6_opcodes_t {
-	SUB_105F6_OP_PREPARE_BIH = 0,
-	SUB_105F6_OP_INIT_LEVEL,
-	SUB_105F6_OP_UPDATE_LEVEL,
-	SUB_105F6_OP_DEINIT_LEVEL,
-	SUB_105F6_OP_GET_VM_PROG_ADDR,
-	SUB_105F6_OP_PLAY_LEVEL_INTRO,
-	SUB_105F6_OP_NEURO_VM_CYCLE,
-} sub_105f6_opcodes_t;
 
 static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 {
