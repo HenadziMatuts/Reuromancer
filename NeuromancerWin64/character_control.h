@@ -12,7 +12,7 @@ typedef enum character_dir_t {
 } character_dir_t;
 
 void character_control_add_sprite_to_chain(int left, int top, character_dir_t dir);
-void character_control_update();
-int character_control_handle_input(sfEvent *event);
+character_dir_t character_control_update();
+character_dir_t character_control_handle_input(sfEvent *event);
 
 #endif

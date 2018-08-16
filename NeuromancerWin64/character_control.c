@@ -62,7 +62,7 @@ void character_control_add_sprite_to_chain(int left, int top, character_dir_t di
 	g_character.frame = 0;
 }
 
-void character_control_update()
+character_dir_t character_control_update()
 {
 	static int frame_cap_ms = 100;
 	static int speed_hort_pix = 5;
@@ -81,7 +81,7 @@ void character_control_update()
 
 		if (g_character.state == CS_IDLE)
 		{
-			return;
+			return g_character.dir;
 		}
 
 		int left = 0, top = 0;
@@ -137,7 +137,7 @@ void character_control_update()
 		}
 	}
 
-	return;
+	return g_character.dir;
 }
 
 static character_dir_t character_control_handle_mouse(sfEvent *event, int *lock)
@@ -227,7 +227,7 @@ static character_dir_t character_control_handle_kboard(sfEvent *event, int *lock
 	return dir;
 }
 
-int character_control_handle_input(sfEvent *event)
+character_dir_t character_control_handle_input(sfEvent *event)
 {
 	sprite_layer_t *cursor = &g_sprite_chain[SCI_CURSOR];
 	sprite_layer_t *character = &g_sprite_chain[SCI_CHARACTER];
@@ -294,5 +294,5 @@ int character_control_handle_input(sfEvent *event)
 		}
 	}
 
-	return mouse_lock || kboard_lock;
+	return g_character.dir;
 }
