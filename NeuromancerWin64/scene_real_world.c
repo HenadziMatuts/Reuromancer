@@ -227,12 +227,12 @@ static void neuro_vm(real_world_state_t *state)
 /* sub_106BD */
 static int setup_intro()
 {
-	uint16_t x = (0x80 >> (g_level_n & 7)) | 0x80;
-	uint16_t y = (g_level_n >> 3) | (g_level_n & 0x80);
+	uint16_t x = 0x80 >> (g_level_n & 7);
+	uint16_t y = g_level_n >> 3;
 
 	g_bih_string_ptr = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
 
-	if ((g_004e[y] & x) == 0) {
+	if ((x & g_004e[y]) == 0) {
 		/* setup long intro */
 		g_004e[y] |= x;
 	}
@@ -400,6 +400,7 @@ static void ui_panel_update()
 				g_4bae.x4c10 ^= 1;
 				g_4bae.x4c38 = 0;
 				g_4bae.x4c5c = 0xFF;
+				/* play music */
 			}
 		}
 	}

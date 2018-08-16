@@ -33,7 +33,7 @@ static void sub105F6_bih_call_level_2(uint16_t offt)
 	switch (offt) {
 	case 0x16F: { /* init */
 		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
-		int enough_cash = (ctl->cash - 250 < 0) ? 0 : 1;
+		int enough_cash = ((int32_t)ctl->cash - 250 < 0) ? 0 : 1;
 
 		ctl->x4c7c = enough_cash;
 		uint8_t day = ctl->date_day + 1;
