@@ -296,7 +296,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 	}
 
 	case SUB_105F6_OP_UPDATE_LEVEL:
-		/* update bg animation */
+		bg_animation_control_update();
 	case SUB_105F6_OP_INIT_LEVEL: /* enter/exit level bih call */
 	case SUB_105F6_OP_DEINIT_LEVEL: {
 		uint16_t offt = g_bih_wrapper.bih->init_obj_code_offt[opcode - 1];
@@ -769,9 +769,8 @@ static real_world_state_t update_normal()
 
 	ui_panel_update();
 	dir = character_control_update();
-	bg_animation_control_update();
-
-	/* execute the following VM instruction */
+	
+	sub_105F6(NULL, SUB_105F6_OP_UPDATE_LEVEL);
 	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_CYCLE);
 
 	if (!g_update_hold)
