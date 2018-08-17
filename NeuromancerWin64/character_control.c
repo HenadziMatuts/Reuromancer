@@ -86,13 +86,15 @@ character_dir_t character_control_update()
 
 		if (g_character.state == CS_IDLE)
 		{
-			return g_character.dir;
+			if (g_character.frame == 0 || g_character.frame == 4)
+			{
+				return g_character.dir;
+			}
 		}
 
 		int left = 0, top = 0;
 
-		switch (g_character.dir)
-		{
+		switch (g_character.dir) {
 		case CD_LEFT:
 			left = (int)ch_sprite->left - speed_hort_pix;
 			if (left > l)
