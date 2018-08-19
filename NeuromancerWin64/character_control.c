@@ -274,27 +274,27 @@ character_dir_t character_control_handle_input(sfEvent *event)
 		switch (new_dir) {
 		case CD_LEFT:
 			g_character.dir = CD_LEFT;
-			g_character.frame = 0;
+			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_left_frames[0], 0);
+				g_sprites + g_left_frames[1], 0);
 			break;
 		case CD_RIGHT:
 			g_character.dir = CD_RIGHT;
-			g_character.frame = 0;
+			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_right_frames[0], 0);
+				g_sprites + g_right_frames[1], 0);
 			break;
 		case CD_UP:
 			g_character.dir = CD_UP;
-			g_character.frame = 0;
+			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_up_frames[0], 0);
+				g_sprites + g_up_frames[1], 0);
 			break;
 		case CD_DOWN:
 			g_character.dir = CD_DOWN;
-			g_character.frame = 0;
+			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_down_frames[0], 0);
+				g_sprites + g_down_frames[1], 0);
 			break;
 		}
 	}
