@@ -729,7 +729,7 @@ static inventory_state_t update_inventory_close()
 		{ 114,  2,  86, 159 },{ 50,   2, 118, 159 },{ 3,  2, 143, 159 },
 	};
 
-	static int frame_cap_ms = 50;
+	static int frame_cap_ms = 35;
 	static int elapsed = 0;
 	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
 
@@ -766,7 +766,7 @@ static inventory_state_t update_inventory_open()
 		{ 176, 21,  56, 149 },{ 176, 33,  56, 143 },{ 176, 64,  56, 128 }
 	};
 
-	static int frame_cap_ms = 50;
+	static int frame_cap_ms = 35;
 	static int elapsed = 0;
 	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
 

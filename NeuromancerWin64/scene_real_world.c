@@ -318,7 +318,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 	}
 
 	case SUB_105F6_OP_PLAY_LEVEL_INTRO: {
-		*state = RWS_TEXT_OUTPUT;
+		//*state = RWS_TEXT_OUTPUT;
 		setup_intro();
 		break;
 	}
@@ -762,6 +762,33 @@ int roompos_hit_exit_zone()
 	return g_a642->level_transitions[g_exit_point];
 }
 
+static int update_fade_out()
+{
+	static int frame = 0;
+
+	static int frame_cap_ms = 15;
+	static int elapsed = 0;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= frame_cap_ms)
+	{
+		return 0;
+	}
+	elapsed = passed;
+
+	if (frame == 7)
+	{
+		frame = 0;
+		g_fader_alpha = 0xFF;
+		return 1;
+	}
+
+	frame++;
+	g_fader_alpha += 32;
+
+	return 0;
+}
+
 static real_world_state_t update_normal()
 {
 	real_world_state_t state = RWS_NORMAL;
@@ -797,6 +824,33 @@ static real_world_state_t update_normal()
 	return state;
 }
 
+static real_world_state_t update_fade_in()
+{
+	static int frame = 0;
+
+	static int frame_cap_ms = 15;
+	static int elapsed = 0;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= frame_cap_ms)
+	{
+		return RWS_FADE_IN;
+	}
+	elapsed = passed;
+
+	if (frame == 7)
+	{
+		frame = 0;
+		g_fader_alpha = 0x00;
+		return RWS_TEXT_OUTPUT;
+	}
+
+	frame++;
+	g_fader_alpha -= 32;
+
+	return RWS_FADE_IN;
+}
+
 static neuro_scene_id_t update()
 {
 	neuro_scene_id_t scene = NSID_REAL_WORLD;
@@ -804,6 +858,10 @@ static neuro_scene_id_t update()
 	update_cursor();
 
 	switch (g_state) {
+	case RWS_FADE_IN:
+		g_state = update_fade_in();
+		break;
+
 	case RWS_TEXT_OUTPUT:
 		g_state = update_text_output();
 		break;
@@ -821,8 +879,12 @@ static neuro_scene_id_t update()
 		break;
 
 	case RWS_RELOAD_LEVEL:
-		deinit();
-		init();
+		if (update_fade_out())
+		{
+			deinit();
+			init();
+			g_state = RWS_FADE_IN;
+		}
 		break;
 
 	default:
@@ -840,5 +902,5 @@ void setup_real_world_scene()
 	g_scene.handle_input = handle_input;
 	g_scene.update = update;
 
-	g_state = RWS_TEXT_OUTPUT;
+	g_state = (g_fader_alpha == 0) ? RWS_TEXT_OUTPUT : RWS_FADE_IN;
 }

@@ -125,6 +125,33 @@ static void handle_input(sfEvent *event)
 	neuro_menu_handle_input(NMID_MAIN_MENU, &g_menu_dialog, (int*)&g_state, event);
 }
 
+static neuro_scene_id_t update_main_menu_fade_out()
+{
+	static int frame = 0;
+
+	static int frame_cap_ms = 15;
+	static int elapsed = 0;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= frame_cap_ms)
+	{
+		return NSID_MAIN_MENU;
+	}
+	elapsed = passed;
+
+	if (frame == 7)
+	{
+		frame = 0;
+		g_fader_alpha = 0xFF;
+		return NSID_REAL_WORLD;
+	}
+
+	frame++;
+	g_fader_alpha += 32;
+
+	return NSID_MAIN_MENU;
+}
+
 static neuro_scene_id_t update()
 {
 	neuro_scene_id_t scene = NSID_MAIN_MENU;
@@ -133,8 +160,10 @@ static neuro_scene_id_t update()
 
 	switch (g_state) {
 	case MMS_TO_LEVEL_SCENE:
+		return update_main_menu_fade_out();
+
 	case MMS_TO_NOT_IMPLEMENTED_SCENE:
-		return (g_state == MMS_TO_LEVEL_SCENE) ? NSID_REAL_WORLD : NSID_NOT_IMPLEMENTED;
+		return NSID_NOT_IMPLEMENTED;
 
 	default:
 		break;

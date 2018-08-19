@@ -39,6 +39,11 @@ static float g_scale_y = 0;
  */
 sfClock *g_timer = NULL;
 
+/*
+ * Fader.
+ */
+uint8_t g_fader_alpha = 0x00;
+
 void update_cursor()
 {
 	sfVector2i mouse_pos = sfMouse_getPositionRenderWindow(g_window);
@@ -125,8 +130,22 @@ static void render()
 
 	sfRenderWindow_drawSprite(g_window, sprite, NULL);
 
-	sfRenderWindow_display(g_window);
+	if (g_fader_alpha != 0)
+	{
+		sfRectangleShape *fader = sfRectangleShape_create();
+		sfVector2f size = { 320, 240 };
+		sfColor color = { 0, 0, 0, g_fader_alpha };
+		
+		sfRectangleShape_setFillColor(fader, color);
+		sfRectangleShape_setSize(fader, size);
+		sfRectangleShape_setScale(fader, scale);
 
+		sfRenderWindow_drawShape(g_window, (sfShape*)fader, NULL);
+		sfRectangleShape_destroy(fader);
+	}
+
+	sfRenderWindow_display(g_window);
+	
 	sfSprite_destroy(sprite);
 }
 

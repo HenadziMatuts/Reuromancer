@@ -2,12 +2,13 @@
 #define _SCENE_REAL_WORLD_H
 
 typedef enum real_world_state_t {
-	RWS_TEXT_OUTPUT = 0,
+	RWS_FADE_IN = 0,
+	RWS_TEXT_OUTPUT,
 	RWS_NORMAL,
 	RWS_INVENTORY,
 	RWS_DIALOG,
 	RWS_WAIT_FOR_INPUT,
-	RWS_RELOAD_LEVEL,
+	RWS_RELOAD_LEVEL
 } real_world_state_t;
 
 typedef enum text_output_state_t {
