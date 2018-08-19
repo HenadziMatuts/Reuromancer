@@ -123,6 +123,7 @@ static void neuro_vm(real_world_state_t *state)
 				g_3f85.vm_state[n].var_2);
 
 			*state = RWS_WAIT_FOR_INPUT;
+			sfSetKeyRepeat(0);
 
 			g_3f85_wrapper.vm_next_op_addr[n] += 2;
 			g_4bae.active_dialog_reply = 0xFF;
@@ -345,7 +346,6 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 	}
 
 	case SUB_105F6_OP_PLAY_LEVEL_INTRO: {
-		//*state = RWS_TEXT_OUTPUT;
 		setup_intro();
 		break;
 	}
@@ -688,6 +688,7 @@ static void handle_wait_for_input(sfEvent *event)
 			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
 			restore_window();
+			sfSetKeyRepeat(1);
 			g_state = RWS_NORMAL;
 
 		default:
@@ -905,11 +906,26 @@ static neuro_scene_id_t update()
 		break;
 
 	case RWS_RELOAD_LEVEL:
-		if (update_fade_out())
+		if ((g_4bae.level_n >= 12 && g_level_n >= 12 &&
+			 g_4bae.level_n <= 17 && g_level_n <= 17) ||
+			(g_4bae.level_n >= 36 && g_level_n >= 36 &&
+			 g_4bae.level_n <= 38 && g_level_n <= 38) ||
+			(g_4bae.level_n >= 53 && g_level_n >= 53 &&
+			 g_4bae.level_n <= 54 && g_level_n <= 54))
 		{
+			g_state = RWS_TEXT_OUTPUT;
 			deinit();
 			init();
-			g_state = RWS_FADE_IN;
+			
+		}
+		else
+		{
+			if (update_fade_out())
+			{
+				g_state = RWS_FADE_IN;
+				deinit();
+				init();
+			}
 		}
 		break;
 

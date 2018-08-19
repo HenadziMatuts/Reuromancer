@@ -33,7 +33,6 @@ void main_menu_handle_text_enter(int *state, sfTextEvent *event)
 
 		if (key == sfKeyReturn)
 		{
-			sfSetKeyRepeat(0);
 			*state = MMS_TO_LEVEL_SCENE;
 			if (strlen(name))
 			{
@@ -60,7 +59,6 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 			build_neuro_menu_text(&g_menu_dialog, "Your name?", 0, 0);
 			build_neuro_menu_text(&g_menu_dialog, "<", 0, 16);
 			drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
-			sfSetKeyRepeat(1);
 			*state = MMS_NEW;
 			break;
 

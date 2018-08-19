@@ -178,7 +178,6 @@ int main(int argc, char *argv[])
 	resource_manager_init();
 	scene_control_setup_scene(NSID_MAIN_MENU);
 	srand((uint32_t)time(NULL));
-	sfSetKeyRepeat(0);
 
 	while (sfRenderWindow_isOpen(g_window))
 	{
