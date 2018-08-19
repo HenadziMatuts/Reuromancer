@@ -38,7 +38,7 @@ void bg_animation_update(bg_animation_control_table_t *tables,
 
 		if (anim->sleep-- == 0)
 		{
-            anh_frame_data_t *data = (anh_frame_data_t*)(anim->first_frame_data) + anim->curr_frame;
+			anh_frame_data_t *data = (anh_frame_data_t*)(anim->first_frame_data) + anim->curr_frame;
 			uint8_t *frame = anim->first_frame_bytes + data->frame_offset;
 			anh_frame_hdr *hdr = (anh_frame_hdr*)frame;
 

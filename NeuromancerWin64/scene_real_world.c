@@ -92,30 +92,43 @@ static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
 /* sub_10735 */
 static void neuro_vm(real_world_state_t *state)
 {
-	for (int i = 3; i >= 0; i--)
+	static int thread = 3;
+
+	thread = (thread < 0) ? 3 : thread;
+
+	for (thread; thread >= 0; thread--)
 	{
-		uint16_t vm_thread = g_a8e0.a8e0[i];
-		if (vm_thread == 0xffff) {
+		uint16_t n = g_a8e0.a8e0[thread];
+		if (n == 0xffff) {
 			continue;
 		}
 
-		uint8_t *opcode_addr = g_3f85_wrapper.vm_next_op_addr[vm_thread];
+		uint8_t *opcode_addr = g_3f85_wrapper.vm_next_op_addr[n];
 		uint8_t opcode = *opcode_addr;
 
 		switch (opcode) {
+		case 0x00: {
+			g_3f85_wrapper.vm_next_op_addr[n] =
+				(uint8_t*)sub_105F6(NULL, SUB_105F6_OP_GET_VM_PROG_ADDR,
+					g_3f85.vm_state[n].flag & 3, 0);
+			break;
+		}
+
 		/* dialog npc reply */
 		case 0x01: {
 			uint8_t string_num = *(opcode_addr + 1);
 
 			sub_10A5B(string_num, 0,
-				g_3f85.vm_state[vm_thread].var_1,
-				g_3f85.vm_state[vm_thread].var_2);
+				g_3f85.vm_state[n].var_1,
+				g_3f85.vm_state[n].var_2);
 
 			*state = RWS_WAIT_FOR_INPUT;
 
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 2;
+			g_3f85_wrapper.vm_next_op_addr[n] += 2;
 			g_4bae.active_dialog_reply = 0xFF;
-			break;
+			
+			thread--;
+			return;
 		}
 
 		/* text output */
@@ -129,22 +142,24 @@ static void neuro_vm(real_world_state_t *state)
 				*state = RWS_TEXT_OUTPUT;
 			}
 
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 2;
-			break;
+			g_3f85_wrapper.vm_next_op_addr[n] += 2;
+
+			thread--;
+			return;
 		}
 
 		/* load program */
 		case 0x03:
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] =
+			g_3f85_wrapper.vm_next_op_addr[n] =
 				(uint8_t*)sub_105F6(NULL, SUB_105F6_OP_GET_VM_PROG_ADDR,
-					g_3f85.vm_state[vm_thread].flag & 3, *(opcode_addr + 1));
+					g_3f85.vm_state[n].flag & 3, *(opcode_addr + 1));
 			break;
 
 		/* goto */
 		case 0x04: {
 			int16_t offset = *(int16_t*)(opcode_addr + 1);
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] += offset;
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 1;
+			g_3f85_wrapper.vm_next_op_addr[n] += offset;
+			g_3f85_wrapper.vm_next_op_addr[n] += 1;
 			break;
 		}
 
@@ -162,13 +177,13 @@ static void neuro_vm(real_world_state_t *state)
 				((jmp == JL) && (g_4bae.x4bae[x4bae_index] < x4bae_value)) ||
 				((jmp == JGE) && (g_4bae.x4bae[x4bae_index] >= x4bae_value)))
 			{
-				g_3f85_wrapper.vm_next_op_addr[vm_thread] += 6;
+				g_3f85_wrapper.vm_next_op_addr[n] += 6;
 			}
 			else
 			{
 				int16_t offset = *(int16_t*)(opcode_addr + 4);
-				g_3f85_wrapper.vm_next_op_addr[vm_thread] += offset;
-				g_3f85_wrapper.vm_next_op_addr[vm_thread] += 4;
+				g_3f85_wrapper.vm_next_op_addr[n] += offset;
+				g_3f85_wrapper.vm_next_op_addr[n] += 4;
 			}
 
 			break;
@@ -181,8 +196,7 @@ static void neuro_vm(real_world_state_t *state)
 			uint16_t value = *(uint16_t*)(opcode_addr + 3);
 			uint16_t *p = (uint16_t*)&g_4bae.x4bae[index];
 			*p = value;
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 5;
-
+			g_3f85_wrapper.vm_next_op_addr[n] += 5;
 			break;
 		}
 
@@ -192,17 +206,19 @@ static void neuro_vm(real_world_state_t *state)
 			uint8_t level = *(uint8_t*)(opcode_addr + 1);
 			g_4bae.level_n = level;
 			*state = RWS_RELOAD_LEVEL;
-			break;
+
+			thread--;
+			return;
 		}
 
 		case 0x11:
 			g_update_hold++;
-			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
+			g_3f85_wrapper.vm_next_op_addr[n]++;
 			break;
 
 		case 0x12:
 			g_update_hold = 0;
-			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
+			g_3f85_wrapper.vm_next_op_addr[n]++;
 			break;
 
 		/* set dialog ctrl */
@@ -210,7 +226,16 @@ static void neuro_vm(real_world_state_t *state)
 			uint16_t level_n = *(opcode_addr + 1);
 			g_3f85.level_info[level_n].first_dialog_reply = *(opcode_addr + 2);
 			g_3f85.level_info[level_n].total_dialog_replies = *(opcode_addr + 3);
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 4;
+			g_3f85_wrapper.vm_next_op_addr[n] += 4;
+			break;
+		}
+
+		case 0x15: {
+			uint16_t index = *(uint16_t*)(opcode_addr + 1);
+			uint16_t value = *(uint16_t*)(opcode_addr + 3);
+			uint16_t *p = (uint16_t*)&g_4bae.x4bae[index];
+			*p += value;
+			g_3f85_wrapper.vm_next_op_addr[n] += 5;
 			break;
 		}
 
@@ -218,7 +243,7 @@ static void neuro_vm(real_world_state_t *state)
 		case 0x16: {
 			uint16_t offt = *(uint16_t*)(opcode_addr + 1);
 			vm_bih_call(offt);
-			g_3f85_wrapper.vm_next_op_addr[vm_thread] += 3;
+			g_3f85_wrapper.vm_next_op_addr[n] += 3;
 			break;
 		}
 
@@ -226,8 +251,10 @@ static void neuro_vm(real_world_state_t *state)
 		case 0x17:
 			*state = RWS_DIALOG;
 			g_dialog_escapable = 0;
-			g_3f85_wrapper.vm_next_op_addr[vm_thread]++;
-			break;
+			g_3f85_wrapper.vm_next_op_addr[n]++;
+
+			thread--;
+			return;
 
 		default:
 			break;
@@ -296,7 +323,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 	}
 
 	case SUB_105F6_OP_UPDATE_LEVEL:
-		/* update bg animation */
+		bg_animation_control_update();
 	case SUB_105F6_OP_INIT_LEVEL: /* enter/exit level bih call */
 	case SUB_105F6_OP_DEINIT_LEVEL: {
 		uint16_t offt = g_bih_wrapper.bih->init_obj_code_offt[opcode - 1];
@@ -796,9 +823,8 @@ static real_world_state_t update_normal()
 
 	ui_panel_update();
 	dir = character_control_update();
-	bg_animation_control_update();
-
-	/* execute the following VM instruction */
+	
+	sub_105F6(NULL, SUB_105F6_OP_UPDATE_LEVEL);
 	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_CYCLE);
 
 	if (!g_update_hold)

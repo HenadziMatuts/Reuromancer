@@ -62,66 +62,6 @@ void character_control_add_sprite_to_chain(int left, int top, character_dir_t di
 	g_character.frame = 0;
 }
 
-static uint16_t g_level_borders[55][4] = {
-	// l    r    t    b
-	{ 24, 294,  96, 118 }, // r1 - bar
-	{ 42, 294, 102, 118 }, // r2 - outside the bar 
-	{ 88, 264,  98, 118 }, // r3 - justice court
-	{ 24, 238, 102, 118 }, // r4 - body shop
-	{ 24, 294, 102, 118 }, // r5 - outside the donuts and body shop
-	// ---
-	{ 24, 294,  96, 118 }, // r6 - donut world
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-	{ 24, 294,  96, 118 },
-};
-
 character_dir_t character_control_update()
 {
 	static int frame_cap_ms = 100;
@@ -139,18 +79,25 @@ character_dir_t character_control_update()
 		g_4bae.roompos_x = ch_sprite->left;
 		g_4bae.roompos_y = ch_sprite->top;
 
+		uint16_t l = g_8cee[CD_LEFT][0] * 2;
+		uint16_t r = (g_8cee[CD_RIGHT][0] + g_8cee[CD_RIGHT][2]) * 2;
+		uint16_t t = g_8cee[CD_UP][1];
+		uint16_t b = g_8cee[CD_DOWN][1] + g_8cee[CD_DOWN][3];
+
 		if (g_character.state == CS_IDLE)
 		{
-			return g_character.dir;
+			if (g_character.frame == 0 || g_character.frame == 4)
+			{
+				return g_character.dir;
+			}
 		}
 
 		int left = 0, top = 0;
 
-		switch (g_character.dir)
-		{
+		switch (g_character.dir) {
 		case CD_LEFT:
 			left = (int)ch_sprite->left - speed_hort_pix;
-			if (left > g_level_borders[g_level_n][0])
+			if (left > l)
 			{
 				ch_sprite->left -= speed_hort_pix;
 			}
@@ -161,7 +108,7 @@ character_dir_t character_control_update()
 
 		case CD_RIGHT:
 			left = ch_sprite->left + speed_hort_pix;
-			if (left < g_level_borders[g_level_n][1])
+			if (left < r)
 			{
 				ch_sprite->left += speed_hort_pix;
 			}
@@ -172,7 +119,7 @@ character_dir_t character_control_update()
 
 		case CD_UP:
 			top = ch_sprite->top - speed_vert_pix;
-			if (top >  g_level_borders[g_level_n][2])
+			if (top > t)
 			{
 				ch_sprite->top -= speed_vert_pix;
 			}
@@ -183,7 +130,7 @@ character_dir_t character_control_update()
 
 		case CD_DOWN:
 			top = ch_sprite->top + speed_vert_pix;
-			if (top <  g_level_borders[g_level_n][3])
+			if (top < b)
 			{
 				ch_sprite->top += speed_vert_pix;
 			}
