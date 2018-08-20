@@ -518,4 +518,4 @@ resource_t g_res_txh[2] = {
 	{
 		-1, NULL, 0, 0
 	}
-}
+};

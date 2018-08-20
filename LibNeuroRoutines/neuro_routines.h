@@ -179,6 +179,7 @@ LIBNEUROAPI extern resource_t g_res_imh[29];
 LIBNEUROAPI extern resource_t g_res_pic[56];
 LIBNEUROAPI extern resource_t g_res_bih[60];
 LIBNEUROAPI extern resource_t g_res_anh[22];
+LIBNEUROAPI extern resource_t g_res_txh[2];
 
 /*
  * Font table.
