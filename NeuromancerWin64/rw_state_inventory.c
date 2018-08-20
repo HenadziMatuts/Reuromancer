@@ -783,13 +783,13 @@ static inventory_state_t update_inventory_close()
 	if (frame == 12)
 	{
 		frame = 0;
-		drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+		drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
 		restore_window();
 		return IS_OPEN_INVENTORY;
 	}
 
 	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg012);
-	drawing_control_add_sprite_to_chain(g_4bae.x4ccf + 1,
+	drawing_control_add_sprite_to_chain(g_4bae.window_sc_index + 1,
 		frames[frame][2], frames[frame][3], g_seg012, 1);
 	frame++;
 
@@ -825,7 +825,7 @@ static inventory_state_t update_inventory_open()
 	}
 
 	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg012);
-	drawing_control_add_sprite_to_chain(g_4bae.x4ccf,
+	drawing_control_add_sprite_to_chain(g_4bae.window_sc_index,
 		frames[frame][2], frames[frame][3], g_seg012, 1);
 	frame++;
 

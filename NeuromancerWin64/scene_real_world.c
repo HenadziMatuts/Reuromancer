@@ -689,7 +689,7 @@ static void handle_wait_for_input(sfEvent *event)
 	{
 		switch (g_neuro_window.mode) {
 		case NWM_NPC_DIALOG_REPLY:
-			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+			drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
 			restore_window();
 			sfSetKeyRepeat(1);

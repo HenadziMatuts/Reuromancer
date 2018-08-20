@@ -50,6 +50,25 @@ neuro_ui_buttons_t g_ui_buttons = {
 	}
 };
 
+/* 0x201A */
+neuro_pax_buttons_t g_pax_buttons = {
+	.exit = {
+		0x08, 0x0C, 0x0137, 0x13, 0x00, 'x'
+	},
+	.user_info = {
+		0x08, 0x14, 0x0137, 0x1B, 0x01, '1'
+	},
+	.banking = {
+		0x08, 0x1C, 0x0137, 0x23, 0x02, '2'
+	},
+	.news = {
+		0x08, 0x24, 0x0137, 0x2B, 0x03, '3'
+	},
+	.board = {
+		0x08, 0x2C, 0x0137, 0x33, 0x04, '4'
+	}
+};
+
 /* 0x21FA */
 neuro_inventory_buttons_t g_inv_buttons = {
 	.item_page_exit = {
@@ -477,7 +496,7 @@ x4bae_t g_4bae = {
 	.x4ccc = 0,
 	.x4ccd = 0,
 	.x4cce = 0,
-	.x4ccf = 2
+	.window_sc_index = 2
 };
 
 uint8_t g_8cee[4][4] = { 

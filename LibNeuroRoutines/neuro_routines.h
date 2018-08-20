@@ -62,7 +62,7 @@ typedef struct neuro_button_t {
 	uint16_t top;
 	uint16_t right;
 	uint16_t bottom;
-	uint16_t code; /* index? */
+	uint16_t code;
 	char label;
 	uint8_t padding;
 } neuro_button_t;

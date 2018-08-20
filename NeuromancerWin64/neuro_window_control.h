@@ -7,6 +7,7 @@
 typedef enum neuro_window_mode_t {
 	NWM_NEURO_UI = 0,
 	NWM_PLAYER_DIALOG_CHOICE = 1,
+	NWM_PAX = 2,
 	NWM_INVENTORY = 3,
 	NWM_PLAYER_DIALOG_REPLY = 5,
 	NWM_NPC_DIALOG_REPLY = 8,
@@ -20,7 +21,8 @@ typedef struct neuro_window_t {
 	uint16_t bottom;      // 0xC924
 	uint16_t mode;        // 0xC926
 	uint16_t c928;
-	uint8_t c92a[4];
+	uint16_t c92a;
+	uint16_t c92c;
 	uint16_t total_items; // 0xC92E
 	uint16_t item[10];    // 0xC930
 	uint16_t c944;
@@ -54,5 +56,8 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button);
 /* Inventory Window Handlers */
 void rw_inventory_handle_button_press(int *state, neuro_button_t *button);
 void rw_inventory_handle_text_enter(int *state, sfTextEvent *event);
+
+/* PAX Window Handlers */
+void rw_pax_handle_button_press(int *state, neuro_button_t *button);
 
 #endif

@@ -36,6 +36,17 @@ typedef struct neuro_ui_buttons_t {
 /* 0x1FA2 */
 extern neuro_ui_buttons_t g_ui_buttons;
 
+typedef struct neuro_pax_buttons_t {
+	neuro_button_t exit;
+	neuro_button_t user_info;
+	neuro_button_t banking;
+	neuro_button_t news;
+	neuro_button_t board;
+} neuro_pax_buttons_t;
+
+/* 0x201A */
+extern neuro_pax_buttons_t g_pax_buttons;
+
 typedef struct neuro_inventory_buttons_t {
 	neuro_button_t item_page_exit;
 	neuro_button_t exit;
@@ -201,7 +212,7 @@ typedef struct x4bae_t {
 	uint8_t x4ccc;
 	uint8_t x4ccd;
 	uint8_t x4cce;
-	uint16_t x4ccf;
+	uint16_t window_sc_index;
 } x4bae_t;
 
 extern x4bae_t g_4bae;

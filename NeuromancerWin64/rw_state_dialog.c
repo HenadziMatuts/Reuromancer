@@ -161,7 +161,7 @@ static dialog_state_t update_dialog_reply(dialog_action_t act)
 	}
 
 	drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
-	drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+	drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
 	restore_window();
 
 	return (act == DA_NEXT_REPLY) ? DS_NEXT_REPLY : DS_ACCEPT_REPLY;
@@ -216,7 +216,7 @@ static dialog_state_t update_dialog_open_close(int open)
 		if (!open)
 		{
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
-			drawing_control_remove_sprite_from_chain(++g_4bae.x4ccf);
+			drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
 			restore_window();
 		}
 	}
