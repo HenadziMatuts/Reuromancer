@@ -45,6 +45,9 @@ void restore_window();
 int neuro_window_setup(uint16_t mode, ...);
 void neuro_window_draw_string(char *text, ...);
 int neuro_window_add_button(neuro_button_t *button);
+void neuro_window_clear();
+void neuro_window_flush_buttons();
+
 int setup_ui_buttons();
 
 

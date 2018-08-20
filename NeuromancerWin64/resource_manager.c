@@ -135,6 +135,27 @@ int resource_manager_load_resource(char *name, uint8_t *dst)
 			i++;
 		}
 	}
+	else if (strstr(name, ".TXH"))
+	{
+		while (g_res_txh[i].file != -1)
+		{
+			if (!strcmp(g_res_txh[i].name, name))
+			{
+				FILE *neuro = g_res_txh[i].file == 0
+					? g_resource_manager.neuro1
+					: g_resource_manager.neuro2;
+
+				fseek(neuro, g_res_txh[i].offset, SEEK_SET);
+				fread(g_resource_manager.compd, g_res_txh[i].size, 1, neuro);
+				len = decompress_anh(g_resource_manager.compd,
+					g_resource_manager.decompd);
+				memmove(dst, g_resource_manager.decompd, len);
+
+				return 1;
+			}
+			i++;
+		}
+	}
 
 	return 0;
 }

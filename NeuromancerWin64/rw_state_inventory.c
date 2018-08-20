@@ -108,9 +108,7 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 		(inv_type ? g_3f85.inventory.software : g_3f85.inventory.items);
 
 	/* clear window */
-	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
-
+	neuro_window_clear();
 	neuro_window_draw_string(inv_type ? "Software" : "Items", inv_type ? 8 : 56, 8);
 
 	if (items_total)
@@ -125,10 +123,7 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 		uint16_t listed_on_page = 0;
 		char string[32] = { 0, };
 
-		/* sub_14AF2 */
-		assert((g_neuro_window.mode == NWM_NEURO_UI) ||
-			(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
-		g_neuro_window.total_items = 0;
+		neuro_window_flush_buttons();
 
 		max_items = (items_total - items_listed < 4) ? items_total - items_listed : 4;
 
@@ -209,14 +204,8 @@ static void inventory_item_options()
 	char *item_name = NULL;
 	int i = 0;
 
-	/* clear window */
-	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
-
-	/* sub_14AF2 */
-	assert((g_neuro_window.mode == NWM_NEURO_UI) ||
-		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
-	g_neuro_window.total_items = 0;
+	neuro_window_clear();
+	neuro_window_flush_buttons();
 
 	item_name = inventoty_get_item_name(g_c946, (g_c946 == 0x7F) ? string : NULL);
 	neuro_window_draw_string(item_name, 8, 8);
@@ -287,14 +276,8 @@ static void inventory_discard(int discard)
 	char string[32] = { 0, };
 	char *item_name = 0;
 
-	/* clear window */
-	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
-
-	/* sub_14AF2 */
-	assert((g_neuro_window.mode == NWM_NEURO_UI) ||
-		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
-	g_neuro_window.total_items = 0;
+	neuro_window_clear();
+	neuro_window_flush_buttons();
 
 	if (discard == ID_GIVE)
 	{
@@ -325,10 +308,8 @@ static void inventory_discard(int discard)
 
 static inventory_state_t inventory_give_item()
 {
-	/* clear window */
-	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
-	g_neuro_window.total_items = 0;
+	neuro_window_clear();
+	neuro_window_flush_buttons();
 
 	if (g_c946 == 0x7F)
 	{
@@ -352,14 +333,8 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 	uint8_t item_code = item[0];
 	uint8_t item_op = g_inventory_item_operations[item_code];
 
-	/* clear window */
-	build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-		g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
-
-	/* sub_14AF2 */
-	assert((g_neuro_window.mode == NWM_NEURO_UI) ||
-		(g_neuro_window.mode > 2 && g_neuro_window.mode <= 4));
-	g_neuro_window.total_items = 0;
+	neuro_window_clear();
+	neuro_window_flush_buttons();
 
 	if (g_c946 == 0x7F || item_op == 0xFF)
 	{

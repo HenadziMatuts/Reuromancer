@@ -12,10 +12,15 @@
 typedef enum pax_state_t {
 	PS_OPEN_PAX = 0,
 	PS_MAIN_MENU,
+	PS_USER_INFO,
+	PS_USER_INFO_WFI,
+	PS_USER_INFO_END_WFI,
 	PS_CLOSE_PAX
 } pax_state_t;
 
 static pax_state_t g_state = PS_OPEN_PAX;
+static uint8_t g_text_data[2048] = { 0, };
+static uint8_t *g_text_ptr = g_text_data;
 
 static void sub_14BAF(uint16_t a, uint16_t b)
 {
@@ -27,6 +32,7 @@ static void sub_14BAF(uint16_t a, uint16_t b)
 
 static pax_state_t pax_main_menu()
 {
+	neuro_window_clear();
 	sub_14BAF(8, 8);
 
 	neuro_window_draw_string(""
@@ -38,7 +44,7 @@ static pax_state_t pax_main_menu()
 		"\n\n\n"
 		"        choose a function", 1);
 
-	g_neuro_window.total_items = 0;
+	neuro_window_flush_buttons();
 	neuro_window_add_button(&g_pax_buttons.exit);
 	neuro_window_add_button(&g_pax_buttons.user_info);
 	neuro_window_add_button(&g_pax_buttons.banking);
@@ -48,11 +54,28 @@ static pax_state_t pax_main_menu()
 	return PS_MAIN_MENU;
 }
 
+static pax_state_t on_pax_user_info()
+{
+	assert(resource_manager_load_resource("FTUSER.TXH", g_text_data));
+
+	neuro_window_clear();
+	neuro_window_flush_buttons();
+	sub_14BAF(8, 8);
+
+	neuro_window_draw_string(g_text_data, 1);
+	g_text_ptr = g_text_data + strlen(g_text_data) + 1;
+
+	return PS_USER_INFO;
+}
+
 static pax_state_t on_pax_main_menu_button(neuro_button_t *button)
 {
 	switch (button->code) {
 	case 0: /*exit*/
 		return PS_CLOSE_PAX;
+
+	case 1: /* user_info */
+		return on_pax_user_info();
 
 	default:
 		break;
@@ -73,14 +96,98 @@ void rw_pax_handle_button_press(int *state, neuro_button_t *button)
 	}
 }
 
+static pax_state_t handle_pax_wait_for_input(pax_state_t state, sfEvent *event)
+{
+	if (event->type == sfEvtMouseButtonReleased ||
+		event->type == sfEvtKeyReleased)
+	{
+		switch (state) {
+		case PS_USER_INFO_WFI:
+			return PS_USER_INFO;
+
+		case PS_USER_INFO_END_WFI:
+			return pax_main_menu();
+
+		default:
+			return state;
+		}
+	}
+
+	return state;
+}
+
 void handle_pax_input(sfEvent *event)
 {
 	switch (g_state) {
 	case PS_MAIN_MENU:
-	default:
 		neuro_window_handle_input((int*)&g_state, event);
 		break;
+
+	case PS_USER_INFO_WFI:
+	case PS_USER_INFO_END_WFI:
+		g_state = handle_pax_wait_for_input(g_state, event);
+		break;
+
+	default:
+		break;
 	}
+}
+
+pax_state_t update_pax_user_info()
+{
+	static int lines_on_screen = 0, lines_scrolled = 0;
+	static int next_line = 1;
+	static int frame_cap_ms = 20;
+	static int elapsed = 0;
+	
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= frame_cap_ms)
+	{
+		return PS_USER_INFO;
+	}
+	elapsed = passed;
+
+	if (next_line)
+	{
+		char line[39] = { 0, };
+		int last = extract_line(&g_text_ptr, line, 38);
+
+		neuro_window_draw_string(line, 0);
+		next_line = 0;
+
+		if (last)
+		{
+			next_line = 1;
+			lines_on_screen = 0;
+			neuro_window_draw_string("[press any key to get back to main menu]", 0);
+			return PS_USER_INFO_END_WFI;
+		}
+		else if (++lines_on_screen == 9)
+		{
+			lines_on_screen = 0;
+			return PS_USER_INFO_WFI;
+		}
+
+		return PS_USER_INFO;
+	}
+	else
+	{
+		uint8_t *pix = g_seg011 + sizeof(imh_hdr_t);
+
+		for (int i = 17, j = 16; i < 96; i++, j++)
+		{
+			memmove(&pix[160 * j + 8], &pix[160 * i + 8], 304);
+		}
+
+		if (++lines_scrolled == 8)
+		{
+			lines_scrolled = 0;
+			next_line = 1;
+		}
+	}
+
+	return PS_USER_INFO;
 }
 
 pax_state_t update_pax_close()
@@ -169,6 +276,10 @@ real_world_state_t update_pax()
 		{
 			return RWS_NORMAL;
 		}
+		break;
+
+	case PS_USER_INFO:
+		g_state = update_pax_user_info();
 		break;
 	}
 	
