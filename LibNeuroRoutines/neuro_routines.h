@@ -192,6 +192,7 @@ LIBNEUROAPI int decompress_imh(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decompress_pic(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decompress_bih(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decompress_anh(uint8_t *src, uint8_t *dst);
+LIBNEUROAPI int decompress_txh(uint8_t *src, uint8_t *dst);
 
 LIBNEUROAPI int huffman_decompress(uint8_t *src, uint8_t *dst);
 LIBNEUROAPI int decode_rle(uint8_t *src, uint32_t len, uint8_t *dst);

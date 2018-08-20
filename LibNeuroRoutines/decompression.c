@@ -105,3 +105,8 @@ int decompress_pic(uint8_t *src, uint8_t *dst)
 
 	return 152 * 112;
 }
+
+int decompress_txh(uint8_t *src, uint8_t *dst)
+{
+	return huffman_decompress(src, dst);
+}
