@@ -66,6 +66,9 @@
     <ClCompile Include="bih_code.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rw_state_pax.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h">

@@ -9,6 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef enum dialog_state_t {
+	DS_OPEN_DIALOG = 0,
+	DS_CHOOSE_REPLY_WFI,
+	DS_NEXT_REPLY,
+	DS_ACCEPT_REPLY,
+	DS_ACCEPT_REPLY_WFI,
+	DS_CLOSE_DIALOG
+} dialog_state_t;
+
 static dialog_state_t g_state = DS_OPEN_DIALOG;
 
 void sub_1342E(char *str, uint16_t opcode);

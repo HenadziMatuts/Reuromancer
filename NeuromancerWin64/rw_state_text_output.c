@@ -5,6 +5,12 @@
 #include <neuro_routines.h>
 #include <string.h>
 
+typedef enum text_output_state_t {
+	TOS_NEXT_LINE = 0,
+	TOS_SCROLLING,
+	TOS_WAIT_FOR_INPUT
+} text_output_state_t;
+
 static text_output_state_t g_state = TOS_NEXT_LINE;
 static char *g_text = NULL;
 

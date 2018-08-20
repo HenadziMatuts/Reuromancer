@@ -645,6 +645,10 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button)
 		*state = RWS_INVENTORY;
 		break;
 
+	case 0x01: /* pax */
+		*state = RWS_PAX;
+		break;
+
 	case 0x02: /* dialog */
 		g_dialog_escapable = 1;
 		*state = RWS_DIALOG;
@@ -716,6 +720,10 @@ static void handle_input(sfEvent *event)
 
 	case RWS_INVENTORY:
 		handle_inventory_input(event);
+		break;
+
+	case RWS_PAX:
+		handle_pax_input(event);
 		break;
 
 	case RWS_DIALOG:
@@ -895,6 +903,10 @@ static neuro_scene_id_t update()
 
 	case RWS_NORMAL:
 		g_state = update_normal();
+		break;
+
+	case RWS_PAX:
+		g_state = update_pax();
 		break;
 
 	case RWS_INVENTORY:
