@@ -102,8 +102,11 @@ sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int 
 	}
 	else if (u32_char == 0x0d)
 	{
-		/* return */
 		return sfKeyReturn;
+	}
+	else if (u32_char == 0x1b)
+	{
+		return sfKeyEscape;
 	}
 
 	return sfKeyCount;

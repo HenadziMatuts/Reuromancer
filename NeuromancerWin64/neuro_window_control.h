@@ -62,5 +62,6 @@ void rw_inventory_handle_text_enter(int *state, sfTextEvent *event);
 
 /* PAX Window Handlers */
 void rw_pax_handle_button_press(int *state, neuro_button_t *button);
+void rw_pax_handle_text_enter(int *state, sfTextEvent *event);
 
 #endif

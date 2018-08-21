@@ -183,11 +183,15 @@ void neuro_window_draw_string(char *text, ...)
 
 		if (up)
 		{
-			build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
+			build_string(text, imh->width * 2, imh->height,
+				g_neuro_window.c92a, g_neuro_window.c92c, g_seg011 + sizeof(imh_hdr_t));
 		}
 		else
 		{
-			build_string(text, imh->width * 2, imh->height, 8, 88, g_seg011 + sizeof(imh_hdr_t));
+			uint32_t t = g_neuro_window.bottom -
+				g_neuro_window.top - g_neuro_window.c92c - 7;
+			build_string(text, imh->width * 2, imh->height,
+				g_neuro_window.c92a, t, g_seg011 + sizeof(imh_hdr_t));
 		}
 
 		break;
@@ -295,6 +299,10 @@ static void window_handle_text_enter(int *state, sfTextEvent *event)
 	switch (g_neuro_window.mode) {
 	case NWM_INVENTORY:
 		rw_inventory_handle_text_enter(state, event);
+		break;
+
+	case NWM_PAX:
+		rw_pax_handle_text_enter(state, event);
 		break;
 
 	default:

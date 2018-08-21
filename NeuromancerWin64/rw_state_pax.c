@@ -13,8 +13,12 @@ typedef enum pax_state_t {
 	PS_OPEN_PAX = 0,
 	PS_MAIN_MENU,
 	PS_USER_INFO,
-	PS_USER_INFO_WFI,
-	PS_USER_INFO_END_WFI,
+	  PS_USER_INFO_WFI,
+	  PS_USER_INFO_END_WFI,
+	PS_BANKING,
+	  PS_BANK_DOWNLOAD,
+	  PS_BANK_UPLOAD,
+	  PS_BANK_TRANSACTIONS_WFI,
 	PS_CLOSE_PAX
 } pax_state_t;
 
@@ -22,19 +26,138 @@ static pax_state_t g_state = PS_OPEN_PAX;
 static uint8_t g_text_data[2048] = { 0, };
 static uint8_t *g_text_ptr = g_text_data;
 
-static void sub_14BAF(uint16_t a, uint16_t b)
+static void neuro_window_set_draw_string_offt(uint16_t l, uint16_t t)
 {
 	assert((g_neuro_window.mode == 2) || (g_neuro_window.mode == 3));
 
-	g_neuro_window.c92a = a;
-	g_neuro_window.c92c = b;
+	g_neuro_window.c92a = l;
+	g_neuro_window.c92c = t;
+}
+
+static pax_state_t pax_bank_transactions()
+{
+	neuro_window_flush_buttons();
+
+	neuro_window_set_draw_string_offt(8, 48);
+	neuro_window_draw_string(""
+		"day      type       amount\n"
+		"                     \n"
+		"                     \n"
+		"                     \n"
+		"                     \n"
+		"Button or [space] to continue.", 1);
+
+	for (int i = 0, index = g_4bae.bank_last_transacton_record_index; i < 4; i++)
+	{
+		char op_string[11] = { 0 };
+		char date_string[9] = { 0 };
+		char transaction_string[32] = { 0 };
+		uint16_t op = g_4bae.bank_transaction_record[index].op;
+
+		switch (op >> 6) {
+		case 0: strcpy(op_string, "Upload");
+			    break;
+		case 1: strcpy(op_string, "Download");
+			    break;
+		case 2: strcpy(op_string, "TransferIn");
+			    break;
+		case 3: strcpy(op_string, "Fined");
+			    break;
+		}
+		
+		build_date_string(date_string, op & 0x3F);
+		sprintf(transaction_string, "%s %-10s %8d",
+			date_string, op_string, g_4bae.bank_transaction_record[index].amount);
+
+		neuro_window_set_draw_string_offt(8, (i * 8) + 56);
+		neuro_window_draw_string(transaction_string, 1);
+
+		index = (index + 1) & 3;
+	}
+
+	return PS_BANK_TRANSACTIONS_WFI;
+}
+
+static pax_state_t pax_bank_account_operation(int download)
+{
+	neuro_window_flush_buttons();
+
+	neuro_window_set_draw_string_offt(8, 48);
+	neuro_window_draw_string(""
+		"Enter amount : <\n"
+		"                     \n"
+		"                     \n"
+		"                     \n"
+		"                     \n", 1);
+
+	neuro_window_set_draw_string_offt(128, 48);
+	return (download) ? PS_BANK_DOWNLOAD : PS_BANK_UPLOAD;
+}
+
+static void pax_banking_prepare()
+{
+	/* stub */
+}
+
+static pax_state_t pax_banking()
+{
+	char str[9] = { 0, };
+
+	pax_banking_prepare();
+
+	neuro_window_clear();
+	neuro_window_flush_buttons();
+
+	neuro_window_set_draw_string_offt(8, 8);
+	neuro_window_draw_string(""
+		"  First Orbital Bank of Switzerland\n"
+		"\n"
+		"  name:           BAMA id = 056306118\n"
+		"  chip =          account =\n"
+		"\n"
+		"X. Exit To Main\n"
+		"D. Download credits\n"
+		"U. Upload credits\n"
+		"T. Transaction record", 1);
+
+	neuro_window_set_draw_string_offt(72, 24);
+	neuro_window_draw_string(g_4bae.name + 2, 2);
+
+	neuro_window_set_draw_string_offt(80, 32);
+	sprintf(str, "%d", g_4bae.cash);
+	neuro_window_draw_string(str, 2);
+
+	neuro_window_set_draw_string_offt(232, 32);
+	sprintf(str, "%d", g_4bae.bank_account);
+	neuro_window_draw_string(str, 2);
+
+	neuro_window_add_button(&g_pax_banking_buttons.exit);
+	neuro_window_add_button(&g_pax_banking_buttons.download);
+	neuro_window_add_button(&g_pax_banking_buttons.upload);
+	neuro_window_add_button(&g_pax_banking_buttons.transactions);
+
+	return PS_BANKING;
+}
+
+static pax_state_t pax_user_info()
+{
+	assert(resource_manager_load_resource("FTUSER.TXH", g_text_data));
+
+	neuro_window_clear();
+	neuro_window_flush_buttons();
+
+	neuro_window_set_draw_string_offt(8, 8);
+	neuro_window_draw_string(g_text_data, 1);
+
+	g_text_ptr = g_text_data + strlen(g_text_data) + 1;
+	return PS_USER_INFO;
 }
 
 static pax_state_t pax_main_menu()
 {
 	neuro_window_clear();
-	sub_14BAF(8, 8);
 
+	neuro_window_set_draw_string_offt(8, 8);
 	neuro_window_draw_string(""
 		"X. Exit System\n"
 		"1. First Time PAX User Info.\n"
@@ -54,18 +177,26 @@ static pax_state_t pax_main_menu()
 	return PS_MAIN_MENU;
 }
 
-static pax_state_t on_pax_user_info()
+static pax_state_t on_pax_banking_button(neuro_button_t *button)
 {
-	assert(resource_manager_load_resource("FTUSER.TXH", g_text_data));
+	switch (button->code) {
+	case 0: /*to main menu*/
+		return pax_main_menu();
 
-	neuro_window_clear();
-	neuro_window_flush_buttons();
-	sub_14BAF(8, 8);
+	case 1: /* download credits */
+		return pax_bank_account_operation(1);
 
-	neuro_window_draw_string(g_text_data, 1);
-	g_text_ptr = g_text_data + strlen(g_text_data) + 1;
+	case 2: /* upload credits */
+		return pax_bank_account_operation(0);
 
-	return PS_USER_INFO;
+	case 3: /* show transactions */
+		return pax_bank_transactions();
+
+	default:
+		break;
+	}
+
+	return PS_BANKING;
 }
 
 static pax_state_t on_pax_main_menu_button(neuro_button_t *button)
@@ -75,7 +206,10 @@ static pax_state_t on_pax_main_menu_button(neuro_button_t *button)
 		return PS_CLOSE_PAX;
 
 	case 1: /* user_info */
-		return on_pax_user_info();
+		return pax_user_info();
+
+	case 2: /* banking */
+		return pax_banking();
 
 	default:
 		break;
@@ -91,7 +225,80 @@ void rw_pax_handle_button_press(int *state, neuro_button_t *button)
 		*state = on_pax_main_menu_button(button);
 		break;
 
+	case PS_BANKING:
+		*state = on_pax_banking_button(button);
+		break;
+
 	default:
+		break;
+	}
+}
+
+static pax_state_t on_pax_bank_account_operation_kboard(int state, sfTextEvent *event)
+{
+	static char input[9] = { 0 };
+	sfKeyCode key = sfHandleTextInput(event->unicode, input, 8, 1);
+	char credits[10] = { 0 };
+
+	if (key == sfKeyEscape)
+	{
+		memset(input, 0, 9);
+		return pax_banking();
+	}
+	else if (key == sfKeyReturn)
+	{
+		uint32_t val = strlen(input) ? (uint32_t)atoi(input) : 0;
+		memset(input, 0, 9);
+
+		if (val == 0)
+		{
+			return pax_banking();
+		}
+
+		if (state == PS_BANK_DOWNLOAD)
+		{
+			if (val > g_4bae.bank_account)
+			{
+				return pax_banking();
+			}
+
+			g_4bae.bank_account -= val;
+			g_4bae.cash += val;
+		}
+		else
+		{
+			if (val > g_4bae.cash)
+			{
+				return pax_banking();
+			}
+
+			g_4bae.cash -= val;
+			g_4bae.bank_account += val;
+		}
+
+		uint16_t op = (state == PS_BANK_DOWNLOAD) ? 0x40 : 0;
+		uint8_t index = g_4bae.bank_last_transacton_record_index++;
+
+		g_4bae.bank_transaction_record[index].op = op | (g_4bae.date_day & 0x3F);
+		g_4bae.bank_transaction_record[index].amount = val;
+		g_4bae.bank_last_transacton_record_index &= 3;
+
+		return pax_banking();
+	}
+
+	sprintf(credits, "%s<", input);
+	memset(credits + strlen(credits), 0x20, 8 - strlen(credits));
+	neuro_window_draw_string(credits, 1);
+
+	return state;
+}
+
+void rw_pax_handle_text_enter(int *state, sfTextEvent *event)
+{
+	switch (*state) {
+	case PS_BANK_DOWNLOAD:
+	case PS_BANK_UPLOAD:
+		*state = on_pax_bank_account_operation_kboard(*state, event);
 		break;
 	}
 }
@@ -108,6 +315,9 @@ static pax_state_t handle_pax_wait_for_input(pax_state_t state, sfEvent *event)
 		case PS_USER_INFO_END_WFI:
 			return pax_main_menu();
 
+		case PS_BANK_TRANSACTIONS_WFI:
+			return pax_banking();
+
 		default:
 			return state;
 		}
@@ -120,11 +330,15 @@ void handle_pax_input(sfEvent *event)
 {
 	switch (g_state) {
 	case PS_MAIN_MENU:
+	case PS_BANKING:
+	case PS_BANK_DOWNLOAD:
+	case PS_BANK_UPLOAD:
 		neuro_window_handle_input((int*)&g_state, event);
 		break;
 
 	case PS_USER_INFO_WFI:
 	case PS_USER_INFO_END_WFI:
+	case PS_BANK_TRANSACTIONS_WFI:
 		g_state = handle_pax_wait_for_input(g_state, event);
 		break;
 
@@ -137,7 +351,7 @@ pax_state_t update_pax_user_info()
 {
 	static int lines_on_screen = 0, lines_scrolled = 0;
 	static int next_line = 1;
-	static int frame_cap_ms = 20;
+	static int frame_cap_ms = 18;
 	static int elapsed = 0;
 	
 	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
@@ -160,7 +374,7 @@ pax_state_t update_pax_user_info()
 		{
 			next_line = 1;
 			lines_on_screen = 0;
-			neuro_window_draw_string("[press any key to get back to main menu]", 0);
+			neuro_window_draw_string("     [press any key to continue]", 0);
 			return PS_USER_INFO_END_WFI;
 		}
 		else if (++lines_on_screen == 9)

@@ -69,6 +69,22 @@ neuro_pax_buttons_t g_pax_buttons = {
 	}
 };
 
+/* 0x2176 */
+neuro_pax_banking_buttons g_pax_banking_buttons = {
+	.exit = {
+		0x08, 0x34, 0x0137, 0x3B, 0x00, 'x'
+	},
+	.download = {
+		0x08, 0x3C, 0x0137, 0x43, 0x01, 'd'
+	},
+	.upload = {
+		0x08, 0x44, 0x0137, 0x4B, 0x02, 'u'
+	},
+	.transactions = {
+		0x08, 0x4C, 0x0137, 0x53, 0x03, 't'
+	}
+};
+
 /* 0x21FA */
 neuro_inventory_buttons_t g_inv_buttons = {
 	.item_page_exit = {
@@ -472,9 +488,8 @@ x4bae_t g_4bae = {
 	.x4c82 = 0,
 	.x4c84 = { 0, 0, 0 },
 	.x4c87 = 0x7D0,
-	.x4c89 = 0x7D0,
-	.x4c8b = 0,
-	.x4c8d = 0,
+	.bank_account = 2000,
+	.bank_last_transacton_record_index = 0,
 	.x4c8e = 0,
 	.x4c90 = 0,
 	.name = { '{', '@', 'C', 'a', 's', 'e', 0, },
@@ -483,9 +498,9 @@ x4bae_t g_4bae = {
 	.roompos_x = 0xA0,
 	.roompos_y = 0x69,
 	.x4ca7 = 0,
-	.x4ca9 = {
-		0x40, 0, 0x78, 0, 0, 0, 0x40, 0, 0x38, 0, 0, 0,
-		0x40, 0, 0x4B, 0, 0, 0, 0xC0, 0, 0xE8, 3, 0, 0,
+	.bank_transaction_record = {
+		{ 0x40, 120 }, { 0x40, 56 },
+		{ 0x40, 75 }, { 0xC0, 1000 },
 	},
 	.ui_type = 0,
 	.x4cc3 = 0,

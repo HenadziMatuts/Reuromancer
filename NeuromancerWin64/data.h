@@ -21,44 +21,38 @@ extern int16_t g_exit_point;
 extern uint16_t g_load_level_vm;
 
 typedef struct neuro_ui_buttons_t {
-	neuro_button_t inventory;
-	neuro_button_t pax;
-	neuro_button_t dialog;
-	neuro_button_t skills;
-	neuro_button_t chip;
-	neuro_button_t disk;
-	neuro_button_t date;
-	neuro_button_t time;
-	neuro_button_t cash;
-	neuro_button_t con;
+	neuro_button_t inventory, pax, dialog;
+	neuro_button_t skills, chip, disk;
+	neuro_button_t date, time, cash, con;
 } neuro_ui_buttons_t;
 
 /* 0x1FA2 */
 extern neuro_ui_buttons_t g_ui_buttons;
 
 typedef struct neuro_pax_buttons_t {
-	neuro_button_t exit;
-	neuro_button_t user_info;
-	neuro_button_t banking;
-	neuro_button_t news;
-	neuro_button_t board;
+	neuro_button_t exit, user_info, banking;
+	neuro_button_t news, board;
 } neuro_pax_buttons_t;
 
 /* 0x201A */
 extern neuro_pax_buttons_t g_pax_buttons;
 
+typedef struct neuro_pax_banking_buttons {
+	neuro_button_t exit, download, upload, transactions;
+} neuro_pax_banking_buttons;
+
+/* 0x2176 */
+extern neuro_pax_banking_buttons g_pax_banking_buttons;
+
 typedef struct neuro_inventory_buttons_t {
-	neuro_button_t item_page_exit;
-	neuro_button_t exit;
-	neuro_button_t more;
+	neuro_button_t item_page_exit, exit, more;
 } neuro_inventory_buttons_t;
 
 /* 0x21FA */
 extern neuro_inventory_buttons_t g_inv_buttons;
 
 typedef struct neuro_inventory_discard_buttons_t {
-	neuro_button_t yes;
-	neuro_button_t no;
+	neuro_button_t yes, no;
 } neuro_inventory_discard_buttons_t;
 
 /* 0x2236 */
@@ -115,6 +109,11 @@ extern char *g_inventory_item_names[];
 extern uint8_t g_inventory_item_operations[128];
 
 extern jumps_t g_4b9d[4];
+
+typedef struct transaction_record_t {
+	uint16_t op;
+	uint32_t amount;
+} transaction_record_t;
 
 typedef struct x4bae_t {
 	uint8_t x4bae[16];
@@ -191,9 +190,8 @@ typedef struct x4bae_t {
 	uint16_t x4c82;
 	uint8_t x4c84[3];
 	uint16_t x4c87;
-	uint16_t x4c89;
-	uint16_t x4c8b;
-	uint8_t x4c8d;
+	uint32_t bank_account; // 0x4C89
+	uint8_t bank_last_transacton_record_index; // 0x4C8D
 	uint16_t x4c8e;
 	uint16_t x4c90;
 	char name[13];    // 0x4C92
@@ -202,7 +200,7 @@ typedef struct x4bae_t {
 	uint16_t roompos_x; // 0x4CA3
 	uint16_t roompos_y; // 0x4CA5
 	uint16_t x4ca7;
-	uint8_t x4ca9[24];
+	transaction_record_t bank_transaction_record[4]; // 0x4CA9
 	uint16_t ui_type; // 0x4CC1
 	uint16_t x4cc3;
 	uint16_t x4cc5;
@@ -212,7 +210,7 @@ typedef struct x4bae_t {
 	uint8_t x4ccc;
 	uint8_t x4ccd;
 	uint8_t x4cce;
-	uint16_t window_sc_index;
+	uint16_t window_sc_index; // 0x4CCF
 } x4bae_t;
 
 extern x4bae_t g_4bae;

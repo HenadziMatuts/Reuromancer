@@ -413,6 +413,34 @@ int setup_ui_buttons()
 
 /***************************************/
 
+void build_date_string(char *dst, uint8_t date_day)
+{
+	uint16_t day = 16;
+	uint16_t month = 11;
+	uint16_t year = 58;
+
+	if (date_day > 14)
+	{
+		if (day + date_day > 61)
+		{
+			year = 59;
+			month = 1;
+			day = day + date_day - 61;
+		}
+		else
+		{
+			month = 12;
+			day = day + date_day - 30;
+		}
+	}
+	else
+	{
+		day += date_day;
+	}
+
+	sprintf(dst, "%02d/%02d/%02d", month, day, year);
+}
+
 static void ui_panel_update()
 {
 	char panel_string[9];
@@ -465,30 +493,7 @@ static void ui_panel_update()
 		break;
 
 	case UI_PM_DATE: {
-		uint16_t day = 16;
-		uint16_t month = 11;
-		uint16_t year = 58;
-
-		if (g_4bae.date_day > 14)
-		{
-			if (day + g_4bae.date_day > 61)
-			{
-				year = 59;
-				month = 1;
-				day = day + g_4bae.date_day - 61;
-			}
-			else
-			{
-				month = 12;
-				day = day + g_4bae.date_day - 30;
-			}
-		}
-		else
-		{
-			day += g_4bae.date_day;
-		}
-
-		sprintf(panel_string, "%02d/%02d/%02d", month, day, year);
+		build_date_string(panel_string, g_4bae.date_day);
 		build_string(panel_string, 320, 200, 96, 149, bg_pix);
 		break;
 	}
@@ -830,7 +835,6 @@ static real_world_state_t update_normal()
 	real_world_state_t state = RWS_NORMAL;
 	character_dir_t dir = CD_NULL;
 
-	ui_panel_update();
 	dir = character_control_update();
 	
 	sub_105F6(NULL, SUB_105F6_OP_UPDATE_LEVEL);
@@ -891,6 +895,7 @@ static neuro_scene_id_t update()
 	neuro_scene_id_t scene = NSID_REAL_WORLD;
 
 	update_cursor();
+	ui_panel_update();
 
 	switch (g_state) {
 	case RWS_FADE_IN:

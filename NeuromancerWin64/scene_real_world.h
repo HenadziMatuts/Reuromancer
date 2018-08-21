@@ -12,6 +12,8 @@ typedef enum real_world_state_t {
 	RWS_RELOAD_LEVEL
 } real_world_state_t;
 
+void build_date_string(char *dst, uint8_t date_day);
+
 /* Text Output state handles */
 void text_output_set_text(char *p);
 void handle_text_output_input(sfEvent *event);
