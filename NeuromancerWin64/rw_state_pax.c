@@ -23,8 +23,8 @@ typedef enum pax_state_t {
 } pax_state_t;
 
 static pax_state_t g_state = PS_OPEN_PAX;
-static uint8_t g_text_data[2048] = { 0, };
-static uint8_t *g_text_ptr = g_text_data;
+static uint8_t g_pax_data[8192] = { 0, };
+static uint8_t *g_text_ptr = g_pax_data;
 
 static void neuro_window_set_draw_string_offt(uint16_t l, uint16_t t)
 {
@@ -32,6 +32,13 @@ static void neuro_window_set_draw_string_offt(uint16_t l, uint16_t t)
 
 	g_neuro_window.c92a = l;
 	g_neuro_window.c92c = t;
+}
+
+static pax_state_t pax_news()
+{
+	assert(resource_manager_load_resource("NEWS.BIH", g_pax_data));
+
+	return PS_MAIN_MENU;
 }
 
 static pax_state_t pax_bank_transactions()
@@ -141,15 +148,15 @@ static pax_state_t pax_banking()
 
 static pax_state_t pax_user_info()
 {
-	assert(resource_manager_load_resource("FTUSER.TXH", g_text_data));
+	assert(resource_manager_load_resource("FTUSER.TXH", g_pax_data));
 
 	neuro_window_clear();
 	neuro_window_flush_buttons();
 
 	neuro_window_set_draw_string_offt(8, 8);
-	neuro_window_draw_string(g_text_data, 1);
+	neuro_window_draw_string(g_pax_data, 1);
 
-	g_text_ptr = g_text_data + strlen(g_text_data) + 1;
+	g_text_ptr = g_pax_data + strlen(g_pax_data) + 1;
 	return PS_USER_INFO;
 }
 
@@ -210,6 +217,9 @@ static pax_state_t on_pax_main_menu_button(neuro_button_t *button)
 
 	case 2: /* banking */
 		return pax_banking();
+
+	case 3: /* news */
+		return pax_news();
 
 	default:
 		break;
