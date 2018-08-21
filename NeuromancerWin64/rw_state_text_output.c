@@ -34,7 +34,7 @@ void handle_text_output_input(sfEvent *event)
 real_world_state_t update_text_output()
 {
 	static int lines_on_screen = 0, lines_scrolled = 0;
-	static int frame_cap_ms = 13;
+	static int frame_cap_ms = 11;
 	static int elapsed = 0;
 
 	char line[18] = { 0, };
