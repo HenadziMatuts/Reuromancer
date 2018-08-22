@@ -294,6 +294,14 @@ void neuro_window_flush_buttons()
 	}
 }
 
+void neuro_window_set_draw_string_offt(uint16_t l, uint16_t t)
+{
+	assert((g_neuro_window.mode == 2) || (g_neuro_window.mode == 3));
+
+	g_neuro_window.c92a = l;
+	g_neuro_window.c92c = t;
+}
+
 static void window_handle_text_enter(int *state, sfTextEvent *event)
 {
 	switch (g_neuro_window.mode) {

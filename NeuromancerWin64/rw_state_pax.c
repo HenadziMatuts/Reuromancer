@@ -19,6 +19,10 @@ typedef enum pax_state_t {
 	  PS_BANK_DOWNLOAD,
 	  PS_BANK_UPLOAD,
 	  PS_BANK_TRANSACTIONS_WFI,
+	PS_NEWS_MENU,
+	  PS_NEWS,
+	    PS_NEWS_WFI,
+	    PS_NEWS_END_WFI,
 	PS_CLOSE_PAX
 } pax_state_t;
 
@@ -26,19 +30,179 @@ static pax_state_t g_state = PS_OPEN_PAX;
 static uint8_t g_pax_data[8192] = { 0, };
 static uint8_t *g_text_ptr = g_pax_data;
 
-static void neuro_window_set_draw_string_offt(uint16_t l, uint16_t t)
-{
-	assert((g_neuro_window.mode == 2) || (g_neuro_window.mode == 3));
+typedef enum pax_info_menu_type_t {
+	PIMT_NEWS = 0,
+	PIMT_BOARD,
+} pax_info_menu_type_t;
 
-	g_neuro_window.c92a = l;
-	g_neuro_window.c92c = t;
+static int pax_info_menu_prepare_list(uint16_t *infos_list, int type)
+{
+	int entries = 0;
+
+	union {
+		pax_news_hdr_t *news;
+		pax_board_msg_hdr_t *msg;
+		uint8_t *p;
+	} info;
+
+	info.p = (type == PIMT_NEWS) ?
+		(uint8_t*)g_pax_news : (uint8_t*)g_pax_board_msg;
+
+	for (int i = 0; i < 32; i++, info.p += 40)
+	{
+		char date_string[9] = { 0, };
+
+		if (info.news->flag & 0x80)
+		{
+			build_date_string(date_string, g_4bae.date_day);
+			strcpy(info.news->date, date_string);
+			info.news->flag &= 0x7F;
+		}
+
+		switch (info.news->flag & 0x0F) {
+		case 0x00:
+			infos_list[entries++] = i;
+			continue;
+
+		case 0x01: {
+			uint16_t offt = info.news->addr - 0x4BAE;
+			int8_t *p = g_4bae.x4bae + offt;
+
+			if (*p > info.news->val)
+			{
+				infos_list[entries++] = i;
+			}
+
+			continue;
+		}
+
+		case 0x02: {
+			uint16_t offt = info.news->addr - 0x4BAE;
+			int8_t *p = g_4bae.x4bae + offt;
+
+			if (*p != info.news->val)
+			{
+				infos_list[entries++] = i;
+			}
+
+			continue;
+		}
+
+		case 0x03:
+			i = 31;
+			continue;
+
+		default:
+			continue;
+		}
+	}
+
+	return entries;
+}
+
+static neuro_button_t g_info_menu_items[5];
+static uint16_t g_info_menu_entries[5];
+
+static pax_state_t pax_info_menu(int type, int start_item)
+{
+	static int items_listed = 0;
+	int list_entries = 0;
+	uint16_t infos_list[32];
+	int max_items = 0;
+	neuro_button_t *item = g_info_menu_items;
+
+	union {
+		pax_news_hdr_t *news;
+		pax_board_msg_hdr_t *msg;
+		uint8_t *p;
+	} info;
+
+	info.p = (type == PIMT_NEWS) ?
+		(uint8_t*)g_pax_news : (uint8_t*)g_pax_board_msg;
+
+	list_entries = pax_info_menu_prepare_list(infos_list, type);
+
+	if (start_item == 0)
+	{
+		items_listed = 0;
+	}
+
+	max_items = list_entries - items_listed;
+	max_items = (max_items > 5) ? 5 : max_items;
+
+	neuro_window_flush_buttons();
+
+	int i = 0;
+	for (i = 0; i < 5; i++, item++)
+	{
+		neuro_window_set_draw_string_offt(8, (i * 8) + 40);
+
+		if (i < max_items)
+		{
+			char item_string[40] = { 0, };
+
+			if (type == PIMT_NEWS)
+			{
+				pax_news_hdr_t *p = &info.news[infos_list[items_listed]];
+				sprintf(item_string, "%d. %8s %s", i + 1, p->date, p->subject);
+			}
+			else
+			{
+				pax_board_msg_hdr_t *p = &info.msg[infos_list[items_listed]];
+				sprintf(item_string, "%d. %8s %-12s %-13s", i + 1, p->date,
+					(*p->from == 0x01) ? g_4bae.name : p->from, p->to);
+			}
+
+			g_info_menu_entries[i] = infos_list[items_listed++];
+			items_listed %= list_entries;
+
+			item->left = 8;
+			item->top = (i * 8) + 44;
+			item->right = 311;
+			item->bottom = (i * 8) + 51;
+			item->code = i;
+			item->label = '0x31' + i;
+
+			neuro_window_add_button(item);
+			neuro_window_draw_string(item_string, 1);
+		}
+		else
+		{
+			neuro_window_draw_string(""
+				"                    "
+				"                    ", 1);
+		}
+	}
+	items_listed %= list_entries;
+
+	char exit_string[10] = { 0 };
+	strcpy(exit_string, "exit");
+	neuro_window_add_button(&g_pax_info_menu_buttons.exit);
+
+	if (list_entries > 5)
+	{
+		strcat(exit_string, " more");
+		neuro_window_add_button(&g_pax_info_menu_buttons.more);
+	}
+
+	neuro_window_set_draw_string_offt(120, 88);
+	neuro_window_draw_string(exit_string, 2);
+
+	return (type == PIMT_NEWS) ? PS_NEWS_MENU : PS_MAIN_MENU;
 }
 
 static pax_state_t pax_news()
 {
 	assert(resource_manager_load_resource("NEWS.BIH", g_pax_data));
 
-	return PS_MAIN_MENU;
+	neuro_window_clear();
+	neuro_window_set_draw_string_offt(8, 8);
+	neuro_window_draw_string(""
+		"      Night City News\n"
+		"\n"
+		"   date     subject");
+
+	return pax_info_menu(PIMT_NEWS, 0);
 }
 
 static pax_state_t pax_bank_transactions()
@@ -184,6 +348,47 @@ static pax_state_t pax_main_menu()
 	return PS_MAIN_MENU;
 }
 
+static pax_state_t on_pax_news_menu_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4: { /* items */
+		uint16_t index = g_info_menu_entries[button->code];
+		g_text_ptr = g_pax_data;
+
+		for (int i = 0; i < index; i++)
+		{
+			while (*g_text_ptr++);
+		}
+
+		neuro_window_clear();
+		neuro_window_flush_buttons();
+		neuro_window_set_draw_string_offt(8, 8);
+
+		char subject_string[40] = { 0 };
+		sprintf(subject_string, "%s %s",
+			g_pax_news[index].date, g_pax_news[index].subject);
+		neuro_window_draw_string(subject_string, 1);
+
+		return PS_NEWS;
+	}
+
+	case 0x0A: /*exit*/
+		return pax_main_menu();
+
+	case 0x0B: /* more */
+		return pax_info_menu(PIMT_NEWS, 1);
+
+	default:
+		break;
+	}
+
+	return PS_NEWS_MENU;
+}
+
 static pax_state_t on_pax_banking_button(neuro_button_t *button)
 {
 	switch (button->code) {
@@ -237,6 +442,10 @@ void rw_pax_handle_button_press(int *state, neuro_button_t *button)
 
 	case PS_BANKING:
 		*state = on_pax_banking_button(button);
+		break;
+
+	case PS_NEWS_MENU:
+		*state = on_pax_news_menu_button(button);
 		break;
 
 	default:
@@ -328,6 +537,12 @@ static pax_state_t handle_pax_wait_for_input(pax_state_t state, sfEvent *event)
 		case PS_BANK_TRANSACTIONS_WFI:
 			return pax_banking();
 
+		case PS_NEWS_WFI:
+			return PS_NEWS;
+
+		case PS_NEWS_END_WFI:
+			return pax_news();
+
 		default:
 			return state;
 		}
@@ -343,12 +558,15 @@ void handle_pax_input(sfEvent *event)
 	case PS_BANKING:
 	case PS_BANK_DOWNLOAD:
 	case PS_BANK_UPLOAD:
+	case PS_NEWS_MENU:
 		neuro_window_handle_input((int*)&g_state, event);
 		break;
 
 	case PS_USER_INFO_WFI:
 	case PS_USER_INFO_END_WFI:
 	case PS_BANK_TRANSACTIONS_WFI:
+	case PS_NEWS_WFI:
+	case PS_NEWS_END_WFI:
 		g_state = handle_pax_wait_for_input(g_state, event);
 		break;
 
@@ -357,18 +575,24 @@ void handle_pax_input(sfEvent *event)
 	}
 }
 
-pax_state_t update_pax_user_info()
+typedef enum pax_text_scroll_event_t {
+	PTS_EVT_NO_EVENT = 0,
+	PTS_EVT_WFI_TO_CONTINUE,
+	PTS_EVT_WFI_TO_END
+} pax_text_scroll_event_t;
+
+pax_text_scroll_event_t pax_scroll_text()
 {
 	static int lines_on_screen = 0, lines_scrolled = 0;
 	static int next_line = 1;
 	static int frame_cap_ms = 18;
 	static int elapsed = 0;
-	
+
 	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
 
 	if (passed - elapsed <= frame_cap_ms)
 	{
-		return PS_USER_INFO;
+		return PTS_EVT_NO_EVENT;
 	}
 	elapsed = passed;
 
@@ -384,16 +608,15 @@ pax_state_t update_pax_user_info()
 		{
 			next_line = 1;
 			lines_on_screen = 0;
-			neuro_window_draw_string("     [press any key to continue]", 0);
-			return PS_USER_INFO_END_WFI;
+			return PTS_EVT_WFI_TO_END;
 		}
 		else if (++lines_on_screen == 9)
 		{
 			lines_on_screen = 0;
-			return PS_USER_INFO_WFI;
+			return PTS_EVT_WFI_TO_CONTINUE;
 		}
 
-		return PS_USER_INFO;
+		return PTS_EVT_NO_EVENT;
 	}
 	else
 	{
@@ -411,7 +634,35 @@ pax_state_t update_pax_user_info()
 		}
 	}
 
-	return PS_USER_INFO;
+	return PTS_EVT_NO_EVENT;
+}
+
+pax_state_t update_pax_text_scrolling(pax_state_t state)
+{
+	pax_text_scroll_event_t evt = pax_scroll_text();
+
+	if (evt == PTS_EVT_WFI_TO_CONTINUE)
+	{
+		switch (state) {
+		case PS_USER_INFO:
+			return PS_USER_INFO_WFI;
+
+		case PS_NEWS:
+			return PS_NEWS_WFI;
+		}
+	}
+	else if (evt == PTS_EVT_WFI_TO_END)
+	{
+		switch (state) {
+		case PS_USER_INFO:
+			return PS_USER_INFO_END_WFI;
+
+		case PS_NEWS:
+			return PS_NEWS_END_WFI;
+		}
+	}
+
+	return state;
 }
 
 pax_state_t update_pax_close()
@@ -503,7 +754,8 @@ real_world_state_t update_pax()
 		break;
 
 	case PS_USER_INFO:
-		g_state = update_pax_user_info();
+	case PS_NEWS:
+		g_state = update_pax_text_scrolling(g_state);
 		break;
 	}
 	

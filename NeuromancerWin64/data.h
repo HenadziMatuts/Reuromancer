@@ -9,16 +9,18 @@
 /* seg004 */
 typedef struct pax_news_hdr_t {
 	uint16_t addr;
-	uint8_t val[2];
+	uint8_t val;
+	uint8_t flag;
 	char date[9];
-	char header[27];
+	char subject[27];
 } pax_news_hdr_t;
 
 extern pax_news_hdr_t g_pax_news[21];
 
 typedef struct pax_board_msg_hdr_t {
 	uint16_t addr;
-	uint8_t val[2];
+	uint8_t val;
+	uint8_t flag;
 	char date[9];
 	char to[13];
 	char from[14];
@@ -63,6 +65,13 @@ typedef struct neuro_pax_banking_buttons {
 
 /* 0x2176 */
 extern neuro_pax_banking_buttons g_pax_banking_buttons;
+
+typedef struct neuro_pax_info_menu_buttons {
+	neuro_button_t exit, more;
+} neuro_pax_info_menu_buttons;
+
+/* 0x21A6 */
+extern neuro_pax_info_menu_buttons g_pax_info_menu_buttons;
 
 typedef struct neuro_inventory_buttons_t {
 	neuro_button_t item_page_exit, exit, more;
