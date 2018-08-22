@@ -6,6 +6,26 @@
 
 #pragma pack(push, 1)
 
+/* seg004 */
+typedef struct pax_news_hdr_t {
+	uint16_t addr;
+	uint8_t val[2];
+	char date[9];
+	char header[27];
+} pax_news_hdr_t;
+
+extern pax_news_hdr_t g_pax_news[21];
+
+typedef struct pax_board_msg_hdr_t {
+	uint16_t addr;
+	uint8_t val[2];
+	char date[9];
+	char to[13];
+	char from[14];
+} pax_board_msg_hdr_t;
+
+extern pax_board_msg_hdr_t g_pax_board_msg[22];
+
 /* 0x004C */
 extern int g_level_n;
 
