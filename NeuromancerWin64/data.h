@@ -190,7 +190,7 @@ typedef struct x4bae_t {
 	uint8_t x4c1a;
 	uint16_t x4c1b;
 	uint8_t x4c1d[4];
-	uint16_t x4c21;
+	uint16_t msg_to_armitage_sent;
 	uint8_t x4c23[2];
 	uint16_t x4c25;
 	uint8_t x4c27[4];

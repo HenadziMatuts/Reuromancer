@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 typedef enum pax_state_t {
 	PS_OPEN_PAX = 0,
@@ -35,12 +36,67 @@ typedef enum pax_state_t {
 } pax_state_t;
 
 static pax_state_t g_state = PS_OPEN_PAX;
-static uint8_t g_pax_data[8192] = { 0, };
+static uint8_t g_pax_data[9216] = { 0, };
 static uint8_t *g_text_ptr = g_pax_data;
 
 static char g_send_msg_carriage_pos = 0;
 static char g_send_msg_addressee[12] = { 0, };
 static char g_send_msg_text[116] = { 0, };
+
+static char* trim(char *s)
+{
+	char *start = s;
+	char *end = s + strlen(s);
+
+	while (*start == ' ')
+	{
+		start++;
+	}
+
+	if (start == end)
+	{
+		*s = 0;
+		return s;
+	}
+
+	while (*--end == ' ');
+	
+	int64_t len = end - start + 1;
+
+	memmove(s, start, len);
+	s[len] = 0;
+
+	return s;
+}
+
+void pax_send_mgs()
+{
+	char *addressee = trim(g_send_msg_addressee);
+	char *text = g_send_msg_text;
+
+	for (size_t s = 0; s < strlen(addressee); s++)
+	{
+		addressee[s] = tolower(addressee[s]);
+	}
+
+	if (strcmp(addressee, "armitage") ||
+		!strstr(text, "056306118") ||
+		g_4bae.msg_to_armitage_sent != 0)
+	{
+		return;
+	}
+
+	g_4bae.msg_to_armitage_sent = 1;
+	g_4bae.x4c5c = 0;
+
+	uint16_t index = g_4bae.bank_last_transacton_record_index;
+
+	g_4bae.bank_transaction_record[index].op = (g_4bae.date_day & 0x3F) | 0x80;
+	g_4bae.bank_transaction_record[index].amount = 10000;
+
+	g_4bae.bank_last_transacton_record_index = (index + 1) & 3;
+	g_4bae.bank_account += 10000;
+}
 
 static pax_state_t pax_board_send()
 {
@@ -70,6 +126,8 @@ static pax_state_t pax_board_send()
 	g_send_msg_text[38] = '\n';
 	g_send_msg_text[77] = '\n';
 	g_send_msg_text[115] = 0;
+
+	g_send_msg_carriage_pos = 0;
 
 	return PS_BOARD_SEND_MSG_ADDRESSEE;
 }
@@ -278,7 +336,7 @@ static pax_state_t pax_news()
 	neuro_window_draw_string(""
 		"      Night City News\n"
 		"\n"
-		"   date     subject");
+		"   date     subject", 1);
 
 	return pax_info_menu(PIMT_NEWS, 0);
 }
@@ -426,23 +484,16 @@ static pax_state_t pax_main_menu()
 	return PS_MAIN_MENU;
 }
 
-static pax_state_t on_pax_board_menu_button(neuro_button_t *button)
+static pax_state_t on_pax_board_send_msg_button(neuro_button_t *button)
 {
 	switch (button->code) {
-	case 0: /* exit */
-		return pax_main_menu();
-
-	case 1: /* view */
-		return pax_board_view();
-
-	case 2: /* send */
-		return pax_board_send();
-
-	default:
-		break;
+	case 0: /* yes */
+		pax_send_mgs();
+	case 1: /* no */
+		return pax_board();
 	}
 
-	return PS_BOARD_MENU;
+	return PS_BOARD_SEND_MSG_ACCEPT;
 }
 
 static pax_state_t on_pax_board_view_menu_button(neuro_button_t *button)
@@ -463,7 +514,7 @@ static pax_state_t on_pax_board_view_menu_button(neuro_button_t *button)
 
 		neuro_window_clear();
 		neuro_window_flush_buttons();
-		
+
 		neuro_window_set_draw_string_offt(8, 8);
 		neuro_window_draw_string(g_pax_board_msg[index].date, 1);
 
@@ -481,6 +532,25 @@ static pax_state_t on_pax_board_view_menu_button(neuro_button_t *button)
 	}
 
 	return PS_BOARD_VIEW_MENU;
+}
+
+static pax_state_t on_pax_board_menu_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0: /* exit */
+		return pax_main_menu();
+
+	case 1: /* view */
+		return pax_board_view();
+
+	case 2: /* send */
+		return pax_board_send();
+
+	default:
+		break;
+	}
+
+	return PS_BOARD_MENU;
 }
 
 static pax_state_t on_pax_news_menu_button(neuro_button_t *button)
@@ -594,6 +664,10 @@ void rw_pax_handle_button_press(int *state, neuro_button_t *button)
 		*state = on_pax_board_view_menu_button(button);
 		break;
 
+	case PS_BOARD_SEND_MSG_ACCEPT:
+		*state = on_pax_board_send_msg_button(button);
+		break;
+
 	default:
 		break;
 	}
@@ -639,7 +713,11 @@ static pax_state_t on_pax_board_send_msg_text_enter(int state, sfTextEvent *even
 		{
 			if (g_send_msg_text[--g_send_msg_carriage_pos] == '\n')
 			{
-				g_send_msg_carriage_pos++;
+				while (g_send_msg_text[--g_send_msg_carriage_pos] == ' ');
+				if (g_send_msg_text[g_send_msg_carriage_pos + 1] != '\n')
+				{
+					g_send_msg_carriage_pos++;
+				}
 			}
 
 			g_send_msg_text[g_send_msg_carriage_pos] = ' ';
@@ -662,6 +740,16 @@ static pax_state_t on_pax_board_send_msg_text_enter(int state, sfTextEvent *even
 			{
 				g_send_msg_carriage_pos = 78;
 			}
+		}
+		else if (key == sfKeyEscape)
+		{
+			neuro_window_set_draw_string_offt(8, 24);
+			neuro_window_draw_string("Send this message (Y/N)", 1);
+
+			neuro_window_add_button(&g_pax_board_send_msg_buttons.yes);
+			neuro_window_add_button(&g_pax_board_send_msg_buttons.no);
+
+			state = PS_BOARD_SEND_MSG_ACCEPT;
 		}
 
 		neuro_window_set_draw_string_offt(8, 64);
@@ -879,6 +967,7 @@ void handle_pax_input(sfEvent *event)
 	case PS_BOARD_VIEW_MENU:
 	case PS_BOARD_SEND_MSG_ADDRESSEE:
 	case PS_BOARD_SEND_MSG_TEXT:
+	case PS_BOARD_SEND_MSG_ACCEPT:
 		neuro_window_handle_input((int*)&g_state, event);
 		break;
 
@@ -984,7 +1073,7 @@ static pax_text_scroll_event_t pax_scroll_text()
 	{
 		uint8_t *pix = g_seg011 + sizeof(imh_hdr_t);
 
-		for (int i = 17, j = 16; i < 96; i++, j++)
+		for (int i = 17, j = 16; i < 97; i++, j++)
 		{
 			memmove(&pix[160 * j + 8], &pix[160 * i + 8], 304);
 		}
