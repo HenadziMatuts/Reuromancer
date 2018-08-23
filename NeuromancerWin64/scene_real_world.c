@@ -406,7 +406,7 @@ int setup_ui_buttons()
 	neuro_window_add_button(&g_ui_buttons.date);
 	neuro_window_add_button(&g_ui_buttons.time);
 	neuro_window_add_button(&g_ui_buttons.cash);
-	neuro_window_add_button(&g_ui_buttons.con);
+	neuro_window_add_button(&g_ui_buttons.constitution);
 
 	return 0;
 }
@@ -483,7 +483,7 @@ static void ui_panel_update()
 		break;
 
 	case UI_PM_CON:
-		sprintf(panel_string, "%8d", g_4bae.con);
+		sprintf(panel_string, "%8d", g_4bae.constitution);
 		build_string(panel_string, 320, 200, 96, 149, bg_pix);
 		break;
 
@@ -671,7 +671,7 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button)
 		g_ui_panel_mode = UI_PM_CASH;
 		break;
 
-	case 0x0D: /* panel con */
+	case 0x0D: /* panel constitution */
 		g_ui_panel_mode = UI_PM_CON;
 		break;
 

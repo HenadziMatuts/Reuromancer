@@ -624,7 +624,7 @@ static inventory_state_t on_inventory_give_credits_kboard(sfTextEvent *event)
 {
 	static char input[9] = { 0 };
 
-	sfKeyCode key = sfHandleTextInput(event->unicode, input, 8, 1);
+	sfKeyCode key = sfHandleTextInput(event->unicode, input, 8, 1, 0);
 
 	if (key != sfKeyReturn)
 	{

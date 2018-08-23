@@ -29,7 +29,7 @@ void main_menu_handle_text_enter(int *state, sfTextEvent *event)
 	if (*state == MMS_NEW)
 	{
 		char input[12] = { 0x00 };
-		sfKeyCode key = sfHandleTextInput(event->unicode, name, 11, 0);
+		sfKeyCode key = sfHandleTextInput(event->unicode, name, 11, 0, 0);
 
 		if (key == sfKeyReturn)
 		{

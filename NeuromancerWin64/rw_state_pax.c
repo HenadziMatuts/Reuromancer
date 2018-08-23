@@ -23,12 +23,56 @@ typedef enum pax_state_t {
 	  PS_NEWS,
 	    PS_NEWS_WFI,
 	    PS_NEWS_END_WFI,
+	PS_BOARD_MENU,
+	  PS_BOARD_VIEW_MENU,
+	   PS_BOARD_MSG,
+	     PS_BOARD_MSG_WFI,
+	     PS_BOARD_MSG_END_WFI,
+	  PS_BOARD_SEND_MSG_ADDRESSEE,
+	  PS_BOARD_SEND_MSG_TEXT,
+	  PS_BOARD_SEND_MSG_ACCEPT,
 	PS_CLOSE_PAX
 } pax_state_t;
 
 static pax_state_t g_state = PS_OPEN_PAX;
 static uint8_t g_pax_data[8192] = { 0, };
 static uint8_t *g_text_ptr = g_pax_data;
+
+static char g_send_msg_carriage_pos = 0;
+static char g_send_msg_addressee[12] = { 0, };
+static char g_send_msg_text[116] = { 0, };
+
+static pax_state_t pax_board_send()
+{
+	char date_string[9] = { 0 };
+	char string[80] = { 0 };
+
+	neuro_window_clear();
+	neuro_window_flush_buttons();
+
+	build_date_string(date_string, g_4bae.date_day);
+	sprintf(string, ""
+		"     Send Message\n"
+		"\n"
+		"Press ESC when done\n"
+		"\n"
+		"date : %s\n"
+		"to   : <",
+		date_string);
+
+	neuro_window_set_draw_string_offt(8, 8);
+	neuro_window_draw_string(string, 1);
+
+	memset(g_send_msg_addressee, 0x20, 11);
+	g_send_msg_addressee[11] = 0;
+
+	memset(g_send_msg_text, 0x20, 115);
+	g_send_msg_text[38] = '\n';
+	g_send_msg_text[77] = '\n';
+	g_send_msg_text[115] = 0;
+
+	return PS_BOARD_SEND_MSG_ADDRESSEE;
+}
 
 typedef enum pax_info_menu_type_t {
 	PIMT_NEWS = 0,
@@ -150,7 +194,7 @@ static pax_state_t pax_info_menu(int type, int start_item)
 			{
 				pax_board_msg_hdr_t *p = &info.msg[infos_list[items_listed]];
 				sprintf(item_string, "%d. %8s %-12s %-13s", i + 1, p->date,
-					(*p->from == 0x01) ? g_4bae.name : p->from, p->to);
+					(*p->to == 0x01) ? g_4bae.name + 2 : p->to, p->from);
 			}
 
 			g_info_menu_entries[i] = infos_list[items_listed++];
@@ -188,7 +232,41 @@ static pax_state_t pax_info_menu(int type, int start_item)
 	neuro_window_set_draw_string_offt(120, 88);
 	neuro_window_draw_string(exit_string, 2);
 
-	return (type == PIMT_NEWS) ? PS_NEWS_MENU : PS_MAIN_MENU;
+	return (type == PIMT_NEWS) ? PS_NEWS_MENU : PS_BOARD_VIEW_MENU;
+}
+
+static pax_state_t pax_board_view()
+{
+	assert(resource_manager_load_resource("PAXBBS.BIH", g_pax_data));
+
+	neuro_window_clear();
+	neuro_window_set_draw_string_offt(8, 8);
+	neuro_window_draw_string(""
+		"Bulletin Board\n"
+		"\n"
+		"       date to           from");
+
+	return pax_info_menu(PIMT_BOARD, 0);
+}
+
+static pax_state_t pax_board()
+{
+	neuro_window_clear();
+	neuro_window_flush_buttons();
+
+	neuro_window_set_draw_string_offt(8, 8);
+	neuro_window_draw_string(""
+		"Bulletin Board\n"
+		"\n"
+		"X. Exit To Main\n"
+		"V. View Messages\n"
+		"S. Send Message", 1);
+
+	neuro_window_add_button(&g_pax_board_menu_buttons.exit);
+	neuro_window_add_button(&g_pax_board_menu_buttons.view);
+	neuro_window_add_button(&g_pax_board_menu_buttons.send);
+
+	return PS_BOARD_MENU;
 }
 
 static pax_state_t pax_news()
@@ -348,6 +426,63 @@ static pax_state_t pax_main_menu()
 	return PS_MAIN_MENU;
 }
 
+static pax_state_t on_pax_board_menu_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0: /* exit */
+		return pax_main_menu();
+
+	case 1: /* view */
+		return pax_board_view();
+
+	case 2: /* send */
+		return pax_board_send();
+
+	default:
+		break;
+	}
+
+	return PS_BOARD_MENU;
+}
+
+static pax_state_t on_pax_board_view_menu_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4: { /* items */
+		uint16_t index = g_info_menu_entries[button->code];
+		g_text_ptr = g_pax_data;
+
+		for (int i = 0; i < index; i++)
+		{
+			while (*g_text_ptr++);
+		}
+
+		neuro_window_clear();
+		neuro_window_flush_buttons();
+		
+		neuro_window_set_draw_string_offt(8, 8);
+		neuro_window_draw_string(g_pax_board_msg[index].date, 1);
+
+		return PS_BOARD_MSG;
+	}
+
+	case 0x0A: /* exit */
+		return pax_board();
+
+	case 0x0B: /* more */
+		return pax_info_menu(PIMT_BOARD, 1);
+
+	default:
+		break;
+	}
+
+	return PS_BOARD_VIEW_MENU;
+}
+
 static pax_state_t on_pax_news_menu_button(neuro_button_t *button)
 {
 	switch (button->code) {
@@ -426,6 +561,9 @@ static pax_state_t on_pax_main_menu_button(neuro_button_t *button)
 	case 3: /* news */
 		return pax_news();
 
+	case 4: /* board */
+		return pax_board();
+
 	default:
 		break;
 	}
@@ -448,15 +586,99 @@ void rw_pax_handle_button_press(int *state, neuro_button_t *button)
 		*state = on_pax_news_menu_button(button);
 		break;
 
+	case PS_BOARD_MENU:
+		*state = on_pax_board_menu_button(button);
+		break;
+
+	case PS_BOARD_VIEW_MENU:
+		*state = on_pax_board_view_menu_button(button);
+		break;
+
 	default:
 		break;
 	}
 }
 
-static pax_state_t on_pax_bank_account_operation_kboard(int state, sfTextEvent *event)
+static pax_state_t on_pax_board_send_msg_text_enter(int state, sfTextEvent *event)
+{
+	if (state == PS_BOARD_SEND_MSG_ADDRESSEE)
+	{
+		sfKeyCode key = sfHandleTextInput(event->unicode,
+			g_send_msg_addressee + g_send_msg_carriage_pos,
+			12 - g_send_msg_carriage_pos, 0, 1);
+		size_t l = strlen(g_send_msg_addressee);
+
+		if (key == sfKeyBack && g_send_msg_carriage_pos > 0)
+		{
+			g_send_msg_addressee[--g_send_msg_carriage_pos] = ' ';
+		}
+		else if (key == sfKeyCount && g_send_msg_carriage_pos < 11)
+		{
+			g_send_msg_carriage_pos++;
+		}
+		else if (key == sfKeyReturn)
+		{
+			neuro_window_set_draw_string_offt(64 + (g_send_msg_carriage_pos * 8), 48);
+			neuro_window_draw_string(" ", 1);
+			g_send_msg_carriage_pos = 0;
+
+			return PS_BOARD_SEND_MSG_TEXT;
+		}
+
+		neuro_window_set_draw_string_offt(64, 48);
+		neuro_window_draw_string("            ", 1);
+		neuro_window_draw_string(g_send_msg_addressee, 1);
+	}
+	else
+	{
+		sfKeyCode key = sfHandleTextInput(event->unicode,
+			g_send_msg_text + g_send_msg_carriage_pos,
+			116 - g_send_msg_carriage_pos, 0, 1);
+
+		if (key == sfKeyBack && g_send_msg_carriage_pos > 0)
+		{
+			if (g_send_msg_text[--g_send_msg_carriage_pos] == '\n')
+			{
+				g_send_msg_carriage_pos++;
+			}
+
+			g_send_msg_text[g_send_msg_carriage_pos] = ' ';
+		}
+		else if (key == sfKeyCount && g_send_msg_carriage_pos < 115)
+		{
+			if (g_send_msg_text[++g_send_msg_carriage_pos] == '\n')
+			{
+				g_send_msg_carriage_pos++;
+			}
+		}
+		else if (key == sfKeyReturn)
+		{
+			if (g_send_msg_carriage_pos < 38)
+			{
+				g_send_msg_carriage_pos = 39;
+			}
+			else if (g_send_msg_carriage_pos >= 39 &&
+				g_send_msg_carriage_pos < 77)
+			{
+				g_send_msg_carriage_pos = 78;
+			}
+		}
+
+		neuro_window_set_draw_string_offt(8, 64);
+		neuro_window_draw_string(""
+			"                                      \n"
+			"                                      \n"
+			"                                      ", 1);
+		neuro_window_draw_string(g_send_msg_text, 1);
+	}
+
+	return state;
+}
+
+static pax_state_t on_pax_bank_account_operation_text_enter(int state, sfTextEvent *event)
 {
 	static char input[9] = { 0 };
-	sfKeyCode key = sfHandleTextInput(event->unicode, input, 8, 1);
+	sfKeyCode key = sfHandleTextInput(event->unicode, input, 8, 1, 0);
 	char credits[10] = { 0 };
 
 	if (key == sfKeyEscape)
@@ -517,7 +739,95 @@ void rw_pax_handle_text_enter(int *state, sfTextEvent *event)
 	switch (*state) {
 	case PS_BANK_DOWNLOAD:
 	case PS_BANK_UPLOAD:
-		*state = on_pax_bank_account_operation_kboard(*state, event);
+		*state = on_pax_bank_account_operation_text_enter(*state, event);
+		break;
+
+	case PS_BOARD_SEND_MSG_ADDRESSEE:
+	case PS_BOARD_SEND_MSG_TEXT:
+		*state = on_pax_board_send_msg_text_enter(*state, event);
+		break;
+	}
+}
+
+static void pax_board_send_msg_text_handle_kboard(sfKeyEvent *event)
+{
+	int pos = g_send_msg_carriage_pos;
+
+	if (event->type == sfEvtKeyPressed)
+	{
+		if (event->code == sfKeyLeft && g_send_msg_carriage_pos > 0)
+		{
+			if (g_send_msg_text[--g_send_msg_carriage_pos] == '\n')
+			{
+				g_send_msg_carriage_pos--;
+			}
+		}
+		else if (event->code == sfKeyRight && g_send_msg_carriage_pos < 115)
+		{
+			uint16_t cl = 8 + (g_send_msg_carriage_pos % 39) * 8;
+			uint16_t ct = 64 + (g_send_msg_carriage_pos / 39) * 8;
+
+			neuro_window_set_draw_string_offt(cl, ct);
+			neuro_window_draw_string(" ", 1);
+
+			if (g_send_msg_text[++g_send_msg_carriage_pos] == '\n')
+			{
+				g_send_msg_carriage_pos++;
+			}
+		}
+		else if (event->code == sfKeyUp && g_send_msg_carriage_pos > 38)
+		{
+			g_send_msg_carriage_pos -= 39;
+		}
+		else if (event->code == sfKeyDown && g_send_msg_carriage_pos < 77)
+		{
+			g_send_msg_carriage_pos += 39;
+		}
+		else
+		{
+			return;
+		}
+
+		uint16_t cl = 8 + (pos % 39) * 8;
+		uint16_t ct = 64 + (pos / 39) * 8;
+		neuro_window_set_draw_string_offt(cl, ct);
+		neuro_window_draw_string(" ", 1);
+	}
+}
+
+static void pax_board_send_msg_adressee_handle_kboard(sfKeyEvent *event)
+{
+	int pos = g_send_msg_carriage_pos;
+
+	if (event->type == sfEvtKeyPressed)
+	{
+		if (event->code == sfKeyLeft && g_send_msg_carriage_pos > 0)
+		{
+			g_send_msg_carriage_pos--;
+		}
+		else if (event->code == sfKeyRight && g_send_msg_carriage_pos < 11)
+		{
+			g_send_msg_carriage_pos++;
+		}
+		else
+		{
+			return;
+		}
+
+		neuro_window_set_draw_string_offt(64 + (pos * 8), 48);
+		neuro_window_draw_string(" ", 1);
+	}
+}
+
+void rw_pax_handle_kboard(int *state, sfKeyEvent *event)
+{
+	switch (*state) {
+	case PS_BOARD_SEND_MSG_ADDRESSEE:
+		pax_board_send_msg_adressee_handle_kboard(event);
+		break;
+
+	case PS_BOARD_SEND_MSG_TEXT: 
+		pax_board_send_msg_text_handle_kboard(event);
 		break;
 	}
 }
@@ -543,6 +853,12 @@ static pax_state_t handle_pax_wait_for_input(pax_state_t state, sfEvent *event)
 		case PS_NEWS_END_WFI:
 			return pax_news();
 
+		case PS_BOARD_MSG_WFI:
+			return PS_BOARD_MSG;
+
+		case PS_BOARD_MSG_END_WFI:
+			return pax_board_view();
+
 		default:
 			return state;
 		}
@@ -559,6 +875,10 @@ void handle_pax_input(sfEvent *event)
 	case PS_BANK_DOWNLOAD:
 	case PS_BANK_UPLOAD:
 	case PS_NEWS_MENU:
+	case PS_BOARD_MENU:
+	case PS_BOARD_VIEW_MENU:
+	case PS_BOARD_SEND_MSG_ADDRESSEE:
+	case PS_BOARD_SEND_MSG_TEXT:
 		neuro_window_handle_input((int*)&g_state, event);
 		break;
 
@@ -567,11 +887,53 @@ void handle_pax_input(sfEvent *event)
 	case PS_BANK_TRANSACTIONS_WFI:
 	case PS_NEWS_WFI:
 	case PS_NEWS_END_WFI:
+	case PS_BOARD_MSG_WFI:
+	case PS_BOARD_MSG_END_WFI:
 		g_state = handle_pax_wait_for_input(g_state, event);
 		break;
 
 	default:
 		break;
+	}
+}
+
+static void update_pax_board_send_msg(pax_state_t state)
+{
+	static int frame = 0;
+	static int frame_cap_ms = 150;
+	static int elapsed = 0;
+
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+	if (passed - elapsed <= frame_cap_ms)
+	{
+		return;
+	}
+	elapsed = passed;
+
+	if (state == PS_BOARD_SEND_MSG_ADDRESSEE)
+	{
+		neuro_window_set_draw_string_offt(64, 48);
+		neuro_window_draw_string(g_send_msg_addressee, 1);
+		neuro_window_set_draw_string_offt(64 + (g_send_msg_carriage_pos * 8), 48);
+	}
+	else
+	{
+		neuro_window_set_draw_string_offt(8, 64);
+		neuro_window_draw_string(g_send_msg_text, 1);
+
+		uint16_t cl = 8 + (g_send_msg_carriage_pos % 39) * 8;
+		uint16_t ct = 64 + (g_send_msg_carriage_pos / 39) * 8;
+		neuro_window_set_draw_string_offt(cl, ct);
+	}
+
+	if (++frame == 1)
+	{
+		neuro_window_draw_string(" ", 1);
+	}
+	else if (frame == 2)
+	{
+		neuro_window_draw_string("<", 1);
+		frame = 0;
 	}
 }
 
@@ -581,7 +943,7 @@ typedef enum pax_text_scroll_event_t {
 	PTS_EVT_WFI_TO_END
 } pax_text_scroll_event_t;
 
-pax_text_scroll_event_t pax_scroll_text()
+static pax_text_scroll_event_t pax_scroll_text()
 {
 	static int lines_on_screen = 0, lines_scrolled = 0;
 	static int next_line = 1;
@@ -649,6 +1011,9 @@ pax_state_t update_pax_text_scrolling(pax_state_t state)
 
 		case PS_NEWS:
 			return PS_NEWS_WFI;
+
+		case PS_BOARD_MSG:
+			return PS_BOARD_MSG_WFI;
 		}
 	}
 	else if (evt == PTS_EVT_WFI_TO_END)
@@ -659,6 +1024,9 @@ pax_state_t update_pax_text_scrolling(pax_state_t state)
 
 		case PS_NEWS:
 			return PS_NEWS_END_WFI;
+
+		case PS_BOARD_MSG:
+			return PS_BOARD_MSG_END_WFI;
 		}
 	}
 
@@ -755,7 +1123,13 @@ real_world_state_t update_pax()
 
 	case PS_USER_INFO:
 	case PS_NEWS:
+	case PS_BOARD_MSG:
 		g_state = update_pax_text_scrolling(g_state);
+		break;
+
+	case PS_BOARD_SEND_MSG_ADDRESSEE:
+	case PS_BOARD_SEND_MSG_TEXT:
+		update_pax_board_send_msg(g_state);
 		break;
 	}
 	

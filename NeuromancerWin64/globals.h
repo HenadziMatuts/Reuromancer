@@ -10,7 +10,8 @@ extern sfClock *g_timer;
 
 void update_cursor();
 
-sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int digits_only);
+sfKeyCode sfHandleTextInput(uint32_t u32_char,
+	char *string, uint32_t size, int digits_only, int insert);
 
 void sfSetKeyRepeat(int enabled);
 

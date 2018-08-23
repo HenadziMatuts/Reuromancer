@@ -72,32 +72,50 @@ void update_cursor()
 	g_sprite_chain[SCI_CURSOR].top = (uint16_t)mouse_pos_y;
 }
 
-sfKeyCode sfHandleTextInput(uint32_t u32_char, char *string, uint32_t size, int digits_only)
+sfKeyCode sfHandleTextInput(uint32_t u32_char,
+	char *string, uint32_t size, int digits_only, int insert)
 {
 	size_t l = strlen(string);
 
+	/* printable ascii */
 	if ((digits_only && (u32_char >= 0x30 && u32_char <= 0x39)) ||
 		(!digits_only && (u32_char >= 0x20 && u32_char <= 0x7e)))
 	{
-		/* printable ascii */
-		if (l + 1 >= size)
+		if (insert)
 		{
-			return sfKeyUnknown;
+			if (l != 0 || l + 1 < size)
+			{
+				*string = (char)u32_char;
+			}
+			else
+			{
+				return sfKeyUnknown;
+			}
 		}
-
-		string[l] = (char)u32_char;
-		string[l + 1] = 0;
-	}
+		else
+		{
+			if (l + 1 < size)
+			{
+				string[l] = (char)u32_char;
+				string[l + 1] = 0;
+			}
+			else
+			{
+				return sfKeyUnknown;
+			}
+		}
+	} /* backspace */
 	else if (u32_char == 0x08)
 	{
-		/* backspace */
-		if (l == 0)
+		if (insert)
 		{
-			return sfKeyUnknown;
+			/* should be handled by caller */
+			return sfKeyBack;
 		}
-
-		string[l - 1] = 0;
-
+		if (l != 0)
+		{
+			string[l - 1] = 0;
+		}
 		return sfKeyBack;
 	}
 	else if (u32_char == 0x0d)

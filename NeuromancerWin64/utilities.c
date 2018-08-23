@@ -105,7 +105,7 @@ int extract_line(char **text, char *line, int length)
 			if (!just_space && (word_len == 0))
 			{
 				*text = ++ps;
-				memset(line, 0x20, length);
+				memset(line + strlen(line), 0x20, length - strlen(line));
 			}
 			else if (strlen(line) + word_len <= length)
 			{

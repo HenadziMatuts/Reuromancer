@@ -302,6 +302,18 @@ void neuro_window_set_draw_string_offt(uint16_t l, uint16_t t)
 	g_neuro_window.c92c = t;
 }
 
+static void window_handle_kboard(int *state, sfKeyEvent *event)
+{
+	switch (g_neuro_window.mode) {
+	case NWM_PAX:
+		rw_pax_handle_kboard(state, event);
+		break;
+
+	default:
+		break;
+	}
+}
+
 static void window_handle_text_enter(int *state, sfTextEvent *event)
 {
 	switch (g_neuro_window.mode) {
@@ -419,6 +431,10 @@ static void neuro_window_handle_kboard_events(int *state, sfEvent *event, int *k
 				*kboard_lock = 1;
 			}
 		}
+		else
+		{
+			window_handle_kboard(state, &event->key);
+		}
 		break;
 
 	case sfEvtKeyReleased:
@@ -429,6 +445,10 @@ static void neuro_window_handle_kboard_events(int *state, sfEvent *event, int *k
 			selected = NULL;
 			_selected = sfKeyUnknown;
 			*kboard_lock = 0;
+		}
+		else
+		{
+			window_handle_kboard(state, &event->key);
 		}
 		break;
 

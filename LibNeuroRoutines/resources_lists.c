@@ -91,7 +91,7 @@ resource_t g_res_pic[56] = {
 	{ -1, NULL, 0, 0 }
 };
 
-resource_t g_res_bih[60] = {
+resource_t g_res_bih[61] = {
 	{ 0, "R1.BIH",            0,  0x5EE },
 	{ 0, "R2.BIH",       0x1C19,   0xC7 },
 	{ 0, "R3.BIH",       0x3CD3,  0x87F },
@@ -124,6 +124,7 @@ resource_t g_res_bih[60] = {
 	{ 0, "ROOMPOS.BIH", 0x3528E,  0x336 },
 	/* more bihs */
 	{ 1, "NEWS.BIH",    0x154D1, 0x146E },
+	{ 1, "PAXBBS.BIH",  0x1693F,  0xC6F },
 	{ 1, "R29.BIH",     0x32BB3,  0x45D },
 	{ 1, "R30.BIH",     0x3427A,   0x26 },
 	{ 1, "R31.BIH",     0x34F59,   0x2D },

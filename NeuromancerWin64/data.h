@@ -45,7 +45,7 @@ extern uint16_t g_load_level_vm;
 typedef struct neuro_ui_buttons_t {
 	neuro_button_t inventory, pax, dialog;
 	neuro_button_t skills, chip, disk;
-	neuro_button_t date, time, cash, con;
+	neuro_button_t date, time, cash, constitution;
 } neuro_ui_buttons_t;
 
 /* 0x1FA2 */
@@ -72,6 +72,20 @@ typedef struct neuro_pax_info_menu_buttons {
 
 /* 0x21A6 */
 extern neuro_pax_info_menu_buttons g_pax_info_menu_buttons;
+
+typedef struct neuro_pax_msg_board_menu_buttons {
+	neuro_button_t exit, view, send;
+} neuro_pax_msg_board_menu_buttons;
+
+/* 0x21BE */
+extern neuro_pax_msg_board_menu_buttons g_pax_board_menu_buttons;
+
+typedef struct neuro_pax_board_send_msg_buttons {
+	neuro_button_t yes, no;
+} neuro_pax_board_send_msg_buttons;
+
+/* 0x21E2 */
+extern neuro_pax_board_send_msg_buttons g_pax_board_send_msg_buttons;
 
 typedef struct neuro_inventory_buttons_t {
 	neuro_button_t item_page_exit, exit, more;
@@ -224,7 +238,7 @@ typedef struct x4bae_t {
 	uint16_t x4c8e;
 	uint16_t x4c90;
 	char name[13];    // 0x4C92
-	uint16_t con;     // 0x4C9F
+	uint16_t constitution; // 0x4C9F
 	uint16_t level_n; // 0x4CA1
 	uint16_t roompos_x; // 0x4CA3
 	uint16_t roompos_y; // 0x4CA5
