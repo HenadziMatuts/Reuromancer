@@ -54,9 +54,6 @@
     <ClCompile Include="scene_real_world.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rw_state_text_output.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rw_state_inventory.c">
       <Filter>Source Files</Filter>
     </ClCompile>

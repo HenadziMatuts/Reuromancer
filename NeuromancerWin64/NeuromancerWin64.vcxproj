@@ -128,7 +128,6 @@
     <ClCompile Include="drawing_control.c" />
     <ClCompile Include="rw_state_inventory.c" />
     <ClCompile Include="rw_state_pax.c" />
-    <ClCompile Include="rw_state_text_output.c" />
     <ClCompile Include="scene_real_world.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="scene_main_menu.c" />

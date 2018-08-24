@@ -7,7 +7,8 @@
 typedef enum window_animation_type_t {
 	WA_TYPE_UNKNOWN = -1,
 	WA_TYPE_WINDOW_FOLDING = 0,
-	WA_TYPE_SCREEN_FADE = 1,
+	WA_TYPE_SCREEN_FADING,
+	WA_TYPE_TEXT_SCROLLING
 } window_animation_type_t;
 
 typedef struct window_folding_frame_data_t {
@@ -22,19 +23,25 @@ typedef struct window_folding_data_t {
 	uint16_t sprite_chain_index;
 } window_folding_data_t;
 
-typedef enum sreen_fade_direction_t {
+typedef enum sreen_fading_direction_t {
 	FADE_IN = 0,
 	FADE_OUT
-} sreen_fade_direction_t;
+} sreen_fading_direction_t;
 
-typedef struct screen_fade_data_t {
-	sreen_fade_direction_t direction;
+typedef struct screen_fading_data_t {
+	sreen_fading_direction_t direction;
 	uint32_t step;
 	uint32_t frame_cap;
-} screen_fade_data_t;
+} screen_fading_data_t;
+
+typedef struct text_scrolling_data_t {
+	char *text;
+	uint32_t frame_cap;
+} text_scrolling_data_t;
 
 typedef enum window_animation_event_t {
 	WA_EVENT_NO_EVENT = 0,
+	WA_EVENT_WAIT_FOR_INPUT,
 	WA_EVENT_COMPLETED
 } window_animation_event_t;
 

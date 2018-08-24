@@ -17,9 +17,11 @@
 static real_world_state_t g_state = RWS_TEXT_OUTPUT;
 static int g_wfi_press = 0;
 
-static char *g_bih_string_ptr = NULL;
+static text_scrolling_data_t g_text_scrolling_data = {
+	.frame_cap = 11,
+};
 
-static screen_fade_data_t g_screen_fade_data = {
+static screen_fading_data_t g_screen_fading_data = {
 	.direction = FADE_OUT,
 	.step = 32,
 	.frame_cap = 15,
@@ -34,10 +36,10 @@ static void level_transition_prepare_anim(int exit)
 		return;
 	}
 
-	g_screen_fade_data.direction = (exit) ? FADE_OUT : FADE_IN;
-	window_animation_setup(WA_TYPE_SCREEN_FADE, &g_screen_fade_data);
+	g_screen_fading_data.direction = (exit) ? FADE_OUT : FADE_IN;
+	window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
 
-	g_screen_fade_data.direction = FADE_OUT;
+	g_screen_fading_data.direction = FADE_OUT;
 }
 
 /***************************************/
@@ -48,7 +50,7 @@ typedef enum sub_105f6_opcodes_t {
 	SUB_105F6_OP_UPDATE_LEVEL,
 	SUB_105F6_OP_DEINIT_LEVEL,
 	SUB_105F6_OP_GET_VM_PROG_ADDR,
-	SUB_105F6_OP_PLAY_LEVEL_INTRO,
+	SUB_105F6_OP_SETUP_LEVEL_INTRO,
 	SUB_105F6_OP_NEURO_VM_CYCLE,
 } sub_105f6_opcodes_t;
 
@@ -79,36 +81,44 @@ void sub_1342E(char *str, uint16_t mode)
 	neuro_window_draw_string(text, 0, 0, 0);
 }
 
-static void sub_10A5B(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
+static real_world_state_t sub_10A5B(uint16_t line_n, uint16_t mode, uint16_t l, uint16_t t)
 {
-	uint16_t x = 0;
+	char *text = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
 
-	g_bih_string_ptr = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
-
-	for (int i = 0; i < a; i++)
+	for (int i = 0; i < line_n; i++)
 	{
-		while (*g_bih_string_ptr++);
+		while (*text++);
 	}
 
-	if (b != 0)
+	if (mode != 0)
 	{
-		text_output_set_text(g_bih_string_ptr);
-		return;
+		if (g_neuro_window.mode == NWM_NEURO_UI)
+		{
+			g_text_scrolling_data.text = text;
+			window_animation_setup(WA_TYPE_TEXT_SCROLLING, &g_text_scrolling_data);
+			return RWS_TEXT_OUTPUT;
+		}
+		else
+		{
+			neuro_window_draw_string(text);
+		}
+
+		return RWS_NORMAL;
 	}
 
-	uint16_t temp_1 = g_4bae.roompos_x;
-	uint16_t temp_2 = g_4bae.roompos_y;
+	uint16_t x = g_4bae.roompos_x;
+	uint16_t y = g_4bae.roompos_y;
 
-	g_4bae.roompos_x = c * 2;
-	g_4bae.roompos_y = d;
+	g_4bae.roompos_x = l * 2;
+	g_4bae.roompos_y = t;
 
 	/* builds dialog bubble with text */
-	sub_1342E(g_bih_string_ptr, NWM_NPC_DIALOG_REPLY);
+	sub_1342E(text, NWM_NPC_DIALOG_REPLY);
 
-	g_4bae.roompos_x = temp_1;
-	g_4bae.roompos_y = temp_2;
+	g_4bae.roompos_x = x;
+	g_4bae.roompos_y = y;
 
-	return;
+	return RWS_WAIT_FOR_INPUT;
 }
 
 /* sub_10735 */
@@ -140,11 +150,10 @@ static void neuro_vm(real_world_state_t *state)
 		case 0x01: {
 			uint8_t string_num = *(opcode_addr + 1);
 
-			sub_10A5B(string_num, 0,
+			*state = sub_10A5B(string_num, 0,
 				g_3f85.vm_state[n].var_1,
 				g_3f85.vm_state[n].var_2);
 
-			*state = RWS_WAIT_FOR_INPUT;
 			sfSetKeyRepeat(0);
 
 			g_3f85_wrapper.vm_next_op_addr[n] += 2;
@@ -157,16 +166,9 @@ static void neuro_vm(real_world_state_t *state)
 		/* text output */
 		case 0x02: {
 			uint8_t string_num = *(opcode_addr + 1);
-
-			/* bad */
-			sub_10A5B(string_num, 1, 0, 0);
-			if (g_neuro_window.mode == NWM_NEURO_UI)
-			{
-				*state = RWS_TEXT_OUTPUT;
-			}
+			*state = sub_10A5B(string_num, 1, 0, 0);
 
 			g_3f85_wrapper.vm_next_op_addr[n] += 2;
-
 			thread--;
 			return;
 		}
@@ -290,8 +292,7 @@ static int setup_intro()
 {
 	uint16_t x = 0x80 >> (g_level_n & 7);
 	uint16_t y = g_level_n >> 3;
-
-	g_bih_string_ptr = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
+	char *text = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
 
 	if ((x & g_004e[y]) == 0) {
 		/* setup long intro */
@@ -299,10 +300,11 @@ static int setup_intro()
 	}
 	else {
 		/* setup short intro */
-		while (*g_bih_string_ptr++);
+		while (*text++);
 	}
 
-	text_output_set_text(g_bih_string_ptr);
+	g_text_scrolling_data.text = text;
+	window_animation_setup(WA_TYPE_TEXT_SCROLLING, &g_text_scrolling_data);
 
 	return 0;
 }
@@ -367,7 +369,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		return (uint64_t)program;
 	}
 
-	case SUB_105F6_OP_PLAY_LEVEL_INTRO: {
+	case SUB_105F6_OP_SETUP_LEVEL_INTRO: {
 		setup_intro();
 		break;
 	}
@@ -648,7 +650,6 @@ static void init()
 
 	sub_105F6(NULL, SUB_105F6_OP_INIT_LEVEL);
 	setup_ui_buttons();
-	sub_105F6(&g_state, SUB_105F6_OP_PLAY_LEVEL_INTRO);
 
 	g_exit_point = -1;
 	g_wfi_press = 0;
@@ -662,7 +663,6 @@ static void deinit()
 	drawing_control_remove_sprite_from_chain(SCI_LEVEL_BG);
 	drawing_control_remove_sprite_from_chain(SCI_BACKGRND);
 	drawing_control_remove_sprite_from_chain(SCI_CHARACTER);
-	g_bih_string_ptr = NULL;
 }
 
 void rw_ui_handle_button_press(int *state, neuro_button_t *button)
@@ -715,6 +715,10 @@ static void handle_wait_for_input(sfEvent *event)
 		event->type == sfEvtKeyReleased))
 	{
 		switch (g_neuro_window.mode) {
+		case NWM_NEURO_UI:
+			g_state = RWS_TEXT_OUTPUT;
+			break;
+
 		case NWM_NPC_DIALOG_REPLY:
 			drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
@@ -737,10 +741,6 @@ static void handle_normal_input(sfEvent *event)
 static void handle_input(sfEvent *event)
 {
 	switch (g_state) {
-	case RWS_TEXT_OUTPUT:
-		handle_text_output_input(event);
-		break;
-
 	case RWS_NORMAL:
 		handle_normal_input(event);
 		break;
@@ -760,7 +760,6 @@ static void handle_input(sfEvent *event)
 	case RWS_WAIT_FOR_INPUT:
 		handle_wait_for_input(event);
 		break;
-
 	}
 }
 
@@ -859,6 +858,22 @@ static real_world_state_t update_normal()
 	return state;
 }
 
+static real_world_state_t update_text_output()
+{
+	window_animation_event_t evt = window_animation_update();
+
+	if (evt == WA_EVENT_WAIT_FOR_INPUT)
+	{
+		return RWS_WAIT_FOR_INPUT;
+	}
+	else if (evt == WA_EVENT_COMPLETED)
+	{
+		return RWS_NORMAL;
+	}
+
+	return RWS_TEXT_OUTPUT;
+}
+
 static neuro_scene_id_t update()
 {
 	neuro_scene_id_t scene = NSID_REAL_WORLD;
@@ -868,8 +883,11 @@ static neuro_scene_id_t update()
 
 	switch (g_state) {
 	case RWS_FADE_IN:
-		g_state = (window_animation_update() == WA_EVENT_COMPLETED) ?
-			RWS_TEXT_OUTPUT : RWS_FADE_IN;
+		if (window_animation_update() == WA_EVENT_COMPLETED)
+		{
+			sub_105F6(&g_state, SUB_105F6_OP_SETUP_LEVEL_INTRO);
+			g_state = RWS_TEXT_OUTPUT;
+		}
 		break;
 
 	case RWS_TEXT_OUTPUT:

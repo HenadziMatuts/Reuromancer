@@ -38,11 +38,14 @@ typedef enum pax_state_t {
 
 static pax_state_t g_state = PS_OPEN_PAX;
 static uint8_t g_pax_data[9216] = { 0, };
-static uint8_t *g_text_ptr = g_pax_data;
 
 static char g_send_msg_carriage_pos = 0;
 static char g_send_msg_addressee[12] = { 0, };
 static char g_send_msg_text[116] = { 0, };
+
+static text_scrolling_data_t g_text_scrolling_data = {
+	.frame_cap = 18,
+};
 
 static char* trim(char *s)
 {
@@ -457,7 +460,9 @@ static pax_state_t pax_user_info()
 	neuro_window_set_draw_string_offt(8, 8);
 	neuro_window_draw_string(g_pax_data, 1);
 
-	g_text_ptr = g_pax_data + strlen(g_pax_data) + 1;
+	g_text_scrolling_data.text = g_pax_data + strlen(g_pax_data) + 1;
+	window_animation_setup(WA_TYPE_TEXT_SCROLLING, &g_text_scrolling_data);
+
 	return PS_USER_INFO;
 }
 
@@ -506,11 +511,11 @@ static pax_state_t on_pax_board_view_menu_button(neuro_button_t *button)
 	case 3:
 	case 4: { /* items */
 		uint16_t index = g_info_menu_entries[button->code];
-		g_text_ptr = g_pax_data;
+		char *text = g_pax_data;
 
 		for (int i = 0; i < index; i++)
 		{
-			while (*g_text_ptr++);
+			while (*text++);
 		}
 
 		neuro_window_clear();
@@ -518,6 +523,9 @@ static pax_state_t on_pax_board_view_menu_button(neuro_button_t *button)
 
 		neuro_window_set_draw_string_offt(8, 8);
 		neuro_window_draw_string(g_pax_board_msg[index].date, 1);
+
+		g_text_scrolling_data.text = text;
+		window_animation_setup(WA_TYPE_TEXT_SCROLLING, &g_text_scrolling_data);
 
 		return PS_BOARD_MSG;
 	}
@@ -563,11 +571,11 @@ static pax_state_t on_pax_news_menu_button(neuro_button_t *button)
 	case 3:
 	case 4: { /* items */
 		uint16_t index = g_info_menu_entries[button->code];
-		g_text_ptr = g_pax_data;
+		char *text = g_pax_data;
 
 		for (int i = 0; i < index; i++)
 		{
-			while (*g_text_ptr++);
+			while (*text++);
 		}
 
 		neuro_window_clear();
@@ -579,6 +587,8 @@ static pax_state_t on_pax_news_menu_button(neuro_button_t *button)
 			g_pax_news[index].date, g_pax_news[index].subject);
 		neuro_window_draw_string(subject_string, 1);
 
+		g_text_scrolling_data.text = text;
+		window_animation_setup(WA_TYPE_TEXT_SCROLLING, &g_text_scrolling_data);
 		return PS_NEWS;
 	}
 
@@ -1027,73 +1037,11 @@ static void update_pax_board_send_msg(pax_state_t state)
 	}
 }
 
-typedef enum pax_text_scroll_event_t {
-	PTS_EVT_NO_EVENT = 0,
-	PTS_EVT_WFI_TO_CONTINUE,
-	PTS_EVT_WFI_TO_END
-} pax_text_scroll_event_t;
-
-static pax_text_scroll_event_t pax_scroll_text()
-{
-	static int lines_on_screen = 0, lines_scrolled = 0;
-	static int next_line = 1;
-	static int frame_cap_ms = 18;
-	static int elapsed = 0;
-
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return PTS_EVT_NO_EVENT;
-	}
-	elapsed = passed;
-
-	if (next_line)
-	{
-		char line[39] = { 0, };
-		int last = extract_line(&g_text_ptr, line, 38);
-
-		neuro_window_draw_string(line, 0);
-		next_line = 0;
-
-		if (last)
-		{
-			next_line = 1;
-			lines_on_screen = 0;
-			return PTS_EVT_WFI_TO_END;
-		}
-		else if (++lines_on_screen == 9)
-		{
-			lines_on_screen = 0;
-			return PTS_EVT_WFI_TO_CONTINUE;
-		}
-
-		return PTS_EVT_NO_EVENT;
-	}
-	else
-	{
-		uint8_t *pix = g_seg011 + sizeof(imh_hdr_t);
-
-		for (int i = 17, j = 16; i < 97; i++, j++)
-		{
-			memmove(&pix[160 * j + 8], &pix[160 * i + 8], 304);
-		}
-
-		if (++lines_scrolled == 8)
-		{
-			lines_scrolled = 0;
-			next_line = 1;
-		}
-	}
-
-	return PTS_EVT_NO_EVENT;
-}
-
 pax_state_t update_pax_text_scrolling(pax_state_t state)
 {
-	pax_text_scroll_event_t evt = pax_scroll_text();
+	window_animation_event_t evt = window_animation_update();
 
-	if (evt == PTS_EVT_WFI_TO_CONTINUE)
+	if (evt == WA_EVENT_WAIT_FOR_INPUT)
 	{
 		switch (state) {
 		case PS_USER_INFO:
@@ -1106,7 +1054,7 @@ pax_state_t update_pax_text_scrolling(pax_state_t state)
 			return PS_BOARD_MSG_WFI;
 		}
 	}
-	else if (evt == PTS_EVT_WFI_TO_END)
+	else if (evt == WA_EVENT_COMPLETED)
 	{
 		switch (state) {
 		case PS_USER_INFO:

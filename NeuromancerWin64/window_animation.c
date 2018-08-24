@@ -1,21 +1,33 @@
 #include "window_animation.h"
 #include "globals.h"
 #include "drawing_control.h"
+#include "neuro_window_control.h"
+#include "resource_manager.h"
 #include <neuro_routines.h>
 #include <string.h>
+#include <assert.h>
 
 fn_window_animation_renderer_hook g_window_animation_renderer_hook = NULL;
 
-typedef struct _screen_fade_data_t {
+typedef struct _text_scrolling_data_t {
+	text_scrolling_data_t user_data;
+	uint16_t line_length;
+	uint16_t max_lines;
+	uint16_t l, w, t, b;
+	uint8_t *pixels;
+} _text_scrolling_data_t;
+
+typedef struct _screen_fading_data_t {
+	screen_fading_data_t user_data;
 	int32_t alpha;
-	screen_fade_data_t user_data;
-} _screen_fade_data_t;
+} _screen_fading_data_t;
 
 typedef struct window_animation_instance_t {
 	window_animation_type_t type;
 	union {
 		window_folding_data_t folding;
-		_screen_fade_data_t fade;
+		_screen_fading_data_t fading;
+		_text_scrolling_data_t scrolling;
 	} data;
 } window_animation_instance_t;
 
@@ -23,11 +35,65 @@ static window_animation_instance_t g_animation = {
 	.type = WA_TYPE_UNKNOWN,
 };
 
+static window_animation_event_t update_text_scrolling(_text_scrolling_data_t *_data)
+{
+	static int lines_on_screen = 0, lines_scrolled = 0;
+	static int next_line = 1;
+	static int elapsed = 0;
+
+	text_scrolling_data_t *data = &_data->user_data;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= (int)data->frame_cap)
+	{
+		return WA_EVENT_NO_EVENT;
+	}
+	elapsed = passed;
+
+	if (next_line)
+	{
+		char line[39] = { 0, };
+		int last = extract_line(&data->text, line, _data->line_length);
+
+		neuro_window_draw_string(line, 0);
+		next_line = 0;
+
+		if (last)
+		{
+			next_line = 1;
+			lines_on_screen = 0;
+			return WA_EVENT_COMPLETED;
+		}
+		else if (++lines_on_screen == _data->max_lines)
+		{
+			lines_on_screen = 0;
+			return WA_EVENT_WAIT_FOR_INPUT;
+		}
+	}
+	else
+	{
+		uint8_t *pix = _data->pixels + sizeof(imh_hdr_t);
+
+		for (int i = _data->t + 1, j = _data->t; i < _data->b; i++, j++)
+		{
+			memmove(&pix[160 * j + _data->l], &pix[160 * i + _data->l], _data->w);
+		}
+
+		if (++lines_scrolled == 8)
+		{
+			lines_scrolled = 0;
+			next_line = 1;
+		}
+	}
+
+	return WA_EVENT_NO_EVENT;
+}
+
 static void screen_fade_renderer_hook(sfRenderWindow *window, sfVector2f *scale)
 {
 	sfRectangleShape *fader = sfRectangleShape_create();
 	sfVector2f size = { 320, 240 };
-	sfColor color = { 0, 0, 0, g_animation.data.fade.alpha };
+	sfColor color = { 0, 0, 0, g_animation.data.fading.alpha };
 
 	sfRectangleShape_setFillColor(fader, color);
 	sfRectangleShape_setSize(fader, size);
@@ -37,11 +103,11 @@ static void screen_fade_renderer_hook(sfRenderWindow *window, sfVector2f *scale)
 	sfRectangleShape_destroy(fader);
 }
 
-static window_animation_event_t update_screen_fade(_screen_fade_data_t *_data)
+static window_animation_event_t update_screen_fading(_screen_fading_data_t *_data)
 {
 	static int elapsed = 0;
 
-	screen_fade_data_t *data = &_data->user_data;
+	screen_fading_data_t *data = &_data->user_data;
 	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
 
 	if (passed - elapsed <= (int)data->frame_cap)
@@ -109,8 +175,12 @@ window_animation_event_t window_animation_update()
 		evt = update_window_folding(&g_animation.data.folding);
 		break;
 
-	case WA_TYPE_SCREEN_FADE:
-		evt = update_screen_fade(&g_animation.data.fade);
+	case WA_TYPE_SCREEN_FADING:
+		evt = update_screen_fading(&g_animation.data.fading);
+		break;
+
+	case WA_TYPE_TEXT_SCROLLING:
+		evt = update_text_scrolling(&g_animation.data.scrolling);
 		break;
 
 	default:
@@ -126,20 +196,53 @@ window_animation_event_t window_animation_update()
 	return evt;
 }
 
+static void prepare_text_scrolling()
+{
+	switch (g_neuro_window.mode) {
+	case NWM_NEURO_UI:
+		g_animation.data.scrolling.line_length = 17;
+		g_animation.data.scrolling.max_lines = 7;
+		g_animation.data.scrolling.l = 88;
+		g_animation.data.scrolling.w = 68;
+		g_animation.data.scrolling.t = 134;
+		g_animation.data.scrolling.b = 191;
+		g_animation.data.scrolling.pixels = g_background;
+		break;
+
+	case NWM_PAX:
+		g_animation.data.scrolling.line_length = 38;
+		g_animation.data.scrolling.max_lines = 9;
+		g_animation.data.scrolling.l = 8;
+		g_animation.data.scrolling.w = 304;
+		g_animation.data.scrolling.t = 16;
+		g_animation.data.scrolling.b = 97;
+		g_animation.data.scrolling.pixels = g_seg011;
+		break;
+
+	default:
+		assert(0);
+	}
+}
+
 void window_animation_setup(window_animation_type_t type, void *data)
 {
+	g_animation.type = type;
+
 	switch (type) {
 	case WA_TYPE_WINDOW_FOLDING:
-		g_animation.type = type;
 		memmove(&g_animation.data.folding, data, sizeof(window_folding_data_t));
 		break;
 
-	case WA_TYPE_SCREEN_FADE:
-		g_animation.type = type;
-		memmove(&g_animation.data.fade.user_data, data, sizeof(screen_fade_data_t));
-		g_animation.data.fade.alpha =
-			(g_animation.data.fade.user_data.direction == FADE_IN) ? 255 : 0;
+	case WA_TYPE_SCREEN_FADING:
+		memmove(&g_animation.data.fading.user_data, data, sizeof(screen_fading_data_t));
+		g_animation.data.fading.alpha =
+			(g_animation.data.fading.user_data.direction == FADE_IN) ? 255 : 0;
 		g_window_animation_renderer_hook = screen_fade_renderer_hook;
+		break;
+
+	case WA_TYPE_TEXT_SCROLLING:
+		memmove(&g_animation.data.scrolling.user_data, data, sizeof(text_scrolling_data_t));
+		prepare_text_scrolling();
 		break;
 
 	default:
