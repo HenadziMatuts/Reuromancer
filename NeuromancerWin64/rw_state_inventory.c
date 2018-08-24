@@ -4,6 +4,7 @@
 #include "scene_real_world.h"
 #include "neuro_window_control.h"
 #include "drawing_control.h"
+#include "window_animation.h"
 #include <neuro_routines.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -734,91 +735,55 @@ void handle_inventory_input(sfEvent *event)
 	}
 }
 
-static inventory_state_t update_inventory_close()
-{
-	static int frame = 0;
-	uint8_t frames[12][4] = {
-		//  w,  h,   l,   t,
-		{ 176, 64,  56, 128 },{ 176,  62,  56, 129 },{ 176, 56,  56, 132 },
-		{ 176, 48,  56, 136 },{ 176,  36,  56, 142 },{ 176, 20,  56, 150 },
-		{ 172,  2,  58, 159 },{ 164,   2,  62, 159 },{ 148,  2,  70, 159 },
-		{ 114,  2,  86, 159 },{ 50,   2, 118, 159 },{ 3,  2, 143, 159 },
-	};
+static window_folding_frame_data_t g_close_frame_data[12] = {
+	{ 176, 64, 56, 128 }, { 176, 62,  56, 129 }, { 176, 56,  56, 132 },
+	{ 176, 48, 56, 136 }, { 176, 36,  56, 142 }, { 176, 20,  56, 150 },
+	{ 172,  2, 58, 159 }, { 164,  2,  62, 159 }, { 148,  2,  70, 159 },
+	{ 114,  2, 86, 159 }, { 50,   2, 118, 159 }, {   3,  2, 143, 159 },
+}, g_open_frame_data[12] = {
+	{   3,  2, 143, 159 }, {   7,  2, 141, 159 }, {  15,  2, 136, 159 },
+	{  23,  2, 132, 159 }, {  45,  2, 121, 159 }, {  87,  2, 101, 159 },
+	{ 176,  3,  56, 159 }, { 176,  5,  56, 157 }, { 176, 11,  56, 154 },
+	{ 176, 21,  56, 149 }, { 176, 33,  56, 143 }, { 176, 64,  56, 128 }
+};
 
-	static int frame_cap_ms = 35;
-	static int elapsed = 0;
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return IS_CLOSE_INVENTORY;
-	}
-	elapsed = passed;
-
-	if (frame == 12)
-	{
-		frame = 0;
-		drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
-		restore_window();
-		return IS_OPEN_INVENTORY;
-	}
-
-	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg012);
-	drawing_control_add_sprite_to_chain(g_4bae.window_sc_index + 1,
-		frames[frame][2], frames[frame][3], g_seg012, 1);
-	frame++;
-
-	return IS_CLOSE_INVENTORY;
-}
-
-static inventory_state_t update_inventory_open()
-{
-	static int frame = 0;
-	uint8_t frames[12][4] = {
-		//  w,  h,   l,   t,
-		{ 3,  2, 143, 159 },{ 7,  2, 141, 159 },{ 15,  2, 136, 159 },
-		{ 23,  2, 132, 159 },{ 45,  2, 121, 159 },{ 87,  2, 101, 159 },
-		{ 176,  3,  56, 159 },{ 176,  5,  56, 157 },{ 176, 11,  56, 154 },
-		{ 176, 21,  56, 149 },{ 176, 33,  56, 143 },{ 176, 64,  56, 128 }
-	};
-
-	static int frame_cap_ms = 35;
-	static int elapsed = 0;
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return IS_OPEN_INVENTORY;
-	}
-	elapsed = passed;
-
-	if (frame == 12)
-	{
-		frame = 0;
-		neuro_window_setup(NWM_INVENTORY);
-		return inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
-	}
-
-	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg012);
-	drawing_control_add_sprite_to_chain(g_4bae.window_sc_index,
-		frames[frame][2], frames[frame][3], g_seg012, 1);
-	frame++;
-
-	return IS_OPEN_INVENTORY;
-}
+static window_folding_data_t g_inv_anim_data = {
+	.total_frames = 12,
+	.frame_cap = 35,
+	.pixels = g_seg012,
+};
 
 real_world_state_t update_inventory()
 {
+	static int anim = 0;
+
 	switch (g_state) {
 	case IS_OPEN_INVENTORY:
-		g_state = update_inventory_open();
-		break;
-
 	case IS_CLOSE_INVENTORY:
-		g_state = update_inventory_close();
-		if (g_state == IS_OPEN_INVENTORY)
+		if (!anim)
 		{
-			return RWS_NORMAL;
+			anim = 1;
+			g_inv_anim_data.frame_data = (g_state == IS_OPEN_INVENTORY) ?
+				g_open_frame_data : g_close_frame_data;
+			g_inv_anim_data.sprite_chain_index = (g_state == IS_OPEN_INVENTORY) ?
+				g_4bae.window_sc_index : g_4bae.window_sc_index + 1;
+			window_animation_setup(WA_TYPE_WINDOW_FOLDING, &g_inv_anim_data);
+		}
+		else if (window_animation_update() == WA_EVENT_COMPLETED)
+		{
+			anim = 0;
+			if (g_state == IS_OPEN_INVENTORY)
+			{
+				neuro_window_setup(NWM_INVENTORY);
+				g_state = inventory_item_list(IT_ITEMS, 4, ISLP_FIRST);
+			}
+			else
+			{
+				g_state = IS_OPEN_INVENTORY;
+				drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
+				restore_window();
+				return RWS_NORMAL;
+			}
 		}
 		break;
 	}
