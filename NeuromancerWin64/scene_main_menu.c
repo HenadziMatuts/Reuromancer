@@ -4,6 +4,7 @@
 #include "drawing_control.h"
 #include "neuro_menu_control.h"
 #include "resource_manager.h"
+#include "window_animation.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -22,6 +23,12 @@ static main_menu_state_t g_state = MMS_INITIAL;
 static uint8_t *g_dialog = NULL;
 static neuro_menu_t g_menu_dialog;
 
+static screen_fade_data_t g_screen_fade_data = {
+	.direction = FADE_OUT,
+	.step = 32,
+	.frame_cap = 15,
+};
+
 void main_menu_handle_text_enter(int *state, sfTextEvent *event)
 {
 	static char name[11] = { 0, };
@@ -39,6 +46,7 @@ void main_menu_handle_text_enter(int *state, sfTextEvent *event)
 				sprintf(g_4bae.name + 2, "%s", name);
 			}
 			memset(name, 0, 11);
+			window_animation_setup(WA_TYPE_SCREEN_FADE, &g_screen_fade_data);
 		}
 		else
 		{
@@ -123,33 +131,6 @@ static void handle_input(sfEvent *event)
 	neuro_menu_handle_input(NMID_MAIN_MENU, &g_menu_dialog, (int*)&g_state, event);
 }
 
-static neuro_scene_id_t update_main_menu_fade_out()
-{
-	static int frame = 0;
-
-	static int frame_cap_ms = 15;
-	static int elapsed = 0;
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return NSID_MAIN_MENU;
-	}
-	elapsed = passed;
-
-	if (frame == 7)
-	{
-		frame = 0;
-		g_fader_alpha = 0xFF;
-		return NSID_REAL_WORLD;
-	}
-
-	frame++;
-	g_fader_alpha += 32;
-
-	return NSID_MAIN_MENU;
-}
-
 static neuro_scene_id_t update()
 {
 	neuro_scene_id_t scene = NSID_MAIN_MENU;
@@ -158,7 +139,13 @@ static neuro_scene_id_t update()
 
 	switch (g_state) {
 	case MMS_TO_LEVEL_SCENE:
-		return update_main_menu_fade_out();
+		if (window_animation_update() == WA_EVENT_COMPLETED)
+		{
+			g_screen_fade_data.direction = FADE_IN;
+			window_animation_setup(WA_TYPE_SCREEN_FADE, &g_screen_fade_data);
+			return NSID_REAL_WORLD;
+		}
+		break;
 
 	case MMS_TO_NOT_IMPLEMENTED_SCENE:
 		return NSID_NOT_IMPLEMENTED;

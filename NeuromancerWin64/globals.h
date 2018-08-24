@@ -19,6 +19,4 @@ int extract_line(char **text, char *line, int length);
 
 sfKeyCode ascii_toSfKeyCode(char c);
 
-extern uint8_t g_fader_alpha;
-
 #endif

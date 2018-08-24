@@ -2,6 +2,7 @@
 #include "resource_manager.h"
 #include "scene_control.h"
 #include "drawing_control.h"
+#include "window_animation.h"
 #include <neuro_routines.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -38,11 +39,6 @@ static float g_scale_y = 0;
  * Timer.
  */
 sfClock *g_timer = NULL;
-
-/*
- * Fader.
- */
-uint8_t g_fader_alpha = 0x00;
 
 void update_cursor()
 {
@@ -144,25 +140,15 @@ static void render()
 	sfSprite *sprite = sfSprite_create();
 	sfVector2f scale = { g_scale_x, g_scale_y };
 
-	sfSprite_setTexture(sprite, g_texture, 1);
-	sfSprite_setScale(sprite, scale);
-
 	sfRenderWindow_clear(g_window, sfBlack);
 
+	sfSprite_setTexture(sprite, g_texture, 1);
+	sfSprite_setScale(sprite, scale);
 	sfRenderWindow_drawSprite(g_window, sprite, NULL);
 
-	if (g_fader_alpha != 0)
+	if (g_window_animation_renderer_hook)
 	{
-		sfRectangleShape *fader = sfRectangleShape_create();
-		sfVector2f size = { 320, 240 };
-		sfColor color = { 0, 0, 0, g_fader_alpha };
-		
-		sfRectangleShape_setFillColor(fader, color);
-		sfRectangleShape_setSize(fader, size);
-		sfRectangleShape_setScale(fader, scale);
-
-		sfRenderWindow_drawShape(g_window, (sfShape*)fader, NULL);
-		sfRectangleShape_destroy(fader);
+		g_window_animation_renderer_hook(g_window, &scale);
 	}
 
 	sfRenderWindow_display(g_window);

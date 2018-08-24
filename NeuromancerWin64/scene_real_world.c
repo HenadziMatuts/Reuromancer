@@ -8,6 +8,7 @@
 #include "neuro_window_control.h"
 #include "scene_real_world.h"
 #include "bih_code.h"
+#include "window_animation.h"
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -17,6 +18,27 @@ static real_world_state_t g_state = RWS_TEXT_OUTPUT;
 static int g_wfi_press = 0;
 
 static char *g_bih_string_ptr = NULL;
+
+static screen_fade_data_t g_screen_fade_data = {
+	.direction = FADE_OUT,
+	.step = 32,
+	.frame_cap = 15,
+};
+
+static void level_transition_prepare_anim(int exit)
+{
+	if ((g_4bae.level_n >= 12 && g_level_n >= 12 && g_4bae.level_n <= 17 && g_level_n <= 17) ||
+		(g_4bae.level_n >= 36 && g_level_n >= 36 && g_4bae.level_n <= 38 && g_level_n <= 38) ||
+		(g_4bae.level_n >= 53 && g_level_n >= 53 && g_4bae.level_n <= 54 && g_level_n <= 54))
+	{
+		return;
+	}
+
+	g_screen_fade_data.direction = (exit) ? FADE_OUT : FADE_IN;
+	window_animation_setup(WA_TYPE_SCREEN_FADE, &g_screen_fade_data);
+
+	g_screen_fade_data.direction = FADE_OUT;
+}
 
 /***************************************/
 
@@ -206,8 +228,8 @@ static void neuro_vm(real_world_state_t *state)
 			g_load_level_vm = 1;
 			uint8_t level = *(uint8_t*)(opcode_addr + 1);
 			g_4bae.level_n = level;
+			level_transition_prepare_anim(1);
 			*state = RWS_RELOAD_LEVEL;
-
 			thread--;
 			return;
 		}
@@ -803,33 +825,6 @@ int roompos_hit_exit_zone()
 	return g_a642->level_transitions[g_exit_point];
 }
 
-static int update_fade_out()
-{
-	static int frame = 0;
-
-	static int frame_cap_ms = 15;
-	static int elapsed = 0;
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return 0;
-	}
-	elapsed = passed;
-
-	if (frame == 7)
-	{
-		frame = 0;
-		g_fader_alpha = 0xFF;
-		return 1;
-	}
-
-	frame++;
-	g_fader_alpha += 32;
-
-	return 0;
-}
-
 static real_world_state_t update_normal()
 {
 	real_world_state_t state = RWS_NORMAL;
@@ -854,40 +849,14 @@ static real_world_state_t update_normal()
 			if (level != -1)
 			{
 				/* reload level */
-				state = RWS_RELOAD_LEVEL;
 				g_4bae.level_n = level;
+				level_transition_prepare_anim(1);
+				state = RWS_RELOAD_LEVEL;
 			}
 		}
 	}
 
 	return state;
-}
-
-static real_world_state_t update_fade_in()
-{
-	static int frame = 0;
-
-	static int frame_cap_ms = 15;
-	static int elapsed = 0;
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return RWS_FADE_IN;
-	}
-	elapsed = passed;
-
-	if (frame == 7)
-	{
-		frame = 0;
-		g_fader_alpha = 0x00;
-		return RWS_TEXT_OUTPUT;
-	}
-
-	frame++;
-	g_fader_alpha -= 32;
-
-	return RWS_FADE_IN;
 }
 
 static neuro_scene_id_t update()
@@ -899,7 +868,8 @@ static neuro_scene_id_t update()
 
 	switch (g_state) {
 	case RWS_FADE_IN:
-		g_state = update_fade_in();
+		g_state = (window_animation_update() == WA_EVENT_COMPLETED) ?
+			RWS_TEXT_OUTPUT : RWS_FADE_IN;
 		break;
 
 	case RWS_TEXT_OUTPUT:
@@ -923,26 +893,12 @@ static neuro_scene_id_t update()
 		break;
 
 	case RWS_RELOAD_LEVEL:
-		if ((g_4bae.level_n >= 12 && g_level_n >= 12 &&
-			 g_4bae.level_n <= 17 && g_level_n <= 17) ||
-			(g_4bae.level_n >= 36 && g_level_n >= 36 &&
-			 g_4bae.level_n <= 38 && g_level_n <= 38) ||
-			(g_4bae.level_n >= 53 && g_level_n >= 53 &&
-			 g_4bae.level_n <= 54 && g_level_n <= 54))
+		if (window_animation_update() == WA_EVENT_COMPLETED)
 		{
-			g_state = RWS_TEXT_OUTPUT;
 			deinit();
+			level_transition_prepare_anim(0);
 			init();
-			
-		}
-		else
-		{
-			if (update_fade_out())
-			{
-				g_state = RWS_FADE_IN;
-				deinit();
-				init();
-			}
+			g_state = RWS_FADE_IN;
 		}
 		break;
 
@@ -961,5 +917,5 @@ void setup_real_world_scene()
 	g_scene.handle_input = handle_input;
 	g_scene.update = update;
 
-	g_state = (g_fader_alpha == 0) ? RWS_TEXT_OUTPUT : RWS_FADE_IN;
+	g_state = RWS_FADE_IN;
 }
