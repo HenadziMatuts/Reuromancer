@@ -138,6 +138,7 @@
     <ClCompile Include="resource_manager.c" />
     <ClCompile Include="scene_control.c" />
     <ClCompile Include="utilities.c" />
+    <ClCompile Include="window_animation.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h" />
@@ -151,6 +152,7 @@
     <ClInclude Include="resource_manager.h" />
     <ClInclude Include="scene_control.h" />
     <ClInclude Include="scene_real_world.h" />
+    <ClInclude Include="window_animation.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="character_control.c">

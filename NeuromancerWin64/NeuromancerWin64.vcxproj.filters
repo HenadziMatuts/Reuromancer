@@ -69,6 +69,9 @@
     <ClCompile Include="rw_state_pax.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="window_animation.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h">
@@ -102,6 +105,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="bih_code.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="window_animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
