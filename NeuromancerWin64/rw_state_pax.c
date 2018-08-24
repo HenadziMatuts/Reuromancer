@@ -4,6 +4,7 @@
 #include "scene_real_world.h"
 #include "neuro_window_control.h"
 #include "drawing_control.h"
+#include "window_animation.h"
 #include <neuro_routines.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -1122,91 +1123,55 @@ pax_state_t update_pax_text_scrolling(pax_state_t state)
 	return state;
 }
 
-pax_state_t update_pax_close()
-{
-	uint16_t frames[12][4] = {
-		//  w,  h,   l,   t,
-		{ 320, 104,  0,  4 },{ 320, 102,  0,  5 },{ 320, 98,   0,  7 },
-		{ 320,  86,  0, 13 },{ 320,  64,  0, 24 },{ 320, 30,   0, 41 },
-		{ 314,   2,  3, 55 },{ 302,   2,  9, 55 },{ 278,  2,  21, 55 },
-		{ 230,   2, 45, 55 },{ 134,   2, 93, 55 },{   4,  2, 158, 55 },
-	};
+static window_folding_frame_data_t g_close_frame_data[12] = {
+	{ 320, 104,  0,  4 }, { 320, 102,  0,  5 }, { 320, 98,   0,  7 },
+	{ 320,  86,  0, 13 }, { 320,  64,  0, 24 }, { 320, 30,   0, 41 },
+	{ 314,   2,  3, 55 }, { 302,   2,  9, 55 }, { 278,  2,  21, 55 },
+	{ 230,   2, 45, 55 }, { 134,   2, 93, 55 }, {   4,  2, 158, 55 },
+}, g_open_frame_data[12] = {
+	{   4,  2, 158, 55 }, {  10,  2, 155, 55 }, {  20,   2, 150, 55 },
+	{  40,  2, 140, 55 }, {  80,  2, 120, 55 }, { 160,   2,  80, 55 },
+	{ 320,  4,   0, 54 }, { 320,  6,   0, 53 }, { 320,  14,   0, 49 },
+	{ 320, 26,   0, 43 }, { 320, 52,   0, 30 }, { 320, 104,   0,  4 }
+};
 
-	static int frame = 0;
-	static int frame_cap_ms = 35;
-	static int elapsed = 0;
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return PS_CLOSE_PAX;
-	}
-	elapsed = passed;
-
-	if (frame == 12)
-	{
-		frame = 0;
-		drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
-		restore_window();
-		return PS_OPEN_PAX;
-	}
-
-	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg011);
-	drawing_control_add_sprite_to_chain(g_4bae.window_sc_index + 1,
-		frames[frame][2], frames[frame][3], g_seg011, 1);
-	frame++;
-
-	return PS_CLOSE_PAX;
-}
-
-pax_state_t update_pax_open()
-{
-	uint16_t frames[12][4] = {
-		//  w,  h,   l,   t,
-		{   4,  2, 158, 55 },{  10,  2, 155, 55 },{  20,   2, 150, 55 },
-		{  40,  2, 140, 55 },{  80,  2, 120, 55 },{ 160,   2,  80, 55 },
-		{ 320,  4,   0, 54 },{ 320,  6,   0, 53 },{ 320,  14,   0, 49 },
-		{ 320, 26,   0, 43 },{ 320, 52,   0, 30 },{ 320, 104,   0,  4 }
-	};
-
-	static int frame = 0;
-	static int frame_cap_ms = 35;
-	static int elapsed = 0;
-	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
-
-	if (passed - elapsed <= frame_cap_ms)
-	{
-		return PS_OPEN_PAX;
-	}
-	elapsed = passed;
-
-	if (frame == 12)
-	{
-		frame = 0;
-		neuro_window_setup(NWM_PAX);
-		return pax_main_menu();
-	}
-
-	build_text_frame(frames[frame][1], frames[frame][0], (imh_hdr_t*)g_seg011);
-	drawing_control_add_sprite_to_chain(g_4bae.window_sc_index,
-		frames[frame][2], frames[frame][3], g_seg011, 1);
-	frame++;
-
-	return PS_OPEN_PAX;
-}
+static window_folding_data_t g_pax_anim_data = {
+	.total_frames = 12,
+	.frame_cap = 35,
+	.pixels = g_seg011,
+};
 
 real_world_state_t update_pax()
 {
+	static int anim = 0;
+
 	switch (g_state) {
 	case PS_OPEN_PAX:
-		g_state = update_pax_open();
-		break;
-
 	case PS_CLOSE_PAX:
-		g_state = update_pax_close();
-		if (g_state == PS_OPEN_PAX)
+		if (!anim)
 		{
-			return RWS_NORMAL;
+			anim = 1;
+			g_pax_anim_data.frame_data = (g_state == PS_OPEN_PAX) ?
+				g_open_frame_data : g_close_frame_data;
+			g_pax_anim_data.sprite_chain_index = (g_state == PS_OPEN_PAX) ?
+				g_4bae.window_sc_index : g_4bae.window_sc_index + 1;
+			window_animation_setup(WA_TYPE_WINDOW_FOLDING, &g_pax_anim_data);
+		}
+		else if (window_animation_update() == WA_EVENT_COMPLETED)
+		{
+			anim = 0;
+			if (g_state == PS_OPEN_PAX)
+			{
+				neuro_window_setup(NWM_PAX);
+				g_state = pax_main_menu();
+			}
+			else
+			{
+				g_state = PS_OPEN_PAX;
+				drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
+				restore_window();
+				return RWS_NORMAL;
+			}
 		}
 		break;
 
