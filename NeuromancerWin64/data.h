@@ -146,9 +146,6 @@ typedef enum jumps_t {
 	JE, JNE, JL, JGE
 } jumps_t;
 
-/* 0x4469 */
-extern char *g_inventory_item_names[];
-
 /* 0x475B */
 extern uint8_t g_inventory_item_operations[128];
 

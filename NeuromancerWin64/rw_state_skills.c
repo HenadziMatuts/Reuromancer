@@ -4,20 +4,45 @@
 #include "drawing_control.h"
 #include "neuro_menu_control.h"
 #include "window_animation.h"
+#include "items.h"
 #include <neuro_routines.h>
 
 typedef enum skills_state_t {
 	SS_OPEN_SKILLS = 0,
 	SS_NO_SKILLS_WFI,
+	SS_SKILLS_PAGE,
 	SS_CLOSE_SKILLS,
-
-	SS_IDLE,
 } skills_state_t;
 
 static skills_state_t g_state = SS_OPEN_SKILLS;
 static uint16_t g_skills[16] = { 0x00, };
 
-static skills_state_t handle_pax_wait_for_input(skills_state_t state, sfEvent *event)
+static skills_state_t on_skills_page_menu_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0x0B: /* exit */
+		return SS_CLOSE_SKILLS;
+
+	default:
+		break;
+	}
+
+	return SS_SKILLS_PAGE;
+}
+
+void skills_menu_handle_button_press(int *state, neuro_button_t *button)
+{
+	switch (*state) {
+	case SS_SKILLS_PAGE:
+		*state = on_skills_page_menu_button(button);
+		break;
+
+	default:
+		break;
+	}
+}
+
+static skills_state_t handle_skills_wait_for_input(skills_state_t state, sfEvent *event)
 {
 	if (event->type == sfEvtMouseButtonReleased ||
 		event->type == sfEvtKeyReleased)
@@ -34,12 +59,15 @@ static skills_state_t handle_pax_wait_for_input(skills_state_t state, sfEvent *e
 	return state;
 }
 
-
 void handle_skills_input(sfEvent *event)
 {
 	switch (g_state) {
 	case SS_NO_SKILLS_WFI:
-		g_state = handle_pax_wait_for_input(g_state, event);
+		g_state = handle_skills_wait_for_input(g_state, event);
+		break;
+
+	case SS_SKILLS_PAGE:
+		neuro_menu_handle_input(NMID_SKILLS_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 
 	default:
@@ -66,18 +94,30 @@ static int skills_prepare()
 
 static skills_state_t skills_show()
 {
+	int skills_total = 0;
+
 	neuro_menu_draw_frame(6, 7, 17, 25, 6, NULL);
 	neuro_menu_draw_text("SKILLS", 9, 0);
 	neuro_menu_flush_items();
 
-	if (!skills_prepare())
+	skills_total = skills_prepare();
+	if (!skills_total)
 	{
 		/* play track 6 */
 		neuro_menu_draw_text("No skills.", 0, 2);
 		return SS_NO_SKILLS_WFI;
 	}
 
-	return SS_IDLE;
+	if (skills_total > 4)
+	{
+		neuro_menu_draw_text("more", 12, 5);
+		neuro_menu_add_item(12, 5, 4, 10, 'm');
+	}
+
+	neuro_menu_draw_text("exit", 7, 5);
+	neuro_menu_add_item(7, 5, 4, 11, 'x');
+
+	return SS_SKILLS_PAGE;
 }
 
 static window_folding_frame_data_t g_close_frame_data[12] = {

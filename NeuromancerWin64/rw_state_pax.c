@@ -209,7 +209,7 @@ static int pax_info_menu_prepare_list(uint16_t *infos_list, int type)
 static neuro_button_t g_info_menu_items[5];
 static uint16_t g_info_menu_entries[5];
 
-static pax_state_t pax_info_menu(int type, int start_item)
+static pax_state_t pax_info_menu(int type, int next_page)
 {
 	static int items_listed = 0;
 	int list_entries = 0;
@@ -228,7 +228,7 @@ static pax_state_t pax_info_menu(int type, int start_item)
 
 	list_entries = pax_info_menu_prepare_list(infos_list, type);
 
-	if (start_item == 0)
+	if (next_page == 0)
 	{
 		items_listed = 0;
 	}

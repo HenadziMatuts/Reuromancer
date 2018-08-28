@@ -5,6 +5,7 @@
 #include "neuro_window_control.h"
 #include "drawing_control.h"
 #include "window_animation.h"
+#include "items.h"
 #include <neuro_routines.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -82,17 +83,6 @@ static uint16_t inventory_count_items(int inv_type)
 	return items;
 }
 
-static char* inventoty_get_item_name(uint16_t item_code, char *credits)
-{
-	if (item_code == 0x7F)
-	{
-		sprintf(credits, "Credits %d", g_4bae.cash);
-		return credits;
-	}
-
-	return g_inventory_item_names[item_code];
-}
-
 typedef enum inventory_show_list_page_t {
 	ISLP_NEXT = 0,
 	ISLP_FIRST,
@@ -154,7 +144,7 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 					(uint8_t)((inv - (inv_type ? g_3f85.inventory.software : g_3f85.inventory.items)) / 4);
 
 				char c = (*(inv + 2) == 0) ? ' ' : '-';
-				char *item_name = inventoty_get_item_name(*inv, NULL);;
+				char *item_name = get_item_name(*inv, NULL);;
 
 				if (inv_type == 0)
 				{
@@ -208,7 +198,7 @@ static void inventory_item_options()
 	neuro_window_clear();
 	neuro_window_flush_buttons();
 
-	item_name = inventoty_get_item_name(g_c946, (g_c946 == 0x7F) ? string : NULL);
+	item_name = get_item_name(g_c946, (g_c946 == 0x7F) ? string : NULL);
 	neuro_window_draw_string(item_name, 8, 8);
 
 	neuro_window_draw_string("X. Exit", 8, 16);
@@ -289,7 +279,7 @@ static void inventory_discard(int discard)
 		neuro_window_draw_string((discard == ID_SOFTWARE) ? "ERASE" : "Discard", 72, 8);
 	}
 
-	item_name = inventoty_get_item_name(g_c946, NULL);
+	item_name = get_item_name(g_c946, NULL);
 
 	if (g_c946 > 0x1C)
 	{

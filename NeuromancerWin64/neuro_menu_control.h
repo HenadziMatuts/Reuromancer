@@ -7,6 +7,7 @@
 typedef enum neuro_menu_id_t {
 	NMID_MAIN_MENU = 0,
 	NMID_NOT_IMPLEMENTED_MENU,
+	NMID_SKILLS_MENU
 } neuro_menu_id_t;
 
 extern neuro_menu_t g_neuro_menu;
@@ -29,5 +30,8 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button);
 
 /* Not Implemented Screen Handlers */
 void not_implemented_menu_handle_button_press(int *state, neuro_button_t *button);
+
+/* Skills Menu Handlers */
+void skills_menu_handle_button_press(int *state, neuro_button_t *button);
 
 #endif

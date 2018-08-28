@@ -124,6 +124,7 @@
     <ClCompile Include="bg_animation_control.c" />
     <ClCompile Include="bih_code.c" />
     <ClCompile Include="data.c" />
+    <ClCompile Include="items.c" />
     <ClCompile Include="rw_state_dialog.c" />
     <ClCompile Include="drawing_control.c" />
     <ClCompile Include="rw_state_inventory.c" />
@@ -147,6 +148,7 @@
     <ClInclude Include="data.h" />
     <ClInclude Include="drawing_control.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="items.h" />
     <ClInclude Include="neuro_menu_control.h" />
     <ClInclude Include="neuro_window_control.h" />
     <ClInclude Include="resource_manager.h" />
