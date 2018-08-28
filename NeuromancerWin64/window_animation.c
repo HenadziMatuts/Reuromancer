@@ -9,6 +9,12 @@
 
 fn_window_animation_renderer_hook g_window_animation_renderer_hook = NULL;
 
+typedef struct _page_turning_data_t {
+	page_turning_data_t user_data;
+	uint16_t l, t, w, h;
+	int16_t height;
+} _page_turning_data_t;
+
 typedef struct _text_scrolling_data_t {
 	text_scrolling_data_t user_data;
 	uint16_t line_length;
@@ -28,12 +34,72 @@ typedef struct window_animation_instance_t {
 		window_folding_data_t folding;
 		_screen_fading_data_t fading;
 		_text_scrolling_data_t scrolling;
+		_page_turning_data_t turning;
 	} data;
 } window_animation_instance_t;
 
 static window_animation_instance_t g_animation = {
 	.type = WA_TYPE_UNKNOWN,
 };
+
+static void page_turning_renderer_hook(sfRenderWindow *window, sfVector2f *scale)
+{
+	_page_turning_data_t *data = &g_animation.data.turning;
+
+	sfRectangleShape *rect = sfRectangleShape_create();
+	sfVector2f pos = { data->l, data->t };
+	sfVector2f size = { data->w, data->height };
+	sfColor color = { 255, 255, 255, 255 };
+
+	sfRectangleShape_setSize(rect, size);
+	sfRectangleShape_setPosition(rect, pos);
+	sfRectangleShape_setFillColor(rect, color);
+	sfRectangleShape_setScale(rect, *scale);
+
+	sfRenderWindow_drawShape(window, (sfShape*)rect, NULL);
+	sfRectangleShape_destroy(rect);
+}
+
+static window_animation_event_t update_page_turning(_page_turning_data_t *_data)
+{
+	static int elapsed = 0;
+	static int dir = 0;
+
+	page_turning_data_t *data = &_data->user_data;
+	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
+
+	if (passed - elapsed <= (int)data->frame_cap)
+	{
+		return WA_EVENT_NO_EVENT;
+	}
+	elapsed = passed;
+
+	if (dir == 0)
+	{
+		_data->height += data->step;
+
+		if (_data->height >= _data->h)
+		{
+			_data->height = _data->h;
+			dir = 1;
+			data->redraw();
+		}
+	}
+	else
+	{
+		_data->height -= data->step;
+		_data->t += data->step * 2;
+
+		if (_data->height <= 0)
+		{
+			dir = 0;
+			data->end();
+			return WA_EVENT_COMPLETED;
+		}
+	}
+
+	return WA_EVENT_NO_EVENT;
+}
 
 static window_animation_event_t update_text_scrolling(_text_scrolling_data_t *_data)
 {
@@ -183,6 +249,10 @@ window_animation_event_t window_animation_update()
 		evt = update_text_scrolling(&g_animation.data.scrolling);
 		break;
 
+	case WA_TYPE_PAGE_TURNING:
+		evt = update_page_turning(&g_animation.data.turning);
+		break;
+
 	default:
 		return WA_EVENT_COMPLETED;
 	}
@@ -194,6 +264,22 @@ window_animation_event_t window_animation_update()
 	}
 
 	return evt;
+}
+
+static void prepare_page_turning()
+{
+	switch (g_neuro_window.mode) {
+	case NWM_PAX:
+		g_animation.data.turning.l = 8;
+		g_animation.data.turning.t = 12;
+		g_animation.data.turning.w = 304;
+		g_animation.data.turning.h = 94;
+		g_animation.data.turning.height = 0;
+		break;
+
+	default:
+		assert(0);
+	}
 }
 
 static void prepare_text_scrolling()
@@ -243,6 +329,12 @@ void window_animation_setup(window_animation_type_t type, void *data)
 	case WA_TYPE_TEXT_SCROLLING:
 		memmove(&g_animation.data.scrolling.user_data, data, sizeof(text_scrolling_data_t));
 		prepare_text_scrolling();
+		break;
+
+	case WA_TYPE_PAGE_TURNING:
+		memmove(&g_animation.data.turning.user_data, data, sizeof(page_turning_data_t));
+		prepare_page_turning();
+		g_window_animation_renderer_hook = page_turning_renderer_hook;
 		break;
 
 	default:
