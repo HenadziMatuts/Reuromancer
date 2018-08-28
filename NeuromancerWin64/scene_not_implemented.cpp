@@ -3,6 +3,7 @@
 #include "resource_manager.h"
 #include "neuro_menu_control.h"
 #include "drawing_control.h"
+#include "neuro_menu_control.h"
 #include <neuro_routines.h>
 #include <assert.h>
 #include <string.h>
@@ -15,13 +16,11 @@ typedef enum not_implemented_state_t {
 
 static not_implemented_state_t g_state = NIS_INITIAL;
 
-static uint8_t *g_dialog = NULL;
-static neuro_menu_t g_not_implemented_dialog;
-
 void not_implemented_menu_handle_button_press(int *state, neuro_button_t *button)
 {
 	switch (button->code) {
 	case 0:
+		neuro_menu_flush();
 		*state = NIS_TO_MAIN_MENU;
 		break;
 
@@ -37,17 +36,15 @@ static void init()
 	assert(resource_manager_load_resource("TITLE.IMH", g_background));
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
 
-	assert(g_dialog = calloc(8192, 1));
-	build_neuro_menu_frame(&g_not_implemented_dialog, 64, 100, 192, 40, 6, g_dialog);
-	build_neuro_menu_text(&g_not_implemented_dialog, "Not implemented yet :(", 0, 0);
-	build_neuro_menu_text(&g_not_implemented_dialog, "Okay", 72, 16);
-	build_neuro_menu_item(&g_not_implemented_dialog, 72, 16, 32, 0, 'k');
-	drawing_control_add_sprite_to_chain(SCI_DIALOG, 64, 100, g_dialog, 1);
+	neuro_menu_draw_frame(6, 9, 13, 22, 3, g_seg011);
+	neuro_menu_draw_text("Not implemented yet :(", 0, 0);
+	neuro_menu_draw_text("oKay", 9, 2);
+	neuro_menu_add_item(9, 2, 4, 0, 'k');
 }
 
 static void handle_input(sfEvent *event)
 {
-	neuro_menu_handle_input(NMID_MAIN_MENU, &g_not_implemented_dialog, (int*)&g_state, event);
+	neuro_menu_handle_input(NMID_NOT_IMPLEMENTED_MENU, &g_neuro_menu, (int*)&g_state, event);
 }
 
 static neuro_scene_id_t update()
@@ -65,9 +62,7 @@ static neuro_scene_id_t update()
 
 static void deinit()
 {
-	free(g_dialog);
 	drawing_control_remove_sprite_from_chain(SCI_BACKGRND);
-	drawing_control_remove_sprite_from_chain(SCI_DIALOG);
 }
 
 void setup_not_implemented_scene()

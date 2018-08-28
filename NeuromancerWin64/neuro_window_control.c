@@ -91,7 +91,7 @@ int neuro_window_setup(uint16_t mode, ...)
 
 		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
 			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011);
-		drawing_control_add_sprite_to_chain(g_4bae.window_sc_index--,
+		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--,
 			g_neuro_window.left, g_neuro_window.top, g_seg011, 1);
 		break;
 
@@ -104,7 +104,7 @@ int neuro_window_setup(uint16_t mode, ...)
 
 		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
 			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
-		drawing_control_add_sprite_to_chain(g_4bae.window_sc_index--,
+		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--,
 			g_neuro_window.left, g_neuro_window.top, g_seg012, 1);
 		break;
 
@@ -228,7 +228,7 @@ void neuro_window_draw_string(char *text, ...)
 	case NWM_NPC_DIALOG_REPLY: {
 		imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
 		build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
-		drawing_control_add_sprite_to_chain(g_4bae.window_sc_index--, 0, g_neuro_window.top, g_seg011, 1);
+		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--, 0, g_neuro_window.top, g_seg011, 1);
 		break;
 	}
 

@@ -681,6 +681,10 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button)
 		*state = RWS_DIALOG;
 		break;
 
+	case 0x03: /* skills */
+		*state = RWS_SKILLS;
+		break;
+
 	case 0x0A: /* panel date */
 		g_ui_panel_mode = UI_PM_DATE;
 		break;
@@ -720,7 +724,7 @@ static void handle_wait_for_input(sfEvent *event)
 			break;
 
 		case NWM_NPC_DIALOG_REPLY:
-			drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
+			drawing_control_remove_sprite_from_chain(++g_4bae.frame_sc_index);
 			drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
 			restore_window();
 			sfSetKeyRepeat(1);
@@ -755,6 +759,10 @@ static void handle_input(sfEvent *event)
 
 	case RWS_DIALOG:
 		handle_dialog_input(event);
+		break;
+
+	case RWS_SKILLS:
+		handle_skills_input(event);
 		break;
 
 	case RWS_WAIT_FOR_INPUT:
@@ -908,6 +916,10 @@ static neuro_scene_id_t update()
 
 	case RWS_DIALOG:
 		g_state = update_dialog();
+		break;
+
+	case RWS_SKILLS:
+		g_state = update_skills();
 		break;
 
 	case RWS_RELOAD_LEVEL:

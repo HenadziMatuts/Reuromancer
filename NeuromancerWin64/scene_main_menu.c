@@ -20,9 +20,6 @@ typedef enum main_menu_state_t {
 
 static main_menu_state_t g_state = MMS_INITIAL;
 
-static uint8_t *g_dialog = NULL;
-static neuro_menu_t g_menu_dialog;
-
 static screen_fading_data_t g_screen_fading_data = {
 	.direction = FADE_OUT,
 	.step = 32,
@@ -40,19 +37,21 @@ void main_menu_handle_text_enter(int *state, sfTextEvent *event)
 
 		if (key == sfKeyReturn)
 		{
-			*state = MMS_TO_LEVEL_SCENE;
 			if (strlen(name))
 			{
 				sprintf(g_4bae.name + 2, "%s", name);
 			}
 			memset(name, 0, 11);
+
+			neuro_menu_flush();
 			window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
+			*state = MMS_TO_LEVEL_SCENE;
 		}
 		else
 		{
 			sprintf(input, "%s%s", name, "<");
 			memset(input + strlen(input), 0x20, 11 - strlen(input));
-			build_neuro_menu_text(&g_menu_dialog, input, 0, 16);
+			neuro_menu_draw_text(input, 0, 2);
 		}
 	}
 }
@@ -63,24 +62,24 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 	case MMS_INITIAL:
 		switch (button->code) {
 		case 0: /* new */
-			build_neuro_menu_frame(&g_menu_dialog, 32, 152, 128, 40, 6, g_dialog);
-			build_neuro_menu_text(&g_menu_dialog, "Your name?", 0, 0);
-			build_neuro_menu_text(&g_menu_dialog, "<", 0, 16);
-			drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
+			neuro_menu_flush();
+			neuro_menu_draw_frame(6, 5, 20, 14, 3, NULL);
+			neuro_menu_draw_text("Your name?", 0, 0);
+			neuro_menu_draw_text("<", 0, 2);
 			*state = MMS_NEW;
 			break;
 
 		case 1: /* load */
-			build_neuro_menu_frame(&g_menu_dialog, 48, 120, 144, 64, 6, g_dialog);
-			build_neuro_menu_text(&g_menu_dialog, "Load Game", 32, 0);
-			build_neuro_menu_text(&g_menu_dialog, "1  2  3  4", 24, 16);
-			build_neuro_menu_text(&g_menu_dialog, "exit", 48, 40);
-			build_neuro_menu_item(&g_menu_dialog, 24, 16, 8, 0, '1');
-			build_neuro_menu_item(&g_menu_dialog, 48, 16, 8, 1, '2');
-			build_neuro_menu_item(&g_menu_dialog, 72, 16, 8, 2, '3');
-			build_neuro_menu_item(&g_menu_dialog, 96, 16, 8, 3, '4');
-			build_neuro_menu_item(&g_menu_dialog, 48, 40, 32, 10, 'x');
-			drawing_control_add_sprite_to_chain(SCI_DIALOG, 48, 120, g_dialog, 1);
+			neuro_menu_flush();
+			neuro_menu_draw_frame(6, 7, 16, 16, 6, NULL);
+			neuro_menu_draw_text("Load Game", 4, 0);
+			neuro_menu_draw_text("1  2  3  4", 3, 2);
+			neuro_menu_draw_text("exit", 6, 5);
+			neuro_menu_add_item(3, 2, 1, 0, '1');
+			neuro_menu_add_item(6, 2, 1, 1, '2');
+			neuro_menu_add_item(9, 2, 1, 2, '3');
+			neuro_menu_add_item(12, 2, 1, 3, '4');
+			neuro_menu_add_item(6, 5, 4, 10, 'x');
 			*state = MMS_LOAD;
 			break;
 		}
@@ -89,11 +88,11 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 	case MMS_LOAD:
 		switch (button->code) {
 		case 10: /* exit */
-			build_neuro_menu_frame(&g_menu_dialog, 32, 152, 96, 24, 6, g_dialog);
-			build_neuro_menu_text(&g_menu_dialog, "New/Load", 8, 0);
-			build_neuro_menu_item(&g_menu_dialog, 8, 0, 24, 0, 'n');
-			build_neuro_menu_item(&g_menu_dialog, 40, 0, 32, 1, 'l');
-			drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
+			neuro_menu_flush();
+			neuro_menu_draw_frame(6, 5, 20, 10, 1, NULL);
+			neuro_menu_draw_text("New/Load", 1, 0);
+			neuro_menu_add_item(1, 0, 3, 0, 'n');
+			neuro_menu_add_item(5, 0, 4, 1, 'l');
 			*state = MMS_INITIAL;
 			break;
 
@@ -101,6 +100,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 		case 1:
 		case 2:
 		case 3:
+			neuro_menu_flush();
 			*state = MMS_TO_NOT_IMPLEMENTED_SCENE;
 			break;
 		}
@@ -118,17 +118,15 @@ static void init()
 	assert(resource_manager_load_resource("TITLE.IMH", g_background));
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
 
-	assert(g_dialog = calloc(8192, 1));
-	build_neuro_menu_frame(&g_menu_dialog, 32, 152, 96, 24, 6, g_dialog);
-	build_neuro_menu_text(&g_menu_dialog, "New/Load", 8, 0);
-	build_neuro_menu_item(&g_menu_dialog, 8, 0, 24, 0, 'n');
-	build_neuro_menu_item(&g_menu_dialog, 40, 0, 32, 1, 'l');
-	drawing_control_add_sprite_to_chain(SCI_DIALOG, 32, 152, g_dialog, 1);
+	neuro_menu_draw_frame(6, 5, 20, 10, 1, NULL);
+	neuro_menu_draw_text("New/Load", 1, 0);
+	neuro_menu_add_item(1, 0, 3, 0, 'n');
+	neuro_menu_add_item(5, 0, 4, 1, 'l');
 }
 
 static void handle_input(sfEvent *event)
 {
-	neuro_menu_handle_input(NMID_MAIN_MENU, &g_menu_dialog, (int*)&g_state, event);
+	neuro_menu_handle_input(NMID_MAIN_MENU, &g_neuro_menu, (int*)&g_state, event);
 }
 
 static neuro_scene_id_t update()
@@ -159,9 +157,7 @@ static neuro_scene_id_t update()
 
 static void deinit()
 {
-	free(g_dialog);
 	drawing_control_remove_sprite_from_chain(SCI_BACKGRND);
-	drawing_control_remove_sprite_from_chain(SCI_DIALOG);
 }
 
 void setup_main_menu_scene()

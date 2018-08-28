@@ -1,6 +1,114 @@
+#include "data.h"
 #include "globals.h"
 #include "drawing_control.h"
 #include "neuro_menu_control.h"
+#include "resource_manager.h"
+#include <assert.h>
+#include <string.h>
+
+/* 0x65FA */
+neuro_menu_t g_neuro_menu;
+
+/* 0x66DC */
+neuro_menu_t g_66dc[3];
+
+void neuro_menu_store()
+{
+	memmove(&g_66dc[2], &g_66dc[1], sizeof(neuro_menu_t));
+	memmove(&g_66dc[1], &g_66dc[0], sizeof(neuro_menu_t));
+	memmove(&g_66dc[0], &g_neuro_menu, sizeof(neuro_menu_t));
+}
+
+void neuro_menu_restore()
+{
+	memmove(&g_neuro_menu, &g_66dc[0], sizeof(neuro_menu_t));
+	memmove(&g_66dc[0], &g_66dc[1], sizeof(neuro_menu_t));
+	memmove(&g_66dc[1], &g_66dc[2], sizeof(neuro_menu_t));
+}
+
+void neuro_menu_draw_frame(uint16_t mode,
+	uint16_t l, uint16_t t, uint16_t w, uint16_t h, uint8_t *pixels)
+{
+	neuro_menu_store();
+
+	switch (mode) {
+	case 6:
+		if (!pixels)
+		{
+			pixels = g_seg011;
+		}
+
+		l = 8 * (l - 1);
+		t = 8 * (t - 1);
+		w = (w * 8) + 16;
+		h = (h * 8) + 16;
+
+		build_neuro_menu_frame(&g_neuro_menu, l, t, w, h, mode, pixels);
+		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--, l, t, pixels, 1);
+		break;
+
+	case 7:
+		assert(7 == 0);
+
+	default:
+		assert(0);
+	}
+}
+
+void neuro_menu_draw_text(char *text, uint16_t l, uint16_t t)
+{
+	switch (g_neuro_menu.flags) {
+	case 6:
+		l = l * 8;
+		t = t * 8;
+		build_neuro_menu_text(&g_neuro_menu, text, l, t);
+		break;
+
+	case 7:
+		assert(7 == 0);
+
+	default:
+		assert(0);
+	}
+}
+
+void neuro_menu_add_item(uint16_t l, uint16_t t, uint16_t w,
+		uint16_t code, char label)
+{
+	switch (g_neuro_menu.flags) {
+	case 6:
+		l = l * 8;
+		t = t * 8;
+		w = w * 8;
+		build_neuro_menu_item(&g_neuro_menu, l, t, w, code, label);
+		break;
+
+	case 7:
+		assert(7 == 0);
+
+	default:
+		assert(0);
+	}
+}
+
+void neuro_menu_flush_items()
+{
+	g_neuro_menu.items_count = 0;
+}
+
+void neuro_menu_flush()
+{
+	switch (g_neuro_menu.flags) {
+	case 6:
+		drawing_control_remove_sprite_from_chain(++g_4bae.frame_sc_index);
+	case 7:
+		neuro_menu_restore();
+		break;
+
+	default:
+		assert(0);
+	}
+}
 
 static void menu_handle_text_enter(neuro_menu_id_t id, int *state, sfTextEvent *event)
 {
@@ -19,6 +127,7 @@ static void menu_handle_button_press(neuro_menu_id_t id, int *state, neuro_butto
 		break;
 
 	case NMID_NOT_IMPLEMENTED_MENU:
+		not_implemented_menu_handle_button_press(state, button);
 		break;
 	}
 }

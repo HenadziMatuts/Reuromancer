@@ -36,7 +36,7 @@ typedef struct resource_t {
 
 typedef enum spite_chain_index_t {
 	SCI_CURSOR = 0,
-	SCI_DIALOG = 2,
+	SCI_NEURO_MENU = 2,
 	SCI_DIALOG_BUBBLE = 3,
 	SCI_CHARACTER = 4,
 	SCI_LEVEL_BG = 9,
@@ -68,24 +68,24 @@ typedef struct neuro_button_t {
 } neuro_button_t;
 
 typedef struct neuro_menu_t {
-	uint16_t left;
-	uint16_t top;
-	uint16_t right;
-	uint16_t bottom;
+	uint16_t left;   // 65FA
+	uint16_t top;    // 65FC
+	uint16_t right;  // 65FE
+	uint16_t bottom; // 6600
 
-	uint16_t inner_left;
-	uint16_t inner_top;
-	uint16_t inner_right;
-	uint16_t inner_bottom;
+	uint16_t inner_left;   // 6602
+	uint16_t inner_top;    // 6604
+	uint16_t inner_right;  // 6606
+	uint16_t inner_bottom; // 6608
 
-	uint16_t _inner_left;
-	uint16_t _inner_top;
-	uint16_t _inner_right;
-	uint16_t _inner_bottom;
+	uint16_t _inner_left;   // 660A
+	uint16_t _inner_top;    // 660C
+	uint16_t _inner_right;  // 660E
+	uint16_t _inner_bottom; // 6610
 
-	uint16_t flags;
+	uint16_t flags; // 6612
 
-	uint16_t items_count;
+	uint16_t items_count; // 6614
 	neuro_button_t items[16];
 
 	uint16_t width;

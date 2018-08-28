@@ -129,7 +129,8 @@ typedef struct x3f85_t {
 	uint8_t vm_state_end;        // 0x407A
 	level_info_t level_info[58]; // 0x407B
 	neuro_inventory_t inventory; // 0x41D7
-	uint8_t x42d7[402];
+	uint8_t skills[16]; // 0x42D7
+	uint8_t x42e7[386]; 
 } x3f85_t;
 
 /* wraps 16-bit operation addresses */
@@ -253,7 +254,7 @@ typedef struct x4bae_t {
 	uint8_t x4ccc;
 	uint8_t x4ccd;
 	uint8_t x4cce;
-	uint16_t window_sc_index; // 0x4CCF
+	uint16_t frame_sc_index; // 0x4CCF
 } x4bae_t;
 
 extern x4bae_t g_4bae;

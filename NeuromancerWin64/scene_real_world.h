@@ -1,6 +1,9 @@
 #ifndef _SCENE_REAL_WORLD_H
 #define _SCENE_REAL_WORLD_H
 
+#include <SFML\Window\Event.h>
+#include <stdint.h>
+
 typedef enum real_world_state_t {
 	RWS_FADE_IN = 0,
 	RWS_TEXT_OUTPUT,
@@ -8,6 +11,7 @@ typedef enum real_world_state_t {
 	RWS_INVENTORY,
 	RWS_PAX,
 	RWS_DIALOG,
+	RWS_SKILLS,
 	RWS_WAIT_FOR_INPUT,
 	RWS_RELOAD_LEVEL
 } real_world_state_t;
@@ -26,5 +30,9 @@ real_world_state_t update_dialog();
 /* PAX state handles */
 void handle_pax_input(sfEvent *event);
 real_world_state_t update_pax();
+
+/* Skills state handles */
+void handle_skills_input(sfEvent *event);
+real_world_state_t update_skills();
 
 #endif

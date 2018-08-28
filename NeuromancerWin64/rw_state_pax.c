@@ -1102,7 +1102,7 @@ real_world_state_t update_pax()
 			g_pax_anim_data.frame_data = (g_state == PS_OPEN_PAX) ?
 				g_open_frame_data : g_close_frame_data;
 			g_pax_anim_data.sprite_chain_index = (g_state == PS_OPEN_PAX) ?
-				g_4bae.window_sc_index : g_4bae.window_sc_index + 1;
+				g_4bae.frame_sc_index : g_4bae.frame_sc_index + 1;
 			window_animation_setup(WA_TYPE_WINDOW_FOLDING, &g_pax_anim_data);
 		}
 		else if (window_animation_update() == WA_EVENT_COMPLETED)
@@ -1116,7 +1116,7 @@ real_world_state_t update_pax()
 			else
 			{
 				g_state = PS_OPEN_PAX;
-				drawing_control_remove_sprite_from_chain(++g_4bae.window_sc_index);
+				drawing_control_remove_sprite_from_chain(++g_4bae.frame_sc_index);
 				restore_window();
 				return RWS_NORMAL;
 			}
