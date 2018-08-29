@@ -26,7 +26,7 @@ void neuro_menu_restore()
 	memmove(&g_66dc[1], &g_66dc[2], sizeof(neuro_menu_t));
 }
 
-void neuro_menu_draw_frame(uint16_t mode,
+void neuro_menu_create(uint16_t mode,
 	uint16_t l, uint16_t t, uint16_t w, uint16_t h, uint8_t *pixels)
 {
 	neuro_menu_store();
@@ -94,6 +94,17 @@ void neuro_menu_add_item(uint16_t l, uint16_t t, uint16_t w,
 void neuro_menu_flush_items()
 {
 	g_neuro_menu.items_count = 0;
+}
+
+void neuro_menu_flush()
+{
+	assert(g_neuro_menu.flags == 6);
+
+	uint16_t h = g_neuro_menu.bottom - g_neuro_menu.top + 1;
+	uint16_t w = g_neuro_menu.width * 2;
+	uint8_t *pixels = g_neuro_menu.pixels;
+
+	build_text_frame(h, w, (imh_hdr_t*)pixels);
 }
 
 void neuro_menu_destroy()

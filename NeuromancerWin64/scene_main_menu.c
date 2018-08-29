@@ -63,7 +63,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 		switch (button->code) {
 		case 0: /* new */
 			neuro_menu_destroy();
-			neuro_menu_draw_frame(6, 5, 20, 14, 3, NULL);
+			neuro_menu_create(6, 5, 20, 14, 3, NULL);
 			neuro_menu_draw_text("Your name?", 0, 0);
 			neuro_menu_draw_text("<", 0, 2);
 			*state = MMS_NEW;
@@ -71,7 +71,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 
 		case 1: /* load */
 			neuro_menu_destroy();
-			neuro_menu_draw_frame(6, 7, 16, 16, 6, NULL);
+			neuro_menu_create(6, 7, 16, 16, 6, NULL);
 			neuro_menu_draw_text("Load Game", 4, 0);
 			neuro_menu_draw_text("1  2  3  4", 3, 2);
 			neuro_menu_draw_text("exit", 6, 5);
@@ -89,7 +89,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 		switch (button->code) {
 		case 10: /* exit */
 			neuro_menu_destroy();
-			neuro_menu_draw_frame(6, 5, 20, 10, 1, NULL);
+			neuro_menu_create(6, 5, 20, 10, 1, NULL);
 			neuro_menu_draw_text("New/Load", 1, 0);
 			neuro_menu_add_item(1, 0, 3, 0, 'n');
 			neuro_menu_add_item(5, 0, 4, 1, 'l');
@@ -118,7 +118,7 @@ static void init()
 	assert(resource_manager_load_resource("TITLE.IMH", g_background));
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
 
-	neuro_menu_draw_frame(6, 5, 20, 10, 1, NULL);
+	neuro_menu_create(6, 5, 20, 10, 1, NULL);
 	neuro_menu_draw_text("New/Load", 1, 0);
 	neuro_menu_add_item(1, 0, 3, 0, 'n');
 	neuro_menu_add_item(5, 0, 4, 1, 'l');

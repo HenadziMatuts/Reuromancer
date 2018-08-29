@@ -593,7 +593,7 @@ static void init()
 	g_4bae.active_item = 0xFFFF;
 	g_4bae.cash_withdrawal = 0xFFFFFFFF;
 	g_update_hold = 0;
-	g_4bae.x4bf4 = 0xFF;
+	g_4bae.active_skill = 0xFF;
 
 	memset(g_a8e0.a8e0, 0xFFFF, 8);
 	g_level_n = g_4bae.level_n;

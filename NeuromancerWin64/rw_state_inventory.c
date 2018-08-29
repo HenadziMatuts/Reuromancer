@@ -67,22 +67,6 @@ static neuro_button_t g_inventory_item_button[4];
 static uint8_t g_inventory_item_code[4];
 static uint8_t g_inventory_item_index[4];
 
-static uint16_t inventory_count_items(int inv_type)
-{
-	uint8_t *inv = (inv_type) ? g_3f85.inventory.software : g_3f85.inventory.items;
-	uint16_t items = 0;
-
-	for (int i = 0; i < 32; i++, inv += 4)
-	{
-		if (*inv != 0xFF)
-		{
-			items++;
-		}
-	}
-
-	return items;
-}
-
 typedef enum inventory_show_list_page_t {
 	ISLP_NEXT = 0,
 	ISLP_FIRST,
@@ -92,7 +76,7 @@ static inventory_state_t inventory_item_list(int inv_type, int max_items, int pa
 {
 	static uint16_t items_listed = 0;
 	static uint8_t *inv = NULL;
-	uint16_t items_total = inventory_count_items(inv_type);
+	uint16_t items_total = count_items(inv_type);
 
 	items_total = (inv_type) ? items_total : items_total + 1;
 	inv = inv ? inv :

@@ -101,3 +101,19 @@ char* get_item_name(uint16_t item_code, char *credits)
 
 	return g_item_names[item_code];
 }
+
+uint16_t count_items(int sortware)
+{
+	uint8_t *inv = (sortware) ? g_3f85.inventory.software : g_3f85.inventory.items;
+	uint16_t items = 0;
+
+	for (int i = 0; i < 32; i++, inv += 4)
+	{
+		if (*inv != 0xFF)
+		{
+			items++;
+		}
+	}
+
+	return items;
+}

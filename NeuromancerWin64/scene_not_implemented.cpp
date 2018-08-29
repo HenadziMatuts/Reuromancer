@@ -36,7 +36,7 @@ static void init()
 	assert(resource_manager_load_resource("TITLE.IMH", g_background));
 	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
 
-	neuro_menu_draw_frame(6, 9, 13, 22, 3, g_seg011);
+	neuro_menu_create(6, 9, 13, 22, 3, g_seg011);
 	neuro_menu_draw_text("Not implemented yet :(", 0, 0);
 	neuro_menu_draw_text("oKay", 9, 2);
 	neuro_menu_add_item(9, 2, 4, 0, 'k');

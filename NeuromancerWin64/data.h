@@ -169,8 +169,8 @@ typedef struct x4bae_t {
 	uint8_t x4bcc;
 	uint8_t x4bcd[38];
 	uint8_t x4bf3;
-	uint8_t x4bf4;
-	uint8_t x4bf5;
+	uint8_t active_skill; // 0x4BF4
+	uint8_t active_skill_level; // 0x4BF5
 	uint8_t x4bf6[6];
 	uint8_t x4bfc;
 	uint8_t x4bfd;

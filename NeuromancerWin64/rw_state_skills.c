@@ -12,12 +12,33 @@ typedef enum skills_state_t {
 	SS_OPEN_SKILLS = 0,
 	SS_NO_SKILLS_WFI,
 	SS_SKILLS_PAGE,
+	SS_SKILL_WAREZ_ITEM_PAGE,
 	SS_CLOSE_SKILLS,
 } skills_state_t;
+
+typedef enum skills_t {
+	BARGAINING = 0,
+	COPTALK,
+	WAREZ_ANALYSIS,
+	DEBUG,
+	HW_REPAIR,
+	ICE_BRAKING,
+	EVASION,
+	CRYPTOLOGY,
+	JAPANESE,
+	LOGIC,
+	PSYCHOANALYSIS,
+	PHENOMENOLOGY,
+	PHILOSOPHY,
+	SOPHISTRY,
+	ZEN,
+	MUSICIANSHIP,
+} skills_t;
 
 static skills_state_t g_state = SS_OPEN_SKILLS;
 static uint16_t g_skills_total = 0;
 static uint16_t g_skills[16] = { 0x00, };
+static uint16_t g_listed_skills[4] = { 0x00 };
 
 static skills_state_t skills_page(int next)
 {
@@ -60,6 +81,7 @@ static skills_state_t skills_page(int next)
 			memmove(skill_string + 21, skill_level_string, 2);
 
 			neuro_menu_add_item(0, i + 1, 24, i, i + '1');
+			g_listed_skills[i] = g_skills[listed];
 			listed++;
 		}
 
@@ -71,9 +93,124 @@ static skills_state_t skills_page(int next)
 	return SS_SKILLS_PAGE;
 }
 
+typedef void(*pfn_item_page_cb)(void);
+typedef void(*pfn_item_page_setup_cb)(uint16_t, uint16_t);
+
+static void item_page_setup(char *title, uint16_t max_items, uint16_t total_items)
+{
+	neuro_menu_flush();
+	neuro_menu_flush_items();
+
+	neuro_menu_add_item(8, 5, 4, 0x0A, 'x');
+	neuro_menu_draw_text("exit", 8, 5);
+
+	if (total_items > max_items)
+	{
+		neuro_menu_add_item(13, 5, 4, 0x0B, 'm');
+		neuro_menu_draw_text("more", 13, 5);
+	}
+
+	neuro_menu_draw_text(title, 10, 0);
+}
+
+static void warez_item_page_setup(uint16_t max_items, uint16_t total_items)
+{
+	item_page_setup("Warez", max_items, total_items);
+}
+
+static void item_page(uint16_t max_items, uint16_t total_items, int software,
+	pfn_item_page_setup_cb setup, pfn_item_page_cb cb, int a, int b, int c, int next)
+{
+	static int listed = 0;
+
+	if (next == 0)
+	{
+		listed = 0;
+	}
+
+	setup(max_items, total_items);
+
+	if (total_items - listed < max_items)
+	{
+		max_items = total_items - listed;
+	}
+
+	for (int i = 0; i < max_items; i++)
+	{
+
+	}
+}
+
+static void skills_item_page(int software, int next)
+{
+	uint16_t items = count_items(software);
+	
+	if (software)
+	{
+		item_page(4, items, software, warez_item_page_setup, NULL, 0, 1, 24, next);
+	}
+	else
+	{
+
+	}
+}
+
+static skills_state_t skills_use_warez_analysis(int x)
+{
+	neuro_menu_flush();
+	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
+
+	skills_item_page(1, 0);
+	return SS_SKILL_WAREZ_ITEM_PAGE;
+}
+
+static skills_state_t skills_use(uint16_t skill)
+{
+	if (g_4bae.ui_type == 0)
+	{
+		skill -= 0x43;
+		g_4bae.active_skill = (uint8_t)skill;
+		g_4bae.active_skill_level = g_3f85.skills[skill];
+
+		switch (skill) {
+		case WAREZ_ANALYSIS:
+			return skills_use_warez_analysis(0);
+
+		default:
+			return SS_CLOSE_SKILLS;
+		}
+	}
+	else
+	{
+		/*...*/
+	}
+
+	return SS_SKILLS_PAGE;
+}
+
+static skills_state_t on_skill_warez_item_page_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0x0A: /* exit */
+		neuro_menu_destroy();
+		return SS_CLOSE_SKILLS;
+
+	default:
+		break;
+	}
+
+	return SS_SKILL_WAREZ_ITEM_PAGE;
+}
+
 static skills_state_t on_skills_page_menu_button(neuro_button_t *button)
 {
 	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3: /* skills */
+		return skills_use(g_listed_skills[button->code]);
+
 	case 0x0A: /* more */
 		return skills_page(1);
 
@@ -92,6 +229,10 @@ void skills_menu_handle_button_press(int *state, neuro_button_t *button)
 	switch (*state) {
 	case SS_SKILLS_PAGE:
 		*state = on_skills_page_menu_button(button);
+		break;
+
+	case SS_SKILL_WAREZ_ITEM_PAGE:
+		*state = on_skill_warez_item_page_button(button);
 		break;
 
 	default:
@@ -124,6 +265,7 @@ void handle_skills_input(sfEvent *event)
 		break;
 
 	case SS_SKILLS_PAGE:
+	case SS_SKILL_WAREZ_ITEM_PAGE:
 		neuro_menu_handle_input(NMID_SKILLS_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 
@@ -151,7 +293,7 @@ static int skills_prepare()
 
 static skills_state_t skills_show()
 {
-	neuro_menu_draw_frame(6, 7, 17, 25, 6, NULL);
+	neuro_menu_create(6, 7, 17, 25, 6, NULL);
 	neuro_menu_draw_text("SKILLS", 9, 0);
 	neuro_menu_flush_items();
 
