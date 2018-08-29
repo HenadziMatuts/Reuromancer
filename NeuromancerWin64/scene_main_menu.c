@@ -43,7 +43,7 @@ void main_menu_handle_text_enter(int *state, sfTextEvent *event)
 			}
 			memset(name, 0, 11);
 
-			neuro_menu_flush();
+			neuro_menu_destroy();
 			window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
 			*state = MMS_TO_LEVEL_SCENE;
 		}
@@ -62,7 +62,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 	case MMS_INITIAL:
 		switch (button->code) {
 		case 0: /* new */
-			neuro_menu_flush();
+			neuro_menu_destroy();
 			neuro_menu_draw_frame(6, 5, 20, 14, 3, NULL);
 			neuro_menu_draw_text("Your name?", 0, 0);
 			neuro_menu_draw_text("<", 0, 2);
@@ -70,7 +70,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 			break;
 
 		case 1: /* load */
-			neuro_menu_flush();
+			neuro_menu_destroy();
 			neuro_menu_draw_frame(6, 7, 16, 16, 6, NULL);
 			neuro_menu_draw_text("Load Game", 4, 0);
 			neuro_menu_draw_text("1  2  3  4", 3, 2);
@@ -88,7 +88,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 	case MMS_LOAD:
 		switch (button->code) {
 		case 10: /* exit */
-			neuro_menu_flush();
+			neuro_menu_destroy();
 			neuro_menu_draw_frame(6, 5, 20, 10, 1, NULL);
 			neuro_menu_draw_text("New/Load", 1, 0);
 			neuro_menu_add_item(1, 0, 3, 0, 'n');
@@ -100,7 +100,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 		case 1:
 		case 2:
 		case 3:
-			neuro_menu_flush();
+			neuro_menu_destroy();
 			*state = MMS_TO_NOT_IMPLEMENTED_SCENE;
 			break;
 		}

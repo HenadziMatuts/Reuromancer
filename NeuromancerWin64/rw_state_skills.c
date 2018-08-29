@@ -6,6 +6,7 @@
 #include "window_animation.h"
 #include "items.h"
 #include <neuro_routines.h>
+#include <string.h>
 
 typedef enum skills_state_t {
 	SS_OPEN_SKILLS = 0,
@@ -15,11 +16,67 @@ typedef enum skills_state_t {
 } skills_state_t;
 
 static skills_state_t g_state = SS_OPEN_SKILLS;
+static uint16_t g_skills_total = 0;
 static uint16_t g_skills[16] = { 0x00, };
+
+static skills_state_t skills_page(int next)
+{
+	static int listed = 0;
+
+	neuro_menu_flush_items();
+
+	if (next == 0)
+	{
+		listed = 0;
+	}
+
+	if (g_skills_total > 4)
+	{
+		neuro_menu_draw_text("more", 12, 5);
+		neuro_menu_add_item(12, 5, 4, 10, 'm');
+	}
+
+	neuro_menu_draw_text("exit", 7, 5);
+	neuro_menu_add_item(7, 5, 4, 11, 'x');
+
+	for (int i = 0; i < 4; i++)
+	{
+		char skill_string[25] = { 0, };
+		sprintf(skill_string, "%24s", " ");
+
+		if (listed < g_skills_total)
+		{
+			skill_string[0] = i + '1';
+			skill_string[1] = '.';
+
+			char *skill_name = get_item_name(g_skills[listed], NULL);
+			memmove(skill_string + 3, skill_name, strlen(skill_name));
+
+			int skill_index = g_skills[listed] - 0x43;
+			int skill_level = g_3f85.skills[skill_index];
+			char skill_level_string[3] = { 0, };
+
+			sprintf(skill_level_string, "%2d", skill_level + 1);
+			memmove(skill_string + 21, skill_level_string, 2);
+
+			neuro_menu_add_item(0, i + 1, 24, i, i + '1');
+			listed++;
+		}
+
+		neuro_menu_draw_text(skill_string, 0, i + 1);
+	}
+
+	listed %= g_skills_total;
+
+	return SS_SKILLS_PAGE;
+}
 
 static skills_state_t on_skills_page_menu_button(neuro_button_t *button)
 {
 	switch (button->code) {
+	case 0x0A: /* more */
+		return skills_page(1);
+
 	case 0x0B: /* exit */
 		return SS_CLOSE_SKILLS;
 
@@ -94,30 +151,19 @@ static int skills_prepare()
 
 static skills_state_t skills_show()
 {
-	int skills_total = 0;
-
 	neuro_menu_draw_frame(6, 7, 17, 25, 6, NULL);
 	neuro_menu_draw_text("SKILLS", 9, 0);
 	neuro_menu_flush_items();
 
-	skills_total = skills_prepare();
-	if (!skills_total)
+	g_skills_total = skills_prepare();
+	if (!g_skills_total)
 	{
 		/* play track 6 */
 		neuro_menu_draw_text("No skills.", 0, 2);
 		return SS_NO_SKILLS_WFI;
 	}
 
-	if (skills_total > 4)
-	{
-		neuro_menu_draw_text("more", 12, 5);
-		neuro_menu_add_item(12, 5, 4, 10, 'm');
-	}
-
-	neuro_menu_draw_text("exit", 7, 5);
-	neuro_menu_add_item(7, 5, 4, 11, 'x');
-
-	return SS_SKILLS_PAGE;
+	return skills_page(0);
 }
 
 static window_folding_frame_data_t g_close_frame_data[12] = {
@@ -164,7 +210,7 @@ real_world_state_t update_skills()
 			}
 			else
 			{
-				neuro_menu_flush();
+				neuro_menu_destroy();
 				g_state = SS_OPEN_SKILLS;
 				return RWS_NORMAL;
 			}

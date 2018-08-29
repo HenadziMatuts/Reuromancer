@@ -96,7 +96,7 @@ void neuro_menu_flush_items()
 	g_neuro_menu.items_count = 0;
 }
 
-void neuro_menu_flush()
+void neuro_menu_destroy()
 {
 	switch (g_neuro_menu.flags) {
 	case 6:

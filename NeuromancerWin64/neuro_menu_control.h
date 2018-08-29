@@ -18,7 +18,7 @@ void neuro_menu_draw_text(char *text, uint16_t l, uint16_t t);
 void neuro_menu_add_item(uint16_t l, uint16_t t, uint16_t w,
 		uint16_t code, char label);
 void neuro_menu_flush_items();
-void neuro_menu_flush();
+void neuro_menu_destroy();
 
 void neuro_menu_handle_input(neuro_menu_id_t id, neuro_menu_t *menu,
 			int *state, sfEvent *event);

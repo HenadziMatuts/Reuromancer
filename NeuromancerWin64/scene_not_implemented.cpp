@@ -20,7 +20,7 @@ void not_implemented_menu_handle_button_press(int *state, neuro_button_t *button
 {
 	switch (button->code) {
 	case 0:
-		neuro_menu_flush();
+		neuro_menu_destroy();
 		*state = NIS_TO_MAIN_MENU;
 		break;
 
