@@ -397,7 +397,7 @@ int sub_1152B()
 	return (*p == 1) ? 1 : 0;
 }
 
-int sub_1155A()
+int is_jack_on_level()
 {
 	uint8_t *p = g_a8e0.bih + sizeof(bih_hdr_t); // 0xA910
 

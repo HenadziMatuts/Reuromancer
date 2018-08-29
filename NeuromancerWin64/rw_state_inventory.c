@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int sub_1155A();
+int is_jack_on_level();
 
 /*
 * "IS_OPEN_INVENTORY"        -> "IS_ITEM_LIST",           "IS_WFI_AND_CLOSE"
@@ -327,12 +327,14 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 	neuro_window_clear();
 	neuro_window_flush_buttons();
 
+	/* credits or no operaton */
 	if (g_c946 == 0x7F || item_op == 0xFF)
 	{
 		neuro_window_draw_string("Nothing happens.", 8, 16);
 		return IS_WFI_AND_CONTINUE;
 	}
 
+	/* "skill" check */
 	if ((rand() & 0xFF) < item[2])
 	{
 		if ((item_op & 0xC0) != 0)
@@ -353,21 +355,32 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 
 	inventory_state_t state;
 
+	/* hardware */
 	if (item_op & 0x80)
 	{
 		switch (g_4bae.x4ccb) {
-		case 0:
+		case 0: /* deck */
 			g_4bae.x4c74 = item_op << 1;
 			state = inventory_item_list(IT_SOFTWARE, 4, ISLP_FIRST);
 			return (state == IS_SOFTWARE_LIST) ? IS_OPERATE_SOFTWARE_LIST : IS_WFI_AND_CLOSE;
 
-		case 1:
-		case 2:
-		case 3:
+		case 1: /* skill chip */
+			g_3f85.skills[item_code - 0x43] = 0;
+			item[0] = 0xFF;
+			neuro_window_draw_string("Skill chip implanted", 8, 16);
+			return IS_WFI_AND_CONTINUE;
+
+		case 2: /* gas mask */
+			g_4bae.gas_mask_is_on ^= 1;
+			neuro_window_draw_string(g_4bae.gas_mask_is_on ?
+				"Gas mask is on." : "Gas mask is off", 8, 16);
+			return IS_WFI_AND_CONTINUE;
+
+		case 3: /* some specific software */
 		case 4:
 		case 5:
 		default:
-			neuro_window_draw_string("Not implemented.", 8, 16);
+			neuro_window_draw_string("Not implemented Yet.", 8, 16);
 			return IS_WFI_AND_CLOSE;
 		}
 	}
@@ -375,7 +388,7 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 	if (g_4bae.x4ccc != 0x10)
 	{
 		if (g_4bae.x4ccc == 0x20)
-		{
+		{   /* cyberspace only items */
 			if (g_a61a == 1)
 			{
 				uint8_t cb = 0;
@@ -399,8 +412,8 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 			}
 		}
 		else if ((g_4bae.x4ccb == 0) || g_4bae.x4c74 & 0x80)
-		{
-			if (sub_1155A())
+		{   /* jackable items */
+			if (is_jack_on_level())
 			{
 				if (g_4bae.x4ccd != 0)
 				{
@@ -435,7 +448,7 @@ static inventory_state_t inventory_operate_item(uint8_t *item)
 		}
 	}
 	else
-	{
+	{   /* database only items */
 		if (item_code == 0x18)
 		{
 			neuro_window_draw_string("Nothing happens.", 8, 16);

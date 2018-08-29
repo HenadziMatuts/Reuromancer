@@ -184,7 +184,7 @@ typedef struct x4bae_t {
 	uint8_t x4c08[8];
 	uint8_t x4c10;
 	uint8_t x4c11[8];
-	uint8_t x4c19;
+	uint8_t gas_mask_is_on;
 	uint8_t x4c1a;
 	uint16_t x4c1b;
 	uint8_t x4c1d[4];
