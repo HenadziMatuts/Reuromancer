@@ -12,7 +12,8 @@ typedef enum skills_state_t {
 	SS_OPEN_SKILLS = 0,
 	SS_NO_SKILLS_WFI,
 	SS_SKILLS_PAGE,
-	SS_SKILL_WAREZ_ITEM_PAGE,
+	  SS_SKILL_WAREZ_ITEM_PAGE,
+	  SS_SKILL_WAREZ_WFI,
 	SS_CLOSE_SKILLS,
 } skills_state_t;
 
@@ -93,8 +94,50 @@ static skills_state_t skills_page(int next)
 	return SS_SKILLS_PAGE;
 }
 
-typedef void(*pfn_item_page_cb)(void);
+typedef void(*pfn_item_page_draw_item_cb)(uint16_t, uint16_t);
 typedef void(*pfn_item_page_setup_cb)(uint16_t, uint16_t);
+static uint8_t *g_inventory = NULL;
+static uint8_t g_listed_items[4][4];
+
+static item_page_draw_item(uint16_t _item_num, uint16_t t, int item)
+{
+	uint8_t *inventory = g_inventory;
+	uint8_t *item_ptr;
+	uint16_t item_num = _item_num;
+
+	do {
+		while (*inventory == 0xFF)
+		{
+			inventory += 4;
+		}
+
+		item_ptr = inventory;
+		inventory += 4;
+
+	} while (item_num--);
+
+	memmove(g_listed_items[_item_num % 4], item_ptr, 4);
+
+	char s[30] = { 0 };
+	char prefix = (item_ptr[2] == 0) ? ' ' : '-';
+	char *name = get_item_name(item_ptr[0], NULL);
+
+	if (item == 0)
+	{	
+		sprintf(s, "%c%-15s%2d.0", prefix, name, item_ptr[1]);
+	}
+	else
+	{
+		sprintf(s, "%c%s", prefix, name);
+	}
+
+	neuro_menu_draw_text(s, 3, t);
+}
+
+static void warez_item_page_draw_item(uint16_t item_num, uint16_t t)
+{
+	item_page_draw_item(item_num, t, 0);
+}
 
 static void item_page_setup(char *title, uint16_t max_items, uint16_t total_items)
 {
@@ -119,7 +162,8 @@ static void warez_item_page_setup(uint16_t max_items, uint16_t total_items)
 }
 
 static void item_page(uint16_t max_items, uint16_t total_items, int software,
-	pfn_item_page_setup_cb setup, pfn_item_page_cb cb, int a, int b, int c, int next)
+	pfn_item_page_setup_cb fn_setup, pfn_item_page_draw_item_cb fn_draw_item,
+	int a, uint16_t t, uint16_t w, int next)
 {
 	static int listed = 0;
 
@@ -128,7 +172,7 @@ static void item_page(uint16_t max_items, uint16_t total_items, int software,
 		listed = 0;
 	}
 
-	setup(max_items, total_items);
+	fn_setup(max_items, total_items);
 
 	if (total_items - listed < max_items)
 	{
@@ -137,8 +181,17 @@ static void item_page(uint16_t max_items, uint16_t total_items, int software,
 
 	for (int i = 0; i < max_items; i++)
 	{
+		char s[3] = { 0 };
+		
+		sprintf(s, "%d.", i + 1);
+		neuro_menu_draw_text(s, 0, i + t);
+		neuro_menu_add_item(0, i + t, w, i, i + '1');
 
+		fn_draw_item(listed, i + t);
+		listed++;
 	}
+
+	listed %= total_items;
 }
 
 static void skills_item_page(int software, int next)
@@ -147,7 +200,10 @@ static void skills_item_page(int software, int next)
 	
 	if (software)
 	{
-		item_page(4, items, software, warez_item_page_setup, NULL, 0, 1, 24, next);
+		g_inventory = g_3f85.inventory.software;
+		item_page(4, items, software,
+			warez_item_page_setup, warez_item_page_draw_item,
+			0, 1, 24, next);
 	}
 	else
 	{
@@ -155,7 +211,7 @@ static void skills_item_page(int software, int next)
 	}
 }
 
-static skills_state_t skills_use_warez_analysis(int x)
+static skills_state_t skills_use_warez_analysis()
 {
 	neuro_menu_flush();
 	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
@@ -174,7 +230,7 @@ static skills_state_t skills_use(uint16_t skill)
 
 		switch (skill) {
 		case WAREZ_ANALYSIS:
-			return skills_use_warez_analysis(0);
+			return skills_use_warez_analysis();
 
 		default:
 			return SS_CLOSE_SKILLS;
@@ -188,12 +244,107 @@ static skills_state_t skills_use(uint16_t skill)
 	return SS_SKILLS_PAGE;
 }
 
+static void skills_draw_item_desc(uint8_t code, uint8_t version,
+	uint16_t status, uint16_t l, uint16_t t)
+{
+	char s[40] = { 0 };
+
+	if (code == 0x7F)
+	{
+		sprintf(s, "Credits %d", g_4bae.cash);
+		neuro_menu_draw_text(s, l, t);
+	}
+	else
+	{
+		char *item_name = get_item_name(code, NULL);
+
+		if (g_inventory_item_operations[code] & 0xC0)
+		{
+			neuro_menu_draw_text(item_name, l, t);
+		}
+		else
+		{
+			char prefix = (status == 0) ? ' ' : '-';
+			sprintf(s, "%c%-11s %d.0", prefix, item_name, version);
+			neuro_menu_draw_text(s, l, t);
+		}
+	}
+}
+
+/* 0x23CA */
+static uint8_t g_warez_analysis_op_string_map[14] = {
+	0, 1, 2, 3, 4, 5, 0, 6, 6, 7, 8, 9, 10, 10
+};
+static char *g_warez_desc[11] = {
+	"Unknown.",
+	"A cyberspace info\n""program.",
+	"A cyberspace ICE breaker\n""program.",
+	"A cyberspace virus\n""program.",
+	"A cyberspace shielding\n""program.",
+	"A cyberspace ICE bypass\n""program.",
+	"A cyberspace interface\n""corruptor program.",
+	"A database password\n""generator.",
+	"A database info program.",
+	"A database chess program.",
+	"A system communications\n""program.",
+};
+
+static skills_state_t skill_warez_analysis_apply(uint8_t *item)
+{
+	uint8_t item_code = item[0];
+	uint8_t item_op = g_inventory_item_operations[item_code];
+	uint8_t item_op_n = item_op & 0x0F;
+	uint8_t op_string_n = 0;
+
+	if (item_op_n == 9 || item_op_n == 11)
+	{
+		op_string_n = 0;
+	}
+	else
+	{
+		if ((item_op & 0x30) == 0x10)
+		{
+			op_string_n = item_op_n + 9;
+		}
+		else if ((item_op & 0x30) == 0x20)
+		{
+			op_string_n = item_op_n;
+		}
+		else if (item_op_n <= 8)
+		{
+			op_string_n = item_op_n + 12;
+		}
+	}
+
+	op_string_n = g_warez_analysis_op_string_map[op_string_n];
+
+	neuro_menu_draw_text("Software Analysis", 3, 0);
+	skills_draw_item_desc(item_code, item[1], 0, 0, 2);
+	neuro_menu_draw_text(g_warez_desc[op_string_n], 0, 3);
+
+	neuro_menu_draw_text("Button or [space].", 3, 5);
+	return SS_SKILL_WAREZ_WFI;
+}
+
 static skills_state_t on_skill_warez_item_page_button(neuro_button_t *button)
 {
+	uint16_t code = button->code;
+
 	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3: /* warez */
+		neuro_menu_destroy();
+		return skill_warez_analysis_apply(g_listed_items[code]);
+
 	case 0x0A: /* exit */
 		neuro_menu_destroy();
 		return SS_CLOSE_SKILLS;
+
+	case 0x0B: /* more */
+		skills_item_page(1, 1);
+		break;
 
 	default:
 		break;
@@ -249,6 +400,10 @@ static skills_state_t handle_skills_wait_for_input(skills_state_t state, sfEvent
 		case SS_NO_SKILLS_WFI:
 			return SS_CLOSE_SKILLS;
 
+		case SS_SKILL_WAREZ_WFI:
+			neuro_menu_flush();
+			return skills_use_warez_analysis();
+
 		default:
 			return state;
 		}
@@ -261,6 +416,7 @@ void handle_skills_input(sfEvent *event)
 {
 	switch (g_state) {
 	case SS_NO_SKILLS_WFI:
+	case SS_SKILL_WAREZ_WFI:
 		g_state = handle_skills_wait_for_input(g_state, event);
 		break;
 
