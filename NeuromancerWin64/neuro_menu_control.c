@@ -127,6 +127,10 @@ static void menu_handle_text_enter(neuro_menu_id_t id, int *state, sfTextEvent *
 	case NMID_MAIN_MENU:
 		main_menu_handle_text_enter(state, event);
 		break;
+
+	case NMID_SKILLS_MENU:
+		skills_menu_handle_text_enter(state, event);
+		break;
 	}
 }
 

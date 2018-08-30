@@ -5,6 +5,7 @@
 #include "neuro_menu_control.h"
 #include "window_animation.h"
 #include "items.h"
+#include "globals.h"
 #include <neuro_routines.h>
 #include <string.h>
 
@@ -18,6 +19,8 @@ typedef enum skills_state_t {
 	    SS_SKILL_DEBUG_WFI,
 	  SS_SKILL_HW_REPAIR_ITEM_PAGE,
 	    SS_SKILL_HW_REPAIR_WFI,
+	  SS_SKILL_CRYPTOLOGY,
+	    SS_SKILL_CRYPTOLOGY_WFI,
 	SS_CLOSE_SKILLS,
 } skills_state_t;
 
@@ -44,6 +47,7 @@ static skills_state_t g_state = SS_OPEN_SKILLS;
 static uint16_t g_skills_total = 0;
 static uint16_t g_skills[16] = { 0x00, };
 static uint16_t g_listed_skills[4] = { 0x00 };
+static int g_wfi_release_lock = 0;
 
 static skills_state_t skills_page(int next)
 {
@@ -188,24 +192,27 @@ static void item_page(uint16_t max_items, uint16_t total_items, int software,
 
 	fn_setup(max_items, total_items);
 
-	if (total_items - listed < max_items)
+	if (total_items)
 	{
-		max_items = total_items - listed;
+		if (total_items - listed < max_items)
+		{
+			max_items = total_items - listed;
+		}
+
+		for (int i = 0; i < max_items; i++)
+		{
+			char s[3] = { 0 };
+
+			sprintf(s, "%d.", i + 1);
+			neuro_menu_draw_text(s, 0, i + t);
+			neuro_menu_add_item(0, i + t, w, i, i + '1');
+
+			fn_draw_item(listed, i + t);
+			listed++;
+		}
+
+		listed %= total_items;
 	}
-
-	for (int i = 0; i < max_items; i++)
-	{
-		char s[3] = { 0 };
-		
-		sprintf(s, "%d.", i + 1);
-		neuro_menu_draw_text(s, 0, i + t);
-		neuro_menu_add_item(0, i + t, w, i, i + '1');
-
-		fn_draw_item(listed, i + t);
-		listed++;
-	}
-
-	listed %= total_items;
 }
 
 static void skills_item_page(int software, int next)
@@ -474,9 +481,22 @@ static skills_state_t on_skill_warez_analysis_item_page_button(neuro_button_t *b
 	return SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE;
 }
 
+static skills_state_t skills_use_cryptology()
+{
+	neuro_menu_flush();
+	neuro_menu_flush_items();
+
+	neuro_menu_draw_text("Cryptology", 7, 0);
+	neuro_menu_draw_text("Enter word to decode:", 0, 1);
+	neuro_menu_draw_text("<", 0, 2);
+
+	return SS_SKILL_CRYPTOLOGY;
+}
+
 static skills_state_t skills_use_hw_repair()
 {
 	neuro_menu_flush();
+	neuro_menu_flush_items();
 	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
 	skills_item_page(0, 0);
 
@@ -516,6 +536,9 @@ static skills_state_t skills_use(uint16_t skill)
 
 		case HW_REPAIR:
 			return skills_use_hw_repair();
+
+		case CRYPTOLOGY:
+			return skills_use_cryptology();
 
 		default:
 			return SS_CLOSE_SKILLS;
@@ -575,26 +598,151 @@ void skills_menu_handle_button_press(int *state, neuro_button_t *button)
 	}
 }
 
+/* 0x23E0 */
+static char *g_decodable_words[20] = {
+	"DUMBO",
+	"IMASMURF",
+	"SMEEGLDIPO",
+	"ABURAKKOI",
+	"KIKENNA",
+	"PANCAKE",
+	"SNORSKEE",
+	"AGABATUR",
+	"EINHOVEN",
+	"VULCAN",
+	"SELIM",
+	"GALILEO",
+	"GNU",
+	"TRIDENT",
+	"OGRAF",
+	"EGGPLANT",
+	"TURNIP",
+	"PLEIADES",
+	"CAL23LNZD8",
+	"THERMOPYLAE"
+};
+static char *g_decoded_words[20] = {
+	"ROMCARDS",
+	"WARRANTS",
+	"PERMAFROST",
+	"UCHIKATSU",
+	"PERILOUS",
+	"VENDORS",
+	"SUPERTAC",
+	"EINTRITT",
+	"VERBOTEN",
+	"BIOSOFT",
+	"BIOTECH",
+	"APOLLO",
+	"YAK",
+	"FUNGEKI",
+	"AUDIT",
+	"LONGISLAND",
+	"LOSER",
+	"SUBARU",
+	"NINJUTSU",
+	"SOCRATES"
+};
+
+/* 0x2430 */
+static uint8_t g_decoding_difficulty[20] = {
+	0, 0, 1, 1, 1, 0, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 7, 8
+};
+
+static void skill_cryptology_apply(char *word)
+{
+	int i = 0;
+
+	for (i = 0; i < 20; i++)
+	{
+		if (_strcmpi(word, g_decodable_words[i]))
+		{
+			continue;
+		}
+
+		uint8_t skill_level = g_3f85.skills[CRYPTOLOGY];
+		
+		if (g_decoding_difficulty[i] > skill_level)
+		{
+			i = 20;
+			break;
+		}
+
+		neuro_menu_draw_text(g_decoded_words[i], 0, 4);
+		neuro_menu_draw_text("Uncoded word is:", 0, 3);
+		break;
+	}
+
+	if (i == 20)
+	{
+		neuro_menu_draw_text("Unable to decode word.", 0, 3);
+	}
+
+	neuro_menu_draw_text("Button or [space].", 3, 5);
+}
+
+static skills_state_t on_skill_cryptology_text_enter(sfTextEvent *event)
+{
+	static char word_to_decode[17] = { 0, };
+	sfKeyCode key = sfHandleTextInput(event->unicode, word_to_decode, 17, 0, 0);
+
+	if (key == sfKeyReturn)
+	{
+		skill_cryptology_apply(word_to_decode);
+		*word_to_decode = 0;
+		g_wfi_release_lock = 1;
+		return SS_SKILL_CRYPTOLOGY_WFI;
+	}
+	else if (key == sfKeyEscape)
+	{
+		*word_to_decode = 0;
+		return SS_CLOSE_SKILLS;
+	}
+	else
+	{
+		neuro_menu_draw_text("                 ", 0, 2);
+		neuro_menu_draw_text(word_to_decode, 0, 2);
+		neuro_menu_draw_text("<", (uint16_t)strlen(word_to_decode), 2);
+	}
+
+	return SS_SKILL_CRYPTOLOGY;
+}
+
+void skills_menu_handle_text_enter(int *state, sfTextEvent *event)
+{
+	switch (*state) {
+	case SS_SKILL_CRYPTOLOGY:
+		*state = on_skill_cryptology_text_enter(event);
+		break;
+	}
+}
+
 static skills_state_t handle_skills_wait_for_input(skills_state_t state, sfEvent *event)
 {
 	if (event->type == sfEvtMouseButtonReleased ||
 		event->type == sfEvtKeyReleased)
 	{
+		if (g_wfi_release_lock)
+		{
+			g_wfi_release_lock = 0;
+			return state;
+		}
+
 		switch (state) {
 		case SS_NO_SKILLS_WFI:
 			return SS_CLOSE_SKILLS;
 
 		case SS_SKILL_WAREZ_ANAYSIS_WFI:
-			neuro_menu_flush();
 			return skills_use_warez_skill(WAREZ_ANALYSIS);
 
 		case SS_SKILL_DEBUG_WFI:
-			neuro_menu_flush();
 			return skills_use_warez_skill(DEBUG);
 
 		case SS_SKILL_HW_REPAIR_WFI:
-			neuro_menu_flush();
 			return skills_use_hw_repair();
+
+		case SS_SKILL_CRYPTOLOGY_WFI:
+			return skills_use_cryptology();
 
 		default:
 			return state;
@@ -611,6 +759,7 @@ void handle_skills_input(sfEvent *event)
 	case SS_SKILL_WAREZ_ANAYSIS_WFI:
 	case SS_SKILL_DEBUG_WFI:
 	case SS_SKILL_HW_REPAIR_WFI:
+	case SS_SKILL_CRYPTOLOGY_WFI:
 		g_state = handle_skills_wait_for_input(g_state, event);
 		break;
 
@@ -618,6 +767,7 @@ void handle_skills_input(sfEvent *event)
 	case SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE:
 	case SS_SKILL_DEBUG_ITEM_PAGE:
 	case SS_SKILL_HW_REPAIR_ITEM_PAGE:
+	case SS_SKILL_CRYPTOLOGY:
 		neuro_menu_handle_input(NMID_SKILLS_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 

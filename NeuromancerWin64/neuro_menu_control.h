@@ -33,6 +33,7 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button);
 void not_implemented_menu_handle_button_press(int *state, neuro_button_t *button);
 
 /* Skills Menu Handlers */
+void skills_menu_handle_text_enter(int *state, sfTextEvent *event);
 void skills_menu_handle_button_press(int *state, neuro_button_t *button);
 
 #endif
