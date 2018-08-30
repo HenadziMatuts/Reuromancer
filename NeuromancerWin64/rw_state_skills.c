@@ -12,8 +12,10 @@ typedef enum skills_state_t {
 	SS_OPEN_SKILLS = 0,
 	SS_NO_SKILLS_WFI,
 	SS_SKILLS_PAGE,
-	  SS_SKILL_WAREZ_ITEM_PAGE,
-	  SS_SKILL_WAREZ_WFI,
+	  SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE,
+	    SS_SKILL_WAREZ_ANAYSIS_WFI,
+	  SS_SKILL_DEBUG_ITEM_PAGE,
+	    SS_SKILL_DEBUG_WFI,
 	SS_CLOSE_SKILLS,
 } skills_state_t;
 
@@ -97,7 +99,7 @@ static skills_state_t skills_page(int next)
 typedef void(*pfn_item_page_draw_item_cb)(uint16_t, uint16_t);
 typedef void(*pfn_item_page_setup_cb)(uint16_t, uint16_t);
 static uint8_t *g_inventory = NULL;
-static uint8_t g_listed_items[4][4];
+static uint8_t *g_listed_items[4];
 
 static item_page_draw_item(uint16_t _item_num, uint16_t t, int item)
 {
@@ -116,7 +118,7 @@ static item_page_draw_item(uint16_t _item_num, uint16_t t, int item)
 
 	} while (item_num--);
 
-	memmove(g_listed_items[_item_num % 4], item_ptr, 4);
+	g_listed_items[_item_num % 4] = item_ptr;
 
 	char s[30] = { 0 };
 	char prefix = (item_ptr[2] == 0) ? ' ' : '-';
@@ -211,39 +213,6 @@ static void skills_item_page(int software, int next)
 	}
 }
 
-static skills_state_t skills_use_warez_analysis()
-{
-	neuro_menu_flush();
-	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
-
-	skills_item_page(1, 0);
-	return SS_SKILL_WAREZ_ITEM_PAGE;
-}
-
-static skills_state_t skills_use(uint16_t skill)
-{
-	if (g_4bae.ui_type == 0)
-	{
-		skill -= 0x43;
-		g_4bae.active_skill = (uint8_t)skill;
-		g_4bae.active_skill_level = g_3f85.skills[skill];
-
-		switch (skill) {
-		case WAREZ_ANALYSIS:
-			return skills_use_warez_analysis();
-
-		default:
-			return SS_CLOSE_SKILLS;
-		}
-	}
-	else
-	{
-		/*...*/
-	}
-
-	return SS_SKILLS_PAGE;
-}
-
 static void skills_draw_item_desc(uint8_t code, uint8_t version,
 	uint16_t status, uint16_t l, uint16_t t)
 {
@@ -269,6 +238,69 @@ static void skills_draw_item_desc(uint8_t code, uint8_t version,
 			neuro_menu_draw_text(s, l, t);
 		}
 	}
+}
+
+/* 0x23D8 */
+static uint16_t g_debug_difficulty[4] = {
+	0x3F, 0x7F, 0xBF, 0xFF
+};
+
+static skills_state_t skill_debug_apply(uint8_t *item)
+{
+	neuro_menu_draw_text("Debug", 9, 0);
+	skills_draw_item_desc(item[0], item[1], 0, 0, 2);
+
+	if (item[2] == 0)
+	{
+		neuro_menu_draw_text("Program has no bugs", 0, 3);
+	}
+	else
+	{
+		uint8_t skill_level = g_3f85.skills[DEBUG];
+
+		if (item[2] > g_debug_difficulty[skill_level])
+		{
+			/* play track 6 */
+			neuro_menu_draw_text("Unable to fix bugs", 0, 3);
+		}
+		else
+		{
+			item[2] = 0;
+			/* play track 11 */
+			neuro_menu_draw_text("Bug fixed, program\nokay", 0, 3);
+		}
+	}
+
+	neuro_menu_draw_text("Button or [space].", 3, 5);
+	return SS_SKILL_DEBUG_WFI;
+}
+
+static skills_state_t on_skill_debug_item_page_button(neuro_button_t *button)
+{
+	uint16_t code = button->code;
+
+	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3: /* warez */
+		neuro_menu_destroy();
+		return skill_debug_apply(g_listed_items[code]);
+
+	case 0x0A: /* exit */
+		neuro_menu_destroy();
+		g_4bae.active_skill = 0xFF;
+		return SS_CLOSE_SKILLS;
+
+	case 0x0B: /* more */
+		skills_item_page(1, 1);
+		break;
+
+	default:
+		break;
+	}
+
+	return SS_SKILL_DEBUG_ITEM_PAGE;
 }
 
 /* 0x23CA */
@@ -323,10 +355,10 @@ static skills_state_t skill_warez_analysis_apply(uint8_t *item)
 	neuro_menu_draw_text(g_warez_desc[op_string_n], 0, 3);
 
 	neuro_menu_draw_text("Button or [space].", 3, 5);
-	return SS_SKILL_WAREZ_WFI;
+	return SS_SKILL_WAREZ_ANAYSIS_WFI;
 }
 
-static skills_state_t on_skill_warez_item_page_button(neuro_button_t *button)
+static skills_state_t on_skill_warez_analysis_item_page_button(neuro_button_t *button)
 {
 	uint16_t code = button->code;
 
@@ -340,6 +372,7 @@ static skills_state_t on_skill_warez_item_page_button(neuro_button_t *button)
 
 	case 0x0A: /* exit */
 		neuro_menu_destroy();
+		g_4bae.active_skill = 0xFF;
 		return SS_CLOSE_SKILLS;
 
 	case 0x0B: /* more */
@@ -350,7 +383,50 @@ static skills_state_t on_skill_warez_item_page_button(neuro_button_t *button)
 		break;
 	}
 
-	return SS_SKILL_WAREZ_ITEM_PAGE;
+	return SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE;
+}
+
+static skills_state_t skills_use_warez_skill(uint16_t skill)
+{
+	neuro_menu_flush();
+	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
+	skills_item_page(1, 0);
+
+	switch (skill) {
+	case WAREZ_ANALYSIS:
+		return SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE;
+
+	case DEBUG:
+		return SS_SKILL_DEBUG_ITEM_PAGE;
+	}
+
+	neuro_menu_destroy();
+	return SS_CLOSE_SKILLS;
+}
+
+static skills_state_t skills_use(uint16_t skill)
+{
+	if (g_4bae.ui_type == 0)
+	{
+		skill -= 0x43;
+		g_4bae.active_skill = (uint8_t)skill;
+		g_4bae.active_skill_level = g_3f85.skills[skill];
+
+		switch (skill) {
+		case WAREZ_ANALYSIS:
+		case DEBUG:
+			return skills_use_warez_skill(skill);
+
+		default:
+			return SS_CLOSE_SKILLS;
+		}
+	}
+	else
+	{
+		/*...*/
+	}
+
+	return SS_SKILLS_PAGE;
 }
 
 static skills_state_t on_skills_page_menu_button(neuro_button_t *button)
@@ -382,8 +458,12 @@ void skills_menu_handle_button_press(int *state, neuro_button_t *button)
 		*state = on_skills_page_menu_button(button);
 		break;
 
-	case SS_SKILL_WAREZ_ITEM_PAGE:
-		*state = on_skill_warez_item_page_button(button);
+	case SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE:
+		*state = on_skill_warez_analysis_item_page_button(button);
+		break;
+
+	case SS_SKILL_DEBUG_ITEM_PAGE:
+		*state = on_skill_debug_item_page_button(button);
 		break;
 
 	default:
@@ -400,9 +480,13 @@ static skills_state_t handle_skills_wait_for_input(skills_state_t state, sfEvent
 		case SS_NO_SKILLS_WFI:
 			return SS_CLOSE_SKILLS;
 
-		case SS_SKILL_WAREZ_WFI:
+		case SS_SKILL_WAREZ_ANAYSIS_WFI:
 			neuro_menu_flush();
-			return skills_use_warez_analysis();
+			return skills_use_warez_skill(WAREZ_ANALYSIS);
+
+		case SS_SKILL_DEBUG_WFI:
+			neuro_menu_flush();
+			return skills_use_warez_skill(DEBUG);
 
 		default:
 			return state;
@@ -416,12 +500,14 @@ void handle_skills_input(sfEvent *event)
 {
 	switch (g_state) {
 	case SS_NO_SKILLS_WFI:
-	case SS_SKILL_WAREZ_WFI:
+	case SS_SKILL_WAREZ_ANAYSIS_WFI:
+	case SS_SKILL_DEBUG_WFI:
 		g_state = handle_skills_wait_for_input(g_state, event);
 		break;
 
 	case SS_SKILLS_PAGE:
-	case SS_SKILL_WAREZ_ITEM_PAGE:
+	case SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE:
+	case SS_SKILL_DEBUG_ITEM_PAGE:
 		neuro_menu_handle_input(NMID_SKILLS_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 
