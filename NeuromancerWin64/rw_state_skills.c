@@ -16,6 +16,8 @@ typedef enum skills_state_t {
 	    SS_SKILL_WAREZ_ANAYSIS_WFI,
 	  SS_SKILL_DEBUG_ITEM_PAGE,
 	    SS_SKILL_DEBUG_WFI,
+	  SS_SKILL_HW_REPAIR_ITEM_PAGE,
+	    SS_SKILL_HW_REPAIR_WFI,
 	SS_CLOSE_SKILLS,
 } skills_state_t;
 
@@ -136,6 +138,11 @@ static item_page_draw_item(uint16_t _item_num, uint16_t t, int item)
 	neuro_menu_draw_text(s, 3, t);
 }
 
+static void hw_item_page_draw_item(uint16_t item_num, uint16_t t)
+{
+	item_page_draw_item(item_num, t, 1);
+}
+
 static void warez_item_page_draw_item(uint16_t item_num, uint16_t t)
 {
 	item_page_draw_item(item_num, t, 0);
@@ -158,6 +165,11 @@ static void item_page_setup(char *title, uint16_t max_items, uint16_t total_item
 	neuro_menu_draw_text(title, 10, 0);
 }
 
+static void hw_item_page_setup(uint16_t max_items, uint16_t total_items)
+{
+	item_page_setup("Items", max_items, total_items);
+}
+
 static void warez_item_page_setup(uint16_t max_items, uint16_t total_items)
 {
 	item_page_setup("Warez", max_items, total_items);
@@ -165,7 +177,7 @@ static void warez_item_page_setup(uint16_t max_items, uint16_t total_items)
 
 static void item_page(uint16_t max_items, uint16_t total_items, int software,
 	pfn_item_page_setup_cb fn_setup, pfn_item_page_draw_item_cb fn_draw_item,
-	int a, uint16_t t, uint16_t w, int next)
+	uint16_t t, uint16_t w, int next)
 {
 	static int listed = 0;
 
@@ -205,11 +217,14 @@ static void skills_item_page(int software, int next)
 		g_inventory = g_3f85.inventory.software;
 		item_page(4, items, software,
 			warez_item_page_setup, warez_item_page_draw_item,
-			0, 1, 24, next);
+			1, 24, next);
 	}
 	else
 	{
-
+		g_inventory = g_3f85.inventory.items;
+		item_page(4, items, software,
+			hw_item_page_setup, hw_item_page_draw_item,
+			1, 24, next);
 	}
 }
 
@@ -241,9 +256,82 @@ static void skills_draw_item_desc(uint8_t code, uint8_t version,
 }
 
 /* 0x23D8 */
-static uint16_t g_debug_difficulty[4] = {
+static uint16_t g_fix_difficulty[4] = {
 	0x3F, 0x7F, 0xBF, 0xFF
 };
+
+static skills_state_t skill_hw_repair_apply(uint8_t *item)
+{
+	uint8_t item_code = item[0];
+
+	if (item_code == 0)
+	{
+		item_code = 0x7F;
+	}
+
+	neuro_menu_draw_text("Hardware Repair", 4, 0);
+	skills_draw_item_desc(item_code, 0, 0, 0, 2);
+
+	if (item_code == 0x53 ||
+		(item_code >= 0x1D && item_code <= 0x34))
+	{
+		if (item[2] == 0)
+		{
+			neuro_menu_draw_text("Hardware has no bugs", 0, 3);
+		}
+		else
+		{
+			uint8_t skill_level = g_3f85.skills[HW_REPAIR];
+
+			if (item[2] > g_fix_difficulty[skill_level])
+			{
+				/* play track 6 */
+				neuro_menu_draw_text("Unable to repair damage.", 0, 3);
+			}
+			else
+			{
+				item[2] = 0;
+				/* play track 11 */
+				neuro_menu_draw_text("Damage repaired,\nhardware okay", 0, 3);
+			}
+		}
+	}
+	else
+	{
+		neuro_menu_draw_text("Item not reparable", 0, 3);
+	}
+
+	neuro_menu_draw_text("Button or [space].", 3, 5);
+	return SS_SKILL_HW_REPAIR_WFI;
+}
+
+static skills_state_t on_skill_hw_repair_item_page_button(neuro_button_t *button)
+{
+	uint16_t code = button->code;
+
+	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3: /* items */
+		neuro_menu_destroy();
+		return skill_hw_repair_apply(g_listed_items[code]);
+
+	case 0x0A: /* exit */
+		neuro_menu_destroy();
+		g_4bae.active_skill = 0xFF;
+		return SS_CLOSE_SKILLS;
+
+	case 0x0B: /* more */
+		skills_item_page(0, 1);
+		break;
+
+	default:
+		break;
+	}
+
+	return SS_SKILL_HW_REPAIR_ITEM_PAGE;
+}
 
 static skills_state_t skill_debug_apply(uint8_t *item)
 {
@@ -258,7 +346,7 @@ static skills_state_t skill_debug_apply(uint8_t *item)
 	{
 		uint8_t skill_level = g_3f85.skills[DEBUG];
 
-		if (item[2] > g_debug_difficulty[skill_level])
+		if (item[2] > g_fix_difficulty[skill_level])
 		{
 			/* play track 6 */
 			neuro_menu_draw_text("Unable to fix bugs", 0, 3);
@@ -386,6 +474,15 @@ static skills_state_t on_skill_warez_analysis_item_page_button(neuro_button_t *b
 	return SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE;
 }
 
+static skills_state_t skills_use_hw_repair()
+{
+	neuro_menu_flush();
+	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
+	skills_item_page(0, 0);
+
+	return SS_SKILL_HW_REPAIR_ITEM_PAGE;
+}
+
 static skills_state_t skills_use_warez_skill(uint16_t skill)
 {
 	neuro_menu_flush();
@@ -416,6 +513,9 @@ static skills_state_t skills_use(uint16_t skill)
 		case WAREZ_ANALYSIS:
 		case DEBUG:
 			return skills_use_warez_skill(skill);
+
+		case HW_REPAIR:
+			return skills_use_hw_repair();
 
 		default:
 			return SS_CLOSE_SKILLS;
@@ -466,6 +566,10 @@ void skills_menu_handle_button_press(int *state, neuro_button_t *button)
 		*state = on_skill_debug_item_page_button(button);
 		break;
 
+	case SS_SKILL_HW_REPAIR_ITEM_PAGE:
+		*state = on_skill_hw_repair_item_page_button(button);
+		break;
+
 	default:
 		break;
 	}
@@ -488,6 +592,10 @@ static skills_state_t handle_skills_wait_for_input(skills_state_t state, sfEvent
 			neuro_menu_flush();
 			return skills_use_warez_skill(DEBUG);
 
+		case SS_SKILL_HW_REPAIR_WFI:
+			neuro_menu_flush();
+			return skills_use_hw_repair();
+
 		default:
 			return state;
 		}
@@ -502,12 +610,14 @@ void handle_skills_input(sfEvent *event)
 	case SS_NO_SKILLS_WFI:
 	case SS_SKILL_WAREZ_ANAYSIS_WFI:
 	case SS_SKILL_DEBUG_WFI:
+	case SS_SKILL_HW_REPAIR_WFI:
 		g_state = handle_skills_wait_for_input(g_state, event);
 		break;
 
 	case SS_SKILLS_PAGE:
 	case SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE:
 	case SS_SKILL_DEBUG_ITEM_PAGE:
+	case SS_SKILL_HW_REPAIR_ITEM_PAGE:
 		neuro_menu_handle_input(NMID_SKILLS_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 
