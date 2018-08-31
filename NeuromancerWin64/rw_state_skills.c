@@ -12,6 +12,7 @@
 typedef enum skills_state_t {
 	SS_OPEN_SKILLS = 0,
 	SS_NO_SKILLS_WFI,
+	SS_CANT_USE_WFI,
 	SS_SKILLS_PAGE,
 	  SS_SKILL_WAREZ_ANALYSIS_ITEM_PAGE,
 	    SS_SKILL_WAREZ_ANAYSIS_WFI,
@@ -54,7 +55,9 @@ static skills_state_t skills_page(int next)
 {
 	static int listed = 0;
 
+	neuro_menu_flush();
 	neuro_menu_flush_items();
+	neuro_menu_draw_text("SKILLS", 9, 0);
 
 	if (next == 0)
 	{
@@ -567,33 +570,45 @@ static skills_state_t skills_use_warez_skill(uint16_t skill)
 
 static skills_state_t skills_use(uint16_t skill)
 {
-	if (g_4bae.ui_type == 0)
+	skill -= 0x43;
+
+	if (g_4bae.ui_type == 1)
 	{
-		skill -= 0x43;
-		g_4bae.active_skill = (uint8_t)skill;
-		g_4bae.active_skill_level = g_3f85.skills[skill];
+		if (skill <= 15 &&
+			(skill == BARGAINING || skill == COPTALK ||
+			 skill == DEBUG || skill == HW_REPAIR ||
+			 skill == JAPANESE || skill == MUSICIANSHIP))
+		{
+			/* play track 6 */
+			neuro_menu_flush();
+			neuro_menu_flush_items();
 
-		switch (skill) {
-		case WAREZ_ANALYSIS:
-		case DEBUG:
-			return skills_use_warez_skill(skill);
+			neuro_menu_draw_text("SKILLS", 9, 0);
+			neuro_menu_draw_text("Can't do that here.", 0, 3);
 
-		case HW_REPAIR:
-			return skills_use_hw_repair();
-
-		case CRYPTOLOGY:
-			return skills_use_cryptology();
-
-		case MUSICIANSHIP:
-			return skills_use_musicianship();
-
-		default:
-			return SS_CLOSE_SKILLS;
+			return SS_CANT_USE_WFI;
 		}
 	}
-	else
-	{
-		/*...*/
+
+	g_4bae.active_skill = (uint8_t)skill;
+	g_4bae.active_skill_level = g_3f85.skills[skill];
+
+	switch (skill) {
+	case WAREZ_ANALYSIS:
+	case DEBUG:
+		return skills_use_warez_skill(skill);
+
+	case HW_REPAIR:
+		return skills_use_hw_repair();
+
+	case CRYPTOLOGY:
+		return skills_use_cryptology();
+
+	case MUSICIANSHIP:
+		return skills_use_musicianship();
+
+	default:
+		return SS_CLOSE_SKILLS;
 	}
 
 	return SS_SKILLS_PAGE;
@@ -783,6 +798,9 @@ static skills_state_t handle_skills_wait_for_input(skills_state_t state, sfEvent
 		case SS_NO_SKILLS_WFI:
 			return SS_CLOSE_SKILLS;
 
+		case SS_CANT_USE_WFI:
+			return skills_page(0);
+
 		case SS_SKILL_WAREZ_ANAYSIS_WFI:
 			return skills_use_warez_skill(WAREZ_ANALYSIS);
 
@@ -807,6 +825,7 @@ void handle_skills_input(sfEvent *event)
 {
 	switch (g_state) {
 	case SS_NO_SKILLS_WFI:
+	case SS_CANT_USE_WFI:
 	case SS_SKILL_WAREZ_ANAYSIS_WFI:
 	case SS_SKILL_DEBUG_WFI:
 	case SS_SKILL_HW_REPAIR_WFI:
@@ -848,8 +867,6 @@ static int skills_prepare()
 static skills_state_t skills_show()
 {
 	neuro_menu_create(6, 7, 17, 25, 6, NULL);
-	neuro_menu_draw_text("SKILLS", 9, 0);
-	neuro_menu_flush_items();
 
 	g_skills_total = skills_prepare();
 	if (!g_skills_total)
