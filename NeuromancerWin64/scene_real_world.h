@@ -12,6 +12,7 @@ typedef enum real_world_state_t {
 	RWS_PAX,
 	RWS_DIALOG,
 	RWS_SKILLS,
+	RWS_ROM,
 	RWS_WAIT_FOR_INPUT,
 	RWS_RELOAD_LEVEL
 } real_world_state_t;
@@ -34,5 +35,9 @@ real_world_state_t update_pax();
 /* Skills state handles */
 void handle_skills_input(sfEvent *event);
 real_world_state_t update_skills();
+
+/* ROM state handlers */
+void handle_rom_input(sfEvent *event);
+real_world_state_t update_rom();
 
 #endif

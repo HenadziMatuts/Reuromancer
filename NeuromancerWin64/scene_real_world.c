@@ -685,6 +685,15 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button)
 		*state = RWS_SKILLS;
 		break;
 
+	case 0x04: /* rom */
+		if (g_4bae.x4c25 == 0)
+		{
+			/* play track 6 */
+			break;
+		}
+		*state = RWS_ROM;
+		break;
+
 	case 0x0A: /* panel date */
 		g_ui_panel_mode = UI_PM_DATE;
 		break;
@@ -763,6 +772,10 @@ static void handle_input(sfEvent *event)
 
 	case RWS_SKILLS:
 		handle_skills_input(event);
+		break;
+
+	case RWS_ROM:
+		handle_rom_input(event);
 		break;
 
 	case RWS_WAIT_FOR_INPUT:
@@ -920,6 +933,10 @@ static neuro_scene_id_t update()
 
 	case RWS_SKILLS:
 		g_state = update_skills();
+		break;
+
+	case RWS_ROM:
+		g_state = update_rom();
 		break;
 
 	case RWS_RELOAD_LEVEL:

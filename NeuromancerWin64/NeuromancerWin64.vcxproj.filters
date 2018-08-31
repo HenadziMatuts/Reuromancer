@@ -75,6 +75,9 @@
     <ClCompile Include="items.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rw_state_rom.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h">
