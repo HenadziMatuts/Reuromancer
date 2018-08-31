@@ -21,6 +21,7 @@ typedef enum skills_state_t {
 	    SS_SKILL_HW_REPAIR_WFI,
 	  SS_SKILL_CRYPTOLOGY,
 	    SS_SKILL_CRYPTOLOGY_WFI,
+	  SS_SKILL_MUSICIANSHIP,
 	SS_CLOSE_SKILLS,
 } skills_state_t;
 
@@ -312,6 +313,25 @@ static skills_state_t skill_hw_repair_apply(uint8_t *item)
 	return SS_SKILL_HW_REPAIR_WFI;
 }
 
+static skills_state_t on_skill_musicianship_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 1:
+	case 2:
+	case 3:
+	case 4: /* music */
+		g_4bae.active_skill = MUSICIANSHIP;
+		g_4bae.active_skill_level = button->code - 1;
+		return SS_CLOSE_SKILLS;
+
+	case 0: /* exit */
+		g_4bae.active_skill = 0xFF;
+		return SS_CLOSE_SKILLS;
+	}
+
+	return SS_SKILL_MUSICIANSHIP;
+}
+
 static skills_state_t on_skill_hw_repair_item_page_button(neuro_button_t *button)
 {
 	uint16_t code = button->code;
@@ -493,6 +513,30 @@ static skills_state_t skills_use_cryptology()
 	return SS_SKILL_CRYPTOLOGY;
 }
 
+static skills_state_t skills_use_musicianship()
+{
+	neuro_menu_flush();
+	neuro_menu_flush_items();
+
+	skills_draw_item_desc(0x52, 0, 0, 6, 0);
+	neuro_menu_draw_text("X. Exit Skill Chip", 3, 1);
+	neuro_menu_draw_text("1. Play Dub", 3, 2);
+	neuro_menu_draw_text("2. Play Jazz", 3, 3);
+	neuro_menu_draw_text("3. Play New Wave", 3, 4);
+	neuro_menu_draw_text("4. Play Classical", 3, 5);
+
+	g_4bae.active_skill_level = 0xFF;
+
+	neuro_menu_add_item(3, 1, 18, 0, 'x');
+
+	for (int i = 1; i <= 4; i++)
+	{
+		neuro_menu_add_item(3, i + 1, 17, i, i + '0');
+	}
+
+	return SS_SKILL_MUSICIANSHIP;
+}
+
 static skills_state_t skills_use_hw_repair()
 {
 	neuro_menu_flush();
@@ -539,6 +583,9 @@ static skills_state_t skills_use(uint16_t skill)
 
 		case CRYPTOLOGY:
 			return skills_use_cryptology();
+
+		case MUSICIANSHIP:
+			return skills_use_musicianship();
 
 		default:
 			return SS_CLOSE_SKILLS;
@@ -591,6 +638,10 @@ void skills_menu_handle_button_press(int *state, neuro_button_t *button)
 
 	case SS_SKILL_HW_REPAIR_ITEM_PAGE:
 		*state = on_skill_hw_repair_item_page_button(button);
+		break;
+
+	case SS_SKILL_MUSICIANSHIP:
+		*state = on_skill_musicianship_button(button);
 		break;
 
 	default:
@@ -768,6 +819,7 @@ void handle_skills_input(sfEvent *event)
 	case SS_SKILL_DEBUG_ITEM_PAGE:
 	case SS_SKILL_HW_REPAIR_ITEM_PAGE:
 	case SS_SKILL_CRYPTOLOGY:
+	case SS_SKILL_MUSICIANSHIP:
 		neuro_menu_handle_input(NMID_SKILLS_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 
@@ -825,7 +877,7 @@ static window_folding_frame_data_t g_close_frame_data[12] = {
 
 static window_folding_data_t g_skills_anim_data = {
 	.total_frames = 12,
-	.frame_cap = 35,
+	.frame_cap = 30,
 	.pixels = g_seg011,
 };
 
