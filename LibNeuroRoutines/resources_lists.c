@@ -185,3 +185,7 @@ resource_t g_res_txh[2] = {
 	{ 0, "FTUSER.TXH", 0x3C2E3, 0x362 },
 	{ -1, NULL, 0, 0 }
 };
+
+resource_t g_res_savegame = {
+	0, "SAVEGAME.SAV", 0x3C96E, 0x2EE0
+};

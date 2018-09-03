@@ -180,6 +180,7 @@ LIBNEUROAPI extern resource_t g_res_pic[56];
 LIBNEUROAPI extern resource_t g_res_bih[61];
 LIBNEUROAPI extern resource_t g_res_anh[22];
 LIBNEUROAPI extern resource_t g_res_txh[2];
+LIBNEUROAPI extern resource_t g_res_savegame;
 
 /*
  * Font table.
