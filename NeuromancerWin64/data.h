@@ -33,6 +33,9 @@ extern int g_level_n;
 
 extern uint8_t g_004e[8];
 
+/* 0x1516 */
+extern uint16_t g_paused;
+
 /* 0x152C */
 extern uint16_t g_update_hold;
 

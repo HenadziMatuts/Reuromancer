@@ -694,6 +694,10 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button)
 		*state = RWS_ROM;
 		break;
 
+	case 0x05: /* disk options */
+		*state = RWS_DISK_OPTIONS;
+		break;
+
 	case 0x0A: /* panel date */
 		g_ui_panel_mode = UI_PM_DATE;
 		break;
@@ -776,6 +780,10 @@ static void handle_input(sfEvent *event)
 
 	case RWS_ROM:
 		handle_rom_input(event);
+		break;
+
+	case RWS_DISK_OPTIONS:
+		handle_disk_options_input(event);
 		break;
 
 	case RWS_WAIT_FOR_INPUT:
@@ -900,7 +908,11 @@ static neuro_scene_id_t update()
 	neuro_scene_id_t scene = NSID_REAL_WORLD;
 
 	update_cursor();
-	ui_panel_update();
+
+	if (!g_paused)
+	{
+		ui_panel_update();
+	}
 
 	switch (g_state) {
 	case RWS_FADE_IN:
@@ -937,6 +949,10 @@ static neuro_scene_id_t update()
 
 	case RWS_ROM:
 		g_state = update_rom();
+		break;
+
+	case RWS_DISK_OPTIONS:
+		g_state = update_disk_options();
 		break;
 
 	case RWS_RELOAD_LEVEL:

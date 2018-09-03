@@ -148,6 +148,10 @@ static void menu_handle_button_press(neuro_menu_id_t id, int *state, neuro_butto
 	case NMID_SKILLS_MENU:
 		skills_menu_handle_button_press(state, button);
 		break;
+
+	case NMID_DISK_OPTIONS_MENU:
+		disk_menu_handle_button_press(state, button);
+		break;
 	}
 }
 

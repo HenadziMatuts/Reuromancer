@@ -6,6 +6,8 @@
 #include <SFML\System\Clock.h>
 #include <stdint.h>
 
+extern uint8_t g_exit_game;
+
 extern sfClock *g_timer;
 
 void update_cursor();

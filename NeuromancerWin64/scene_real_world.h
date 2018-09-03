@@ -13,6 +13,7 @@ typedef enum real_world_state_t {
 	RWS_DIALOG,
 	RWS_SKILLS,
 	RWS_ROM,
+	RWS_DISK_OPTIONS,
 	RWS_WAIT_FOR_INPUT,
 	RWS_RELOAD_LEVEL
 } real_world_state_t;
@@ -39,5 +40,9 @@ real_world_state_t update_skills();
 /* ROM state handlers */
 void handle_rom_input(sfEvent *event);
 real_world_state_t update_rom();
+
+/* Disk Options handlers */
+void handle_disk_options_input(sfEvent *event);
+real_world_state_t update_disk_options();
 
 #endif

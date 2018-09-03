@@ -125,6 +125,7 @@
     <ClCompile Include="bih_code.c" />
     <ClCompile Include="data.c" />
     <ClCompile Include="items.c" />
+    <ClCompile Include="rw_disk_options.c" />
     <ClCompile Include="rw_state_dialog.c" />
     <ClCompile Include="drawing_control.c" />
     <ClCompile Include="rw_state_inventory.c" />

@@ -40,6 +40,11 @@ static float g_scale_y = 0;
  */
 sfClock *g_timer = NULL;
 
+/*
+ * Exit mark.
+ */
+uint8_t g_exit_game = 0;
+
 void update_cursor()
 {
 	sfVector2i mouse_pos = sfMouse_getPositionRenderWindow(g_window);
@@ -186,7 +191,7 @@ int main(int argc, char *argv[])
 	scene_control_setup_scene(NSID_MAIN_MENU);
 	srand((uint32_t)time(NULL));
 
-	while (sfRenderWindow_isOpen(g_window))
+	while (sfRenderWindow_isOpen(g_window) && !g_exit_game)
 	{
 		while (sfRenderWindow_pollEvent(g_window, &event))
 		{
