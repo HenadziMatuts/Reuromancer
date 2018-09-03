@@ -30,6 +30,7 @@ uint8_t g_vga[320 * 200 * 4];
 
 /*
 * Sprite chain (renering queue)
+* 0x3BD4
 */
 sprite_layer_t g_sprite_chain[SCI_TOTAL];
 

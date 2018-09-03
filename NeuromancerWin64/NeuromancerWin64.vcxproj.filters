@@ -81,6 +81,9 @@
     <ClCompile Include="rw_disk_options.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="save_load.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bg_animation_control.h">
@@ -120,6 +123,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="items.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="save_load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

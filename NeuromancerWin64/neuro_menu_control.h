@@ -12,6 +12,7 @@ typedef enum neuro_menu_id_t {
 } neuro_menu_id_t;
 
 extern neuro_menu_t g_neuro_menu;
+extern neuro_menu_t g_66dc[3];
 
 void neuro_menu_create(uint16_t mode,
 		uint16_t l, uint16_t t, uint16_t w, uint16_t h, uint8_t *pixels);

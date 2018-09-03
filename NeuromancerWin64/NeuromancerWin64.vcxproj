@@ -132,6 +132,7 @@
     <ClCompile Include="rw_state_pax.c" />
     <ClCompile Include="rw_state_rom.c" />
     <ClCompile Include="rw_state_skills.c" />
+    <ClCompile Include="save_load.c" />
     <ClCompile Include="scene_real_world.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="scene_main_menu.c" />
@@ -154,6 +155,7 @@
     <ClInclude Include="neuro_menu_control.h" />
     <ClInclude Include="neuro_window_control.h" />
     <ClInclude Include="resource_manager.h" />
+    <ClInclude Include="save_load.h" />
     <ClInclude Include="scene_control.h" />
     <ClInclude Include="scene_real_world.h" />
     <ClInclude Include="window_animation.h" />

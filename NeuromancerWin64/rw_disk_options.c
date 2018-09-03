@@ -1,5 +1,6 @@
 #include "data.h"
 #include "globals.h"
+#include "save_load.h"
 #include "resource_manager.h"
 #include "window_animation.h"
 #include "neuro_menu_control.h"
@@ -8,6 +9,8 @@
 typedef enum disk_options_state_t {
 	DOS_OPEN = 0,
 	DOS_MAIN_MENU,
+	DOS_LOAD,
+	DOS_SAVE,
 	DOS_PAUSE_WFI,
 	DOS_QUIT,
 	DOS_CLOSE,
@@ -82,10 +85,12 @@ static disk_options_state_t on_disk_options_main_menu_button(neuro_button_t *but
 {
 	switch (button->code) {
 	case 1: /* load */
-		break;
+		load_menu();
+		return DOS_LOAD;
 
 	case 2: /* save */
-		break;
+		save_menu();
+		return DOS_SAVE;
 
 	case 3: /* pause */
 		return disk_options_pause();
@@ -102,6 +107,8 @@ static disk_options_state_t on_disk_options_main_menu_button(neuro_button_t *but
 
 void disk_menu_handle_button_press(int *state, neuro_button_t *button)
 {
+	int ret = -1;
+
 	switch (*state) {
 	case DOS_MAIN_MENU:
 		*state = on_disk_options_main_menu_button(button);
@@ -109,6 +116,22 @@ void disk_menu_handle_button_press(int *state, neuro_button_t *button)
 
 	case DOS_QUIT:
 		*state = on_disk_options_quit_button(button);
+		break;
+
+	case DOS_LOAD:
+		ret = on_load_menu_button(button);
+		if (ret == 0)
+		{
+			*state = disk_options_main_menu();
+		}
+		break;
+
+	case DOS_SAVE:
+		ret = on_save_menu_button(button);
+		if (ret == 0)
+		{
+			*state = disk_options_main_menu();
+		}
 		break;
 	}
 }
@@ -137,6 +160,8 @@ void handle_disk_options_input(sfEvent *event)
 
 	case DOS_MAIN_MENU:
 	case DOS_QUIT:
+	case DOS_LOAD:
+	case DOS_SAVE:
 		neuro_menu_handle_input(NMID_DISK_OPTIONS_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 	}
