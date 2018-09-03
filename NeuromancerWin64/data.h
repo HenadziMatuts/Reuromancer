@@ -107,6 +107,8 @@ extern neuro_inventory_discard_buttons_t g_inv_disc_buttons;
 /* 0x25B4 */
 extern ui_panel_mode_t g_ui_panel_mode;
 
+extern uint8_t g_3b94[64];
+
 typedef struct neuro_vm_state_t {
 	uint8_t level;
 	uint8_t flag;

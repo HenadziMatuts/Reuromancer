@@ -135,6 +135,8 @@ neuro_inventory_discard_buttons_t g_inv_disc_buttons = {
 /* 0x25B4 */
 ui_panel_mode_t g_ui_panel_mode = UI_PM_CASH;
 
+uint8_t g_3b94[64];
+
 x3f85_t g_3f85 = {
 	{
 		{ 0x00, 0xC1, 0xFF, 0x0000, 0x24, 0x28 },
