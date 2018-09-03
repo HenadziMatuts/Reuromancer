@@ -26,6 +26,8 @@ uint8_t g_level_bg[17056] = {   /* seg015 */
 	0x98, 0x00, 0x70, 0x00
 };
 uint8_t g_roompos[23968];       /* seg016 */
+uint8_t g_savegame[12000];
+
 
 void resource_manager_init()
 {
@@ -155,6 +157,17 @@ int resource_manager_load_resource(char *name, uint8_t *dst)
 			}
 			i++;
 		}
+	}
+	else if (!strcmp(name, "SAVEGAME.SAV"))
+	{
+		FILE *neuro = g_res_savegame.file == 0
+			? g_resource_manager.neuro1
+			: g_resource_manager.neuro2;
+
+		fseek(neuro, g_res_savegame.offset, SEEK_SET);
+		fread(dst, g_res_savegame.size, 1, neuro);
+
+		return 1;
 	}
 
 	return 0;
