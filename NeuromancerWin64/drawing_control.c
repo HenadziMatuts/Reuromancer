@@ -1,4 +1,5 @@
 #include "drawing_control.h"
+#include "address_translator.h"
 #include <string.h>
 
 /*
@@ -52,10 +53,11 @@ void drawing_control_add_sprite_to_chain(int n,
 	layer->top = top;
 
 	memmove(&layer->sprite_hdr, sprite, sizeof(imh_hdr_t));
-	layer->sprite_pixels = sprite + sizeof(imh_hdr_t);
+	translate_x64_to_x16(sprite + sizeof(imh_hdr_t),
+		&layer->pixels_segt, &layer->pixels_offt);
 
 	memmove(&layer->_sprite_hdr, &layer->sprite_hdr,
-		sizeof(imh_hdr_t) + sizeof(uint8_t*));
+		sizeof(imh_hdr_t) + (2 * sizeof(uint16_t)));
 
 	layer->update = 1;
 	layer->flags = ((opaque << 4) & 16) | 1;
@@ -133,7 +135,7 @@ static void draw_sprite_to_vga(sprite_layer_t *sprite)
 	uint32_t w = sprite->sprite_hdr.width * 2;
 	uint32_t h = sprite->sprite_hdr.height;
 	uint32_t bg_transparency = ((sprite->flags >> 4) == 0);
-	uint8_t *pixels = sprite->sprite_pixels;
+	uint8_t *pixels = translate_x16_to_x64(sprite->pixels_segt, sprite->pixels_offt);
 
 	draw_to_vga(left, top, w, h, pixels, bg_transparency);
 }

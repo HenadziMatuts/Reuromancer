@@ -121,6 +121,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="address_translator.c" />
     <ClCompile Include="bg_animation_control.c" />
     <ClCompile Include="bih_code.c" />
     <ClCompile Include="data.c" />
@@ -145,6 +146,7 @@
     <ClCompile Include="window_animation.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="address_translator.h" />
     <ClInclude Include="bg_animation_control.h" />
     <ClInclude Include="bih_code.h" />
     <ClInclude Include="character_control.h" />

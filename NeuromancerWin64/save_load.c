@@ -6,42 +6,6 @@
 #include <assert.h>
 #include <string.h>
 
-typedef enum segments_t {
-	SEG_000 = 0,
-	SEG_001, SEG_002, SEG_003, SEG_004,
-	SEG_005, SEG_006, SEG_007, SEG_008,
-	SEG_009, SEG_010, SEG_011, SEG_012,
-	SEG_013, SEG_014, SEG_015, SEG_016,
-	DSEG, SEG_TOTAL
-} segments_t;
-
-typedef struct adderss_translator_helper_t {
-	uint16_t segment;
-	uint16_t offset;
-	uint8_t *data;
-} adderss_translator_helper_t;
-
-adderss_translator_helper_t addr_translator_helper[SEG_TOTAL] = {
-	{ 0x020E, 0x00, NULL },
-	{ 0x11DE, 0x0B, NULL },
-	{ 0x1203, 0x0A, NULL },
-	{ 0x1245, 0x00, NULL },
-	{ 0x1277, 0x00, (uint8_t*)&g_seg004 },
-	{ 0x12E3, 0x00, NULL },
-	{ 0x1323, 0x00, NULL },
-	{ 0x1900, 0x00, NULL },
-	{ 0x1AC3, 0x00, NULL },
-	{ 0x1B0E, 0x00, (uint8_t*)&g_seg009 },
-	{ 0x1B27, 0x00, (uint8_t*)&g_seg010 },
-	{ 0x22FB, 0x00, (uint8_t*)&g_seg011 },
-	{ 0x2D3C, 0x00, (uint8_t*)&g_seg012 },
-	{ 0x2E9D, 0x00, (uint8_t*)&g_seg013 },
-	{ 0x3DC0, 0x00, (uint8_t*)&g_seg014 },
-	{ 0x3DE6, 0x00, (uint8_t*)&g_seg015 },
-	{ 0x4210, 0x00, (uint8_t*)&g_seg016 },
-	{ 0x47EA, 0x00, NULL }
-};
-
 static void add_slots()
 {
 	neuro_menu_draw_text("1  2  3  4", 3, 2);

@@ -52,9 +52,11 @@ typedef struct sprite_layer_t {
 	uint16_t new_left;
 	uint16_t new_top;
 	imh_hdr_t sprite_hdr;
-	uint8_t *sprite_pixels;
+	uint16_t pixels_segt;
+	uint16_t pixels_offt;
 	imh_hdr_t _sprite_hdr;
-	uint8_t *_sprite_pixels;
+	uint16_t _pixels_segt;
+	uint16_t _pixels_offt;
 } sprite_layer_t;
 
 typedef struct neuro_button_t {
