@@ -1,6 +1,7 @@
 #include <neuro_routines.h>
 #include "globals.h"
 #include "resource_manager.h"
+#include "data.h"
 #include <string.h>
 
 static uint32_t g_animations = 0;
@@ -31,5 +32,5 @@ void bg_animation_control_update()
 	}
 	elapsed = passed;
 
-	bg_animation_update(g_animation_control, g_animations, g_seg011, g_level_bg + 8);
+	bg_animation_update(g_animation_control, g_animations, g_seg011.data, g_seg015.pixels);
 }

@@ -152,7 +152,7 @@ static int pax_info_menu_prepare_list(uint16_t *infos_list, int type)
 	} info;
 
 	info.p = (type == PIMT_NEWS) ?
-		(uint8_t*)g_pax_news : (uint8_t*)g_pax_board_msg;
+		(uint8_t*)g_seg004.pax_news : (uint8_t*)g_seg004.pax_board_msg;
 
 	for (int i = 0; i < 32; i++, info.p += 40)
 	{
@@ -224,7 +224,7 @@ static pax_state_t pax_info_menu(int type, int next_page)
 	} info;
 
 	info.p = (type == PIMT_NEWS) ?
-		(uint8_t*)g_pax_news : (uint8_t*)g_pax_board_msg;
+		(uint8_t*)g_seg004.pax_news : (uint8_t*)g_seg004.pax_board_msg;
 
 	list_entries = pax_info_menu_prepare_list(infos_list, type);
 
@@ -522,7 +522,7 @@ static pax_state_t on_pax_board_view_menu_button(neuro_button_t *button)
 		neuro_window_flush_buttons();
 
 		neuro_window_set_draw_string_offt(8, 8);
-		neuro_window_draw_string(g_pax_board_msg[index].date, 1);
+		neuro_window_draw_string(g_seg004.pax_board_msg[index].date, 1);
 
 		g_text_scrolling_data.text = text;
 		window_animation_setup(WA_TYPE_TEXT_SCROLLING, &g_text_scrolling_data);
@@ -584,7 +584,7 @@ static pax_state_t on_pax_news_menu_button(neuro_button_t *button)
 
 		char subject_string[40] = { 0 };
 		sprintf(subject_string, "%s %s",
-			g_pax_news[index].date, g_pax_news[index].subject);
+			g_seg004.pax_news[index].date, g_seg004.pax_news[index].subject);
 		neuro_window_draw_string(subject_string, 1);
 
 		g_text_scrolling_data.text = text;
@@ -1086,7 +1086,7 @@ static window_folding_frame_data_t g_close_frame_data[12] = {
 static window_folding_data_t g_pax_anim_data = {
 	.total_frames = 12,
 	.frame_cap = 35,
-	.pixels = g_seg011,
+	.pixels = g_seg011.data,
 };
 
 real_world_state_t update_pax()

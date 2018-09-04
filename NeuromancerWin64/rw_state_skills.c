@@ -544,7 +544,7 @@ static skills_state_t skills_use_hw_repair()
 {
 	neuro_menu_flush();
 	neuro_menu_flush_items();
-	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
+	neuro_menu_create(6, 6, 16, 24, 6, (uint8_t*)&g_seg011 + 0x5A0A);
 	skills_item_page(0, 0);
 
 	return SS_SKILL_HW_REPAIR_ITEM_PAGE;
@@ -553,7 +553,7 @@ static skills_state_t skills_use_hw_repair()
 static skills_state_t skills_use_warez_skill(uint16_t skill)
 {
 	neuro_menu_flush();
-	neuro_menu_create(6, 6, 16, 24, 6, g_seg011 + 0x5A0A);
+	neuro_menu_create(6, 6, 16, 24, 6, (uint8_t*)&g_seg011 + 0x5A0A);
 	skills_item_page(1, 0);
 
 	switch (skill) {
@@ -895,7 +895,7 @@ static window_folding_frame_data_t g_close_frame_data[12] = {
 static window_folding_data_t g_skills_anim_data = {
 	.total_frames = 12,
 	.frame_cap = 30,
-	.pixels = g_seg011,
+	.pixels = g_seg011.data,
 };
 
 real_world_state_t update_skills()

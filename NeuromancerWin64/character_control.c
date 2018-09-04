@@ -31,7 +31,7 @@ static character_t g_character = {
 
 void character_control_add_sprite_to_chain(int left, int top, character_dir_t dir)
 {
-	uint8_t *frame = g_sprites;
+	uint8_t *frame = g_seg013.spritesheet;
 
 	switch (dir)
 	{
@@ -103,7 +103,7 @@ character_dir_t character_control_update()
 			}
 			g_character.frame = (g_character.frame + 1) % 8;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, ch_sprite->left, ch_sprite->top,
-				g_sprites + g_left_frames[g_character.frame], 0);
+				g_seg013.spritesheet + g_left_frames[g_character.frame], 0);
 			break;
 
 		case CD_RIGHT:
@@ -114,7 +114,7 @@ character_dir_t character_control_update()
 			}
 			g_character.frame = (g_character.frame + 1) % 8;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, ch_sprite->left, ch_sprite->top,
-				g_sprites + g_right_frames[g_character.frame], 0);
+				g_seg013.spritesheet + g_right_frames[g_character.frame], 0);
 			break;
 
 		case CD_UP:
@@ -125,7 +125,7 @@ character_dir_t character_control_update()
 			}
 			g_character.frame = (g_character.frame + 1) % 8;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, ch_sprite->left, ch_sprite->top,
-				g_sprites + g_up_frames[g_character.frame], 0);
+				g_seg013.spritesheet + g_up_frames[g_character.frame], 0);
 			break;
 
 		case CD_DOWN:
@@ -136,7 +136,7 @@ character_dir_t character_control_update()
 			}
 			g_character.frame = (g_character.frame + 1) % 8;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, ch_sprite->left, ch_sprite->top,
-				g_sprites + g_down_frames[g_character.frame], 0);
+				g_seg013.spritesheet + g_down_frames[g_character.frame], 0);
 			break;
 
 		}
@@ -276,25 +276,25 @@ character_dir_t character_control_handle_input(sfEvent *event)
 			g_character.dir = CD_LEFT;
 			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_left_frames[1], 0);
+				g_seg013.spritesheet + g_left_frames[1], 0);
 			break;
 		case CD_RIGHT:
 			g_character.dir = CD_RIGHT;
 			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_right_frames[1], 0);
+				g_seg013.spritesheet + g_right_frames[1], 0);
 			break;
 		case CD_UP:
 			g_character.dir = CD_UP;
 			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_up_frames[1], 0);
+				g_seg013.spritesheet + g_up_frames[1], 0);
 			break;
 		case CD_DOWN:
 			g_character.dir = CD_DOWN;
 			g_character.frame = 1;
 			drawing_control_add_sprite_to_chain(SCI_CHARACTER, character->left, character->top,
-				g_sprites + g_down_frames[1], 0);
+				g_seg013.spritesheet + g_down_frames[1], 0);
 			break;
 		}
 	}

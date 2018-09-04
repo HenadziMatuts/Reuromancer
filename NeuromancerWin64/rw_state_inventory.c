@@ -737,7 +737,7 @@ static window_folding_frame_data_t g_close_frame_data[12] = {
 static window_folding_data_t g_inv_anim_data = {
 	.total_frames = 12,
 	.frame_cap = 30,
-	.pixels = g_seg012,
+	.pixels = g_seg012.data,
 };
 
 real_world_state_t update_inventory()

@@ -115,8 +115,8 @@ static void init()
 {
 	memset(g_vga, 0, 320 * 200 * 4);
 
-	assert(resource_manager_load_resource("TITLE.IMH", g_background));
-	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
+	assert(resource_manager_load_resource("TITLE.IMH", g_seg010.background));
+	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_seg010.background, 1);
 
 	neuro_menu_create(6, 5, 20, 10, 1, NULL);
 	neuro_menu_draw_text("New/Load", 1, 0);

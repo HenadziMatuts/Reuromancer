@@ -468,7 +468,7 @@ void build_date_string(char *dst, uint8_t date_day)
 static void ui_panel_update()
 {
 	char panel_string[9];
-	uint8_t *bg_pix = g_background + sizeof(imh_hdr_t);
+	uint8_t *bg_pix = g_seg010.background + sizeof(imh_hdr_t);
 	static int update_cap_ms = 1000;
 	static int elapsed = 0;
 	int passed = sfTime_asMilliseconds(sfClock_getElapsedTime(g_timer));
@@ -529,7 +529,7 @@ static void ui_panel_update()
 
 static void roompos_init()
 {
-	roompos_t *roompos = (roompos_t*)g_roompos;
+	roompos_t *roompos = (roompos_t*)g_seg016.roompos;
 	roompos_level_t *roompos_level = &roompos->roompos_level[g_4bae.level_n];
 	uint16_t transition = 0;
 	character_dir_t dir = CD_NULL;
@@ -575,8 +575,8 @@ static void init()
 	char resource[32] = { 0, };
 	memset(g_vga, 0, 320 * 200 * 4);
 
-	assert(resource_manager_load_resource("NEURO.IMH", g_background));
-	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_background, 1);
+	assert(resource_manager_load_resource("NEURO.IMH", g_seg010.background));
+	drawing_control_add_sprite_to_chain(SCI_BACKGRND, 0, 0, g_seg010.background, 1);
 
 	neuro_window_setup(0);
 
@@ -602,12 +602,12 @@ static void init()
 	assert(resource_manager_load_resource(resource, g_a8e0.bih));
 
 	sprintf(resource, "R%d.PIC", g_level_n + 1);
-	assert(resource_manager_load_resource(resource, g_level_bg + sizeof(imh_hdr_t)));
-	drawing_control_add_sprite_to_chain(SCI_LEVEL_BG, 8, 8, g_level_bg, 1);
+	assert(resource_manager_load_resource(resource, g_seg015.pixels));
+	drawing_control_add_sprite_to_chain(SCI_LEVEL_BG, 8, 8, (uint8_t*)&g_seg015.hdr, 1);
 
 	sprintf(resource, "R%d.ANH", g_level_n + 1);
-	resource_manager_load_resource(resource, g_roompos + 0x488) ?
-		bg_animation_control_init_tables(g_roompos + 0x488) :
+	resource_manager_load_resource(resource, g_seg016.anh + 0x488) ?
+		bg_animation_control_init_tables(g_seg016.anh + 0x488) :
 		bg_animation_control_init_tables(NULL);
 
 	sub_105F6(NULL, SUB_105F6_OP_PREPARE_BIH, g_level_n);

@@ -183,7 +183,7 @@ static window_folding_frame_data_t g_close_frame_data[12] = {
 static window_folding_data_t g_disk_options_anim_data = {
 	.total_frames = 12,
 	.frame_cap = 28,
-	.pixels = g_seg011,
+	.pixels = g_seg011.data,
 };
 
 real_world_state_t update_disk_options()

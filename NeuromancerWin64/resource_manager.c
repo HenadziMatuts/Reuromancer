@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "data.h"
 #include "resource_manager.h"
 #include "drawing_control.h"
 #include <neuro_routines.h>
@@ -15,17 +16,7 @@ typedef struct resource_manager_t {
 } resource_manager_t;
 static resource_manager_t g_resource_manager;
 
-uint8_t g_cursors[400];         /* seg009 */
-uint8_t g_background[32064];    /* seg010 */
-uint8_t g_seg011[42000];        /* seg011 */
-uint8_t g_seg012[5648];         /* seg012 */
-uint8_t g_sprites[62000];       /* seg013 */
-uint8_t g_dialog_bubbles[609];  /* seg014 */
-uint8_t g_level_bg[17056] = {   /* seg015 */
-	0x00, 0x00, 0x00, 0x00,
-	0x98, 0x00, 0x70, 0x00
-};
-uint8_t g_roompos[23968];       /* seg016 */
+//uint8_t g_roompos[23968];       /* seg016 */
 uint8_t g_savegame[12000];
 
 
@@ -36,11 +27,11 @@ void resource_manager_init()
 	assert(g_resource_manager.neuro1 = fopen("NEURO1.DAT", "rb"));
 	assert(g_resource_manager.neuro2 = fopen("NEURO2.DAT", "rb"));
 
-	assert(resource_manager_load_resource("BUBBLES.IMH", g_dialog_bubbles));
-	assert(resource_manager_load_resource("ROOMPOS.BIH", g_roompos));
-	assert(resource_manager_load_resource("SPRITES.IMH", g_sprites));
-	assert(resource_manager_load_resource("CURSORS.IMH", g_cursors));
-	drawing_control_add_sprite_to_chain(SCI_CURSOR, 160, 100, g_cursors, 0);
+	assert(resource_manager_load_resource("BUBBLES.IMH", g_seg014.dialog_bubbles));
+	assert(resource_manager_load_resource("ROOMPOS.BIH", g_seg016.roompos));
+	assert(resource_manager_load_resource("SPRITES.IMH", g_seg013.spritesheet));
+	assert(resource_manager_load_resource("CURSORS.IMH", g_seg009.cursors));
+	drawing_control_add_sprite_to_chain(SCI_CURSOR, 160, 100, g_seg009.cursors, 0);
 }
 
 void resource_manager_deinit()

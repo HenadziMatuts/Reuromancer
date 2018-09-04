@@ -90,9 +90,9 @@ int neuro_window_setup(uint16_t mode, ...)
 		g_neuro_window.c944 = 160;
 
 		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011);
+			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011.data);
 		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--,
-			g_neuro_window.left, g_neuro_window.top, g_seg011, 1);
+			g_neuro_window.left, g_neuro_window.top, g_seg011.data, 1);
 		break;
 
 	case NWM_INVENTORY:
@@ -103,9 +103,9 @@ int neuro_window_setup(uint16_t mode, ...)
 		g_neuro_window.c944 = 88;
 
 		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012.data);
 		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--,
-			g_neuro_window.left, g_neuro_window.top, g_seg012, 1);
+			g_neuro_window.left, g_neuro_window.top, g_seg012.data, 1);
 		break;
 
 	case NWM_PLAYER_DIALOG_CHOICE:
@@ -130,12 +130,12 @@ int neuro_window_setup(uint16_t mode, ...)
 				if (g_4bae.roompos_x < 0xA0)
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x1A2, 0);
+						g_4bae.roompos_x + 8, g_neuro_window.bottom + 1, g_seg014.dialog_bubbles + 0x1A2, 0);
 				}
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0xDC, 0);
+						g_4bae.roompos_x - 8, g_neuro_window.bottom + 1, g_seg014.dialog_bubbles + 0xDC, 0);
 				}
 			}
 			else
@@ -143,18 +143,18 @@ int neuro_window_setup(uint16_t mode, ...)
 				if (g_4bae.roompos_x < 0xA0)
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_x + 8, g_neuro_window.bottom + 1, g_dialog_bubbles + 0x6E, 0);
+						g_4bae.roompos_x + 8, g_neuro_window.bottom + 1, g_seg014.dialog_bubbles + 0x6E, 0);
 				}
 				else
 				{
 					drawing_control_add_sprite_to_chain(SCI_DIALOG_BUBBLE,
-						g_4bae.roompos_x - 8, g_neuro_window.bottom + 1, g_dialog_bubbles, 0);
+						g_4bae.roompos_x - 8, g_neuro_window.bottom + 1, g_seg014.dialog_bubbles, 0);
 				}
 			}
 		}
 
 		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011);
+			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011.data);
 		break;
 	}
 
@@ -170,7 +170,7 @@ void neuro_window_draw_string(char *text, ...)
 {
 	switch (g_neuro_window.mode) {
 	case NWM_NEURO_UI:
-		build_string(text, 320, 200, 176, 182, g_background + sizeof(imh_hdr_t));
+		build_string(text, 320, 200, 176, 182, g_seg010.background + sizeof(imh_hdr_t));
 		break;
 
 	case NWM_PAX: {
@@ -179,19 +179,19 @@ void neuro_window_draw_string(char *text, ...)
 		uint16_t up = va_arg(args, uint16_t);
 		va_end(args);
 
-		imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
+		imh_hdr_t *imh = (imh_hdr_t*)g_seg011.data;
 
 		if (up)
 		{
 			build_string(text, imh->width * 2, imh->height,
-				g_neuro_window.c92a, g_neuro_window.c92c, g_seg011 + sizeof(imh_hdr_t));
+				g_neuro_window.c92a, g_neuro_window.c92c, g_seg011.data + sizeof(imh_hdr_t));
 		}
 		else
 		{
 			uint32_t t = g_neuro_window.bottom -
 				g_neuro_window.top - g_neuro_window.c92c - 7;
 			build_string(text, imh->width * 2, imh->height,
-				g_neuro_window.c92a, t, g_seg011 + sizeof(imh_hdr_t));
+				g_neuro_window.c92a, t, g_seg011.data + sizeof(imh_hdr_t));
 		}
 
 		break;
@@ -204,8 +204,8 @@ void neuro_window_draw_string(char *text, ...)
 		uint16_t top = va_arg(args, uint16_t);
 		va_end(args);
 
-		imh_hdr_t *imh = (imh_hdr_t*)g_seg012;
-		build_string(text, imh->width * 2, imh->height, left, top, g_seg012 + sizeof(imh_hdr_t));
+		imh_hdr_t *imh = (imh_hdr_t*)g_seg012.data;
+		build_string(text, imh->width * 2, imh->height, left, top, g_seg012.data + sizeof(imh_hdr_t));
 
 		break;
 	}
@@ -226,9 +226,9 @@ void neuro_window_draw_string(char *text, ...)
 	}
 	case NWM_PLAYER_DIALOG_CHOICE:
 	case NWM_NPC_DIALOG_REPLY: {
-		imh_hdr_t *imh = (imh_hdr_t*)g_seg011;
-		build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011 + sizeof(imh_hdr_t));
-		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--, 0, g_neuro_window.top, g_seg011, 1);
+		imh_hdr_t *imh = (imh_hdr_t*)g_seg011.data;
+		build_string(text, imh->width * 2, imh->height, 8, 8, g_seg011.data + sizeof(imh_hdr_t));
+		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--, 0, g_neuro_window.top, g_seg011.data, 1);
 		break;
 	}
 
@@ -263,12 +263,12 @@ void neuro_window_clear()
 
 	case NWM_PAX:
 		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011);
+			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg011.data);
 		break;
 
 	case NWM_INVENTORY:
 		build_text_frame(g_neuro_window.bottom - g_neuro_window.top + 1,
-			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012);
+			g_neuro_window.right - g_neuro_window.left + 1, (imh_hdr_t*)g_seg012.data);
 		break;
 
 	case 4:
@@ -356,13 +356,13 @@ static void select_window_button(neuro_button_t *button)
 
 	switch (g_neuro_window.mode) {
 	case NWM_NEURO_UI:
-		pic = g_background;
+		pic = g_seg010.background;
 		break;
 	case NWM_PAX:
-		pic = g_seg011;
+		pic = g_seg011.data;
 		break;
 	case NWM_INVENTORY:
-		pic = g_seg012;
+		pic = g_seg012.data;
 		break;
 	default:
 		return;

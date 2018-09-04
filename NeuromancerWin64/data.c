@@ -1,53 +1,104 @@
 #include "data.h"
 
-/* seg004 */
-pax_news_hdr_t g_pax_news[21] = {
-	{ 0x0000, 0x00, 0x00, "11/16/58", "BAR FOOD DECLARED FATAL  " },
-	{ 0x0000, 0x00, 0x00, "11/16/58", "COWBOY DISAPPEARS        " },
-	{ 0x0000, 0x00, 0x00, "11/16/58", "News In Brief            " },
-	{ 0x4BC9, 0x01, 0x01, "11/17/58", "NASA AND FUJI DO BUSINESS" },
-	{ 0x4BC9, 0x01, 0x01, "11/17/58", "News In Brief            " },
-	{ 0x4BC9, 0x02, 0x01, "11/18/58", "JUSTICE DEFENDS DEFENDERS" },
-	{ 0x4BC9, 0x03, 0x01, "11/18/58", "News In Brief            " },
-	{ 0x4BC9, 0x03, 0x01, "11/18/58", "FRIED COWBOY FOUND       " },
-	{ 0x4BC9, 0x03, 0x01, "11/19/58", "DR. TIMOTHY LEARY AT 138 " },
-	{ 0x4BC9, 0x03, 0x01, "11/19/58", "DISMEMBERED HAND FOUND   " },
-	{ 0x4BC9, 0x03, 0x01, "11/19/58", "News In Brief            " },
-	{ 0x4C1F, 0x00, 0x82, "11/00/58", "PERVERT NETTED IN SWEEP  " },
-	{ 0x4C59, 0x00, 0x82, "11/00/58", "CRIMINAL HITS CHIBA CITY " },
-	{ 0x4C5A, 0x00, 0x82, "11/00/58", "CHIBA CITY HITS CRIMINAL " },
-	{ 0x4C23, 0x00, 0x82, "11/00/58", "MAAS BIOLABS BURGLARIZED " },
-	{ 0x4C27, 0x00, 0x82, "11/00/58", "INDUSTRIAL SPY NABBED    " },
-	{ 0x4C29, 0x00, 0x82, "11/00/58", "JUSTICE BLINDED          " },
-	{ 0x4C25, 0x00, 0x82, "11/00/58", "SENSE/NET RAIDED AGAIN   " },
-	{ 0x4C2B, 0x00, 0x82, "11/00/58", "VAGRANT PAYS HOTEL BILL  " },
-	{ 0x4C2D, 0x00, 0x82, "11/00/58", "BANK LOSES MONEY         " },
-	{ 0x0000, 0x00, 0x03, "", "" }
+/* seg004: 0x1277 : 0000 - 06BF */
+seg004_layout_t g_seg004 = {
+	.pax_news = {
+		{ 0x0000, 0x00, 0x00, "11/16/58", "BAR FOOD DECLARED FATAL  " },
+		{ 0x0000, 0x00, 0x00, "11/16/58", "COWBOY DISAPPEARS        " },
+		{ 0x0000, 0x00, 0x00, "11/16/58", "News In Brief            " },
+		{ 0x4BC9, 0x01, 0x01, "11/17/58", "NASA AND FUJI DO BUSINESS" },
+		{ 0x4BC9, 0x01, 0x01, "11/17/58", "News In Brief            " },
+		{ 0x4BC9, 0x02, 0x01, "11/18/58", "JUSTICE DEFENDS DEFENDERS" },
+		{ 0x4BC9, 0x03, 0x01, "11/18/58", "News In Brief            " },
+		{ 0x4BC9, 0x03, 0x01, "11/18/58", "FRIED COWBOY FOUND       " },
+		{ 0x4BC9, 0x03, 0x01, "11/19/58", "DR. TIMOTHY LEARY AT 138 " },
+		{ 0x4BC9, 0x03, 0x01, "11/19/58", "DISMEMBERED HAND FOUND   " },
+		{ 0x4BC9, 0x03, 0x01, "11/19/58", "News In Brief            " },
+		{ 0x4C1F, 0x00, 0x82, "11/00/58", "PERVERT NETTED IN SWEEP  " },
+		{ 0x4C59, 0x00, 0x82, "11/00/58", "CRIMINAL HITS CHIBA CITY " },
+		{ 0x4C5A, 0x00, 0x82, "11/00/58", "CHIBA CITY HITS CRIMINAL " },
+		{ 0x4C23, 0x00, 0x82, "11/00/58", "MAAS BIOLABS BURGLARIZED " },
+		{ 0x4C27, 0x00, 0x82, "11/00/58", "INDUSTRIAL SPY NABBED    " },
+		{ 0x4C29, 0x00, 0x82, "11/00/58", "JUSTICE BLINDED          " },
+		{ 0x4C25, 0x00, 0x82, "11/00/58", "SENSE/NET RAIDED AGAIN   " },
+		{ 0x4C2B, 0x00, 0x82, "11/00/58", "VAGRANT PAYS HOTEL BILL  " },
+		{ 0x4C2D, 0x00, 0x82, "11/00/58", "BANK LOSES MONEY         " },
+		{ 0x0000, 0x00, 0x03, "", "" }
+	},
+	.pax_board_msg = {
+		{ 0x0000, 0x00, 0x00, "11/14/58",       "All",       "SysOp" },
+		{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },   "Matt Shaw" },
+		{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },      "FFargo" },
+		{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },        "Shin" },
+		{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },   "Crazy Edo" },
+		{ 0x0000, 0x00, 0x00, "11/15/58",    { 0x01 },   "Matt Shaw" },
+		{ 0x0000, 0x00, 0x00, "11/15/58",    { 0x01 },       "Bosch" },
+		{ 0x0000, 0x00, 0x00, "11/15/58",    { 0x01 }, "Emp. Norton" },
+		{ 0x0000, 0x00, 0x00, "11/16/58",      "Ratz",   "Red Snake" },
+		{ 0x0000, 0x00, 0x00, "11/16/58",       "All",   "Interplay" },
+		{ 0x0000, 0x00, 0x00, "11/16/58",       "All",    "Armitage" },
+		{ 0x0000, 0x00, 0x00, "11/16/58",       "All",     "Hitachi" },
+		{ 0x4BC9, 0x01, 0x01, "11/17/58",    { 0x01 }, "Emp. Norton" },
+		{ 0x4BC9, 0x01, 0x01, "11/17/58",       "All",         "CFM" },
+		{ 0x4BC9, 0x01, 0x01, "11/17/58",       "All",         "IRS" },
+		{ 0x4BC9, 0x02, 0x01, "11/18/58",     "Larry",  "Modern Bob" },
+		{ 0x4BC9, 0x02, 0x01, "11/18/58", "Crazy Edo",   "Wakizashi" },
+		{ 0x4BC9, 0x03, 0x01, "11/19/58", "Wakizashi",   "Crazy Edo" },
+		{ 0x4BF1, 0x00, 0x82, "11/16/58",    { 0x01 },       "Bosch" },
+		{ 0x4C21, 0x00, 0x82, "11/16/58",    { 0x01 },    "Armitage" },
+		{ 0x4C25, 0x00, 0x82, "11/16/58",       "All",   "Sense/Net" },
+		{ 0x0000, 0x00, 0x03, "", "", "" }
+	},
+	.padding = { 0x00 }
 };
 
-pax_board_msg_hdr_t g_pax_board_msg[22] = {
-	{ 0x0000, 0x00, 0x00, "11/14/58",       "All",       "SysOp" },
-	{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },   "Matt Shaw" },
-	{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },      "FFargo" },
-	{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },        "Shin" },
-	{ 0x0000, 0x00, 0x00, "11/14/58",    { 0x01 },   "Crazy Edo" },
-	{ 0x0000, 0x00, 0x00, "11/15/58",    { 0x01 },   "Matt Shaw" },
-	{ 0x0000, 0x00, 0x00, "11/15/58",    { 0x01 },       "Bosch" },
-	{ 0x0000, 0x00, 0x00, "11/15/58",    { 0x01 }, "Emp. Norton" },
-	{ 0x0000, 0x00, 0x00, "11/16/58",      "Ratz",   "Red Snake" },
-	{ 0x0000, 0x00, 0x00, "11/16/58",       "All",   "Interplay" },
-	{ 0x0000, 0x00, 0x00, "11/16/58",       "All",    "Armitage" },
-	{ 0x0000, 0x00, 0x00, "11/16/58",       "All",     "Hitachi" },
-	{ 0x4BC9, 0x01, 0x01, "11/17/58",    { 0x01 }, "Emp. Norton" },
-	{ 0x4BC9, 0x01, 0x01, "11/17/58",       "All",         "CFM" },
-	{ 0x4BC9, 0x01, 0x01, "11/17/58",       "All",         "IRS" },
-	{ 0x4BC9, 0x02, 0x01, "11/18/58",     "Larry",  "Modern Bob" },
-	{ 0x4BC9, 0x02, 0x01, "11/18/58", "Crazy Edo",   "Wakizashi" },
-	{ 0x4BC9, 0x03, 0x01, "11/19/58", "Wakizashi",   "Crazy Edo" },
-	{ 0x4BF1, 0x00, 0x82, "11/16/58",    { 0x01 },       "Bosch" },
-	{ 0x4C21, 0x00, 0x82, "11/16/58",    { 0x01 },    "Armitage" },
-	{ 0x4C25, 0x00, 0x82, "11/16/58",       "All",   "Sense/Net" },
-	{ 0x0000, 0x00, 0x03, "", "", "" }
+/* seg009: 0x1B0E : 0000 - 018F */
+seg009_layout_t g_seg009 = {
+	.padding = { 0, },
+	.cursors = { 0, }
+};
+
+/* seg010: 0x1B27 : 0000 - 7D3F */
+seg010_layout_t g_seg010 = {
+	.padding = { 0, },
+	.background = { 0, }
+};
+
+/* seg011: 0x22FB : 0000 - A410 */
+seg011_layout_t g_seg011 = {
+	.padding = { 0, },
+	.data = { 0, }
+};
+
+/* seg012: 0x2D3C : 0000 - 1610 */
+seg012_layout_t g_seg012 = {
+	.padding = { 0, },
+	.data = { 0, }
+};
+
+/* seg013: 0x2E9D : 0000 - F230 */
+seg013_layout_t g_seg013 = {
+	.padding = { 0, },
+	.spritesheet = { 0, }
+};
+
+/* seg014: 0x3DC0 : 0000 - 025F */
+seg014_layout_t g_seg014 = {
+	.padding = { 0, },
+	.dialog_bubbles = { 0, }
+};
+
+/* seg015: 0x3DE6 : 0000 - 329F */
+seg015_layout_t g_seg015 = {
+	.padding = { 0, },
+	.hdr = { 0, 0, 152, 112 },
+	.pixels = { 0, },
+};
+
+/* seg016: 0x4210 : 0000 - 5DA0 */
+seg016_layout_t g_seg016 = {
+	.roompos = { 0, },
+	.anh = { 0, }
 };
 
 /* 0x004C */
@@ -256,7 +307,7 @@ x3f85_t g_3f85 = {
 			0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00
 		},
 		.software = {
-			0xFF, 0x01, 0x00, 0x00, 0xFF, 0x01, 0x00, 0x00,
+			0x00, 0x01, 0x00, 0x00, 0xFF, 0x01, 0x00, 0x00,
 			0xFF, 0x01, 0x00, 0x00, 0xFF, 0x01, 0x00, 0x00,
 			0xFF, 0x01, 0x00, 0x00, 0xFF, 0x01, 0x00, 0x00,
 			0xFF, 0x05, 0x00, 0x00, 0xFF, 0x01, 0x00, 0x00,
@@ -275,7 +326,7 @@ x3f85_t g_3f85 = {
 		}
 	},
 	.skills = {
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 	},
 	{

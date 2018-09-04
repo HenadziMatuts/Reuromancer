@@ -35,7 +35,7 @@ void neuro_menu_create(uint16_t mode,
 	case 6:
 		if (!pixels)
 		{
-			pixels = g_seg011;
+			pixels = g_seg011.data;
 		}
 
 		l = 8 * (l - 1);

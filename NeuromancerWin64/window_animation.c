@@ -1,5 +1,6 @@
 #include "window_animation.h"
 #include "globals.h"
+#include "data.h"
 #include "drawing_control.h"
 #include "neuro_window_control.h"
 #include "resource_manager.h"
@@ -292,7 +293,7 @@ static void prepare_text_scrolling()
 		g_animation.data.scrolling.w = 68;
 		g_animation.data.scrolling.t = 134;
 		g_animation.data.scrolling.b = 191;
-		g_animation.data.scrolling.pixels = g_background;
+		g_animation.data.scrolling.pixels = g_seg010.background;
 		break;
 
 	case NWM_PAX:
@@ -302,7 +303,7 @@ static void prepare_text_scrolling()
 		g_animation.data.scrolling.w = 304;
 		g_animation.data.scrolling.t = 16;
 		g_animation.data.scrolling.b = 97;
-		g_animation.data.scrolling.pixels = g_seg011;
+		g_animation.data.scrolling.pixels = g_seg011.data;
 		break;
 
 	default:

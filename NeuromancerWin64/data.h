@@ -6,7 +6,6 @@
 
 #pragma pack(push, 1)
 
-/* seg004 */
 typedef struct pax_news_hdr_t {
 	uint16_t addr;
 	uint8_t val;
@@ -14,8 +13,6 @@ typedef struct pax_news_hdr_t {
 	char date[9];
 	char subject[27];
 } pax_news_hdr_t;
-
-extern pax_news_hdr_t g_pax_news[21];
 
 typedef struct pax_board_msg_hdr_t {
 	uint16_t addr;
@@ -26,7 +23,62 @@ typedef struct pax_board_msg_hdr_t {
 	char from[14];
 } pax_board_msg_hdr_t;
 
-extern pax_board_msg_hdr_t g_pax_board_msg[22];
+typedef struct seg004_layout_t {
+	pax_news_hdr_t pax_news[21];
+	pax_board_msg_hdr_t pax_board_msg[22];
+	uint8_t padding[8];
+} seg004_layout_t;
+
+typedef struct seg009_layout_t {
+	uint8_t padding[2];
+	uint8_t cursors[398];
+} seg009_layout_t;
+
+typedef struct seg010_layout_t {
+	uint8_t padding[2];
+	uint8_t background[32062];
+} seg010_layout_t;
+
+typedef struct seg011_layout_t {
+	uint8_t padding[2];
+	uint8_t data[41998];
+} seg011_layout_t;
+
+typedef struct seg012_layout_t {
+	uint8_t padding[10];
+	uint8_t data[5638];
+} seg012_layout_t;
+
+typedef struct seg013_layout_t {
+	uint8_t padding[2];
+	uint8_t spritesheet[61998];
+} seg013_layout_t;
+
+typedef struct seg014_layout_t {
+	uint8_t padding[2];
+	uint8_t dialog_bubbles[607];
+} seg014_layout_t;
+
+typedef struct seg015_layout_t {
+	uint8_t padding[10];
+	imh_hdr_t hdr;
+	uint8_t pixels[17038];
+} seg015_layout_t;
+
+typedef struct seg016_layout_t {
+	uint8_t roompos[1160];
+	uint8_t anh[22808];
+} seg016_layout_t;
+
+extern seg004_layout_t g_seg004; // seg004: 0x1277 : 0000 - 06BF
+extern seg009_layout_t g_seg009; // seg009: 0x1B0E : 0000 - 018F
+extern seg010_layout_t g_seg010; // seg010: 0x1B27 : 0000 - 7D3F
+extern seg011_layout_t g_seg011; // seg011: 0x22FB : 0000 - A40F
+extern seg012_layout_t g_seg012; // seg012: 0x2D3C : 0000 - 160F
+extern seg013_layout_t g_seg013; // seg013: 0x2E9D : 0000 - F22F
+extern seg014_layout_t g_seg014; // seg014: 0x3DC0 : 0000 - 025F
+extern seg015_layout_t g_seg015; // seg015: 0x3DE6 : 0000 - 329F
+extern seg016_layout_t g_seg016; // seg016: 0x4210 : 0000 - 5DA0
 
 /* 0x004C */
 extern int g_level_n;
