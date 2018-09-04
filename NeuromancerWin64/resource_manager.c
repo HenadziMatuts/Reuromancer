@@ -16,9 +16,7 @@ typedef struct resource_manager_t {
 } resource_manager_t;
 static resource_manager_t g_resource_manager;
 
-//uint8_t g_roompos[23968];       /* seg016 */
 uint8_t g_savegame[12000];
-
 
 void resource_manager_init()
 {

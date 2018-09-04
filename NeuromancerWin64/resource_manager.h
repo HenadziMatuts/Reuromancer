@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-//extern uint8_t g_roompos[23968];
 extern uint8_t g_savegame[12000];
 
 void resource_manager_init();
