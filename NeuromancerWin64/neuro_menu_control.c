@@ -3,6 +3,7 @@
 #include "drawing_control.h"
 #include "neuro_menu_control.h"
 #include "resource_manager.h"
+#include "address_translator.h"
 #include <assert.h>
 #include <string.h>
 
@@ -11,6 +12,68 @@ neuro_menu_t g_neuro_menu;
 
 /* 0x66DC */
 neuro_menu_t g_66dc[3];
+
+static void build_neuro_menu(neuro_menu_t *menu,
+	uint16_t left, uint16_t top, uint16_t w, uint16_t h,
+	uint16_t mode, uint8_t *pixels)
+{
+	menu->mode = mode;
+
+	menu->left = left;
+	menu->top = top;
+	menu->right = left + w - 1;
+	menu->bottom = top + h - 1;
+
+	menu->inner_left = menu->left + 8;
+	menu->inner_top = menu->top + 8;
+	menu->inner_right = menu->right - 8;
+	menu->inner_bottom = menu->bottom - 8;
+
+	memmove(&menu->_inner_left,
+		&menu->inner_left, sizeof(uint16_t) * 4);
+
+	menu->items_count = 0;
+
+	menu->width = w / 2;
+	translate_x64_to_x16(pixels, &menu->pixels_segt, &menu->pixels_offt);
+
+	build_text_frame(h, w, (imh_hdr_t*)pixels);
+}
+
+static void build_neuro_menu_text(neuro_menu_t *menu,
+	char *text, uint16_t x_offt, uint16_t y_offt)
+{
+	uint16_t w = menu->width * 2;
+	uint16_t h = menu->bottom - menu->top + 1;
+	uint16_t l = menu->inner_left - menu->left + x_offt;
+	uint16_t t = menu->inner_top - menu->top + y_offt;
+	uint8_t *p = translate_x16_to_x64(menu->pixels_segt, menu->pixels_offt);
+
+	build_string(text, w, h, l, t, p + sizeof(imh_hdr_t));
+}
+
+static void build_neuro_menu_item(neuro_menu_t *menu,
+	uint16_t x_offt, uint16_t y_offt, uint16_t w,
+	uint16_t item_num, char c)
+{
+	if (item_num > 15)
+	{
+		return;
+	}
+
+	neuro_button_t *item = &menu->items[menu->items_count];
+
+	memset(item, 0, sizeof(neuro_button_t));
+
+	item->left = menu->inner_left + x_offt;
+	item->top = menu->inner_top + y_offt;
+	item->right = item->left + w - 1;
+	item->bottom = item->top + 7;
+	item->code = item_num;
+	item->label = c;
+
+	menu->items_count++;
+}
 
 void neuro_menu_store()
 {
@@ -43,7 +106,7 @@ void neuro_menu_create(uint16_t mode,
 		w = (w * 8) + 16;
 		h = (h * 8) + 16;
 
-		build_neuro_menu_frame(&g_neuro_menu, l, t, w, h, mode, pixels);
+		build_neuro_menu(&g_neuro_menu, l, t, w, h, mode, pixels);
 		drawing_control_add_sprite_to_chain(g_4bae.frame_sc_index--, l, t, pixels, 1);
 		break;
 
@@ -57,7 +120,7 @@ void neuro_menu_create(uint16_t mode,
 
 void neuro_menu_draw_text(char *text, uint16_t l, uint16_t t)
 {
-	switch (g_neuro_menu.flags) {
+	switch (g_neuro_menu.mode) {
 	case 6:
 		l = l * 8;
 		t = t * 8;
@@ -75,7 +138,7 @@ void neuro_menu_draw_text(char *text, uint16_t l, uint16_t t)
 void neuro_menu_add_item(uint16_t l, uint16_t t, uint16_t w,
 		uint16_t code, char label)
 {
-	switch (g_neuro_menu.flags) {
+	switch (g_neuro_menu.mode) {
 	case 6:
 		l = l * 8;
 		t = t * 8;
@@ -98,18 +161,18 @@ void neuro_menu_flush_items()
 
 void neuro_menu_flush()
 {
-	assert(g_neuro_menu.flags == 6);
+	assert(g_neuro_menu.mode == 6);
 
 	uint16_t h = g_neuro_menu.bottom - g_neuro_menu.top + 1;
 	uint16_t w = g_neuro_menu.width * 2;
-	uint8_t *pixels = g_neuro_menu.pixels;
-
-	build_text_frame(h, w, (imh_hdr_t*)pixels);
+	imh_hdr_t *pixels = (imh_hdr_t*)translate_x16_to_x64(g_neuro_menu.pixels_segt,
+							g_neuro_menu.pixels_offt);
+	build_text_frame(h, w, pixels);
 }
 
 void neuro_menu_destroy()
 {
-	switch (g_neuro_menu.flags) {
+	switch (g_neuro_menu.mode) {
 	case 6:
 		drawing_control_remove_sprite_from_chain(++g_4bae.frame_sc_index);
 	case 7:
@@ -157,7 +220,7 @@ static void menu_handle_button_press(neuro_menu_id_t id, int *state, neuro_butto
 
 static void select_menu_button(neuro_menu_t *_menu, neuro_button_t *button)
 {
-	imh_hdr_t *menu = (imh_hdr_t*)_menu->pixels;
+	imh_hdr_t *menu = (imh_hdr_t*)translate_x16_to_x64(_menu->pixels_segt, _menu->pixels_offt);
 	uint8_t *pixels = (uint8_t*)menu + sizeof(imh_hdr_t);
 	uint32_t item_left = (button->left - _menu->left) / 2;
 	uint32_t item_top = button->top - _menu->top;

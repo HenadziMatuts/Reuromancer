@@ -85,13 +85,14 @@ typedef struct neuro_menu_t {
 	uint16_t _inner_right;  // 660E
 	uint16_t _inner_bottom; // 6610
 
-	uint16_t flags; // 6612
+	uint16_t mode; // 6612
 
 	uint16_t items_count; // 6614
 	neuro_button_t items[16];
 
 	uint16_t width;
-	uint8_t *pixels;
+	uint16_t pixels_segt;
+	uint16_t pixels_offt;
 } neuro_menu_t;
 
 typedef struct bih_hdr_t {
@@ -210,20 +211,6 @@ LIBNEUROAPI void build_string(char *string, uint32_t w, uint32_t h,
 
 
 LIBNEUROAPI void build_text_frame(uint32_t h, uint32_t w, imh_hdr_t *dst);
-
-/*
- * Dialog box control.
- */
-LIBNEUROAPI void build_neuro_menu_frame(neuro_menu_t *dialog,
-					uint16_t left, uint16_t top, uint16_t w, uint16_t h,
-					uint16_t flags, uint8_t *pixels);
-
-LIBNEUROAPI void build_neuro_menu_text(neuro_menu_t *dialog,
-					char *text, uint16_t x_offt, uint16_t y_offt);
-
-LIBNEUROAPI void build_neuro_menu_item(neuro_menu_t *dialog,
-					uint16_t x_offt, uint16_t y_offt, uint16_t w,
-					uint16_t item_num, char c);
 
 /*
  * Sound stuff.
