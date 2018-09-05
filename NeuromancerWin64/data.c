@@ -1,6 +1,6 @@
 #include "data.h"
 
-/* seg004: 0x1277 : 0000 - 06BF */
+/* seg004: 0000 - 06BF */
 seg004_layout_t g_seg004 = {
 	.pax_news = {
 		{ 0x0000, 0x00, 0x00, "11/16/58", "BAR FOOD DECLARED FATAL  " },
@@ -52,54 +52,57 @@ seg004_layout_t g_seg004 = {
 	.padding = { 0x00 }
 };
 
-/* seg009: 0x1B0E : 0000 - 018F */
+/* seg009: 0000 - 018F */
 seg009_layout_t g_seg009 = {
 	.padding = { 0, },
 	.cursors = { 0, }
 };
 
-/* seg010: 0x1B27 : 0000 - 7D3F */
+/* seg010: 0000 - 7D3F */
 seg010_layout_t g_seg010 = {
 	.padding = { 0, },
 	.background = { 0, }
 };
 
-/* seg011: 0x22FB : 0000 - A410 */
+/* seg011: 0000 - A410 */
 seg011_layout_t g_seg011 = {
 	.padding = { 0, },
 	.data = { 0, }
 };
 
-/* seg012: 0x2D3C : 0000 - 1610 */
+/* seg012: 0000 - 1610 */
 seg012_layout_t g_seg012 = {
 	.padding = { 0, },
 	.data = { 0, }
 };
 
-/* seg013: 0x2E9D : 0000 - F230 */
+/* seg013: 0000 - F230 */
 seg013_layout_t g_seg013 = {
 	.padding = { 0, },
 	.spritesheet = { 0, }
 };
 
-/* seg014: 0x3DC0 : 0000 - 025F */
+/* seg014: 0000 - 025F */
 seg014_layout_t g_seg014 = {
 	.padding = { 0, },
 	.dialog_bubbles = { 0, }
 };
 
-/* seg015: 0x3DE6 : 0000 - 329F */
+/* seg015: 0000 - 329F */
 seg015_layout_t g_seg015 = {
 	.padding = { 0, },
 	.hdr = { 0, 0, 152, 112 },
 	.pixels = { 0, },
 };
 
-/* seg016: 0x4210 : 0000 - 5DA0 */
+/* seg016: 0000 - 5D9F */
 seg016_layout_t g_seg016 = {
 	.roompos = { 0, },
 	.anh = { 0, }
 };
+
+/* ss: 0000 - 2047 */
+uint8_t g_ss[2048];
 
 /* 0x004C */
 int g_level_n = -1;
@@ -289,7 +292,7 @@ x3f85_t g_3f85 = {
 	},
 	.inventory = {
 		.items = {
-			0x5F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00,
+			0x5F, 0x00, 0x00, 0x00, 0x53, 0x00, 0x00, 0x00,
 			0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00,
 			0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00,
 			0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00,

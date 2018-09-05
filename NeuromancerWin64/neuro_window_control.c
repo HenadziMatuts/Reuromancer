@@ -4,6 +4,7 @@
 #include "drawing_control.h"
 #include "neuro_window_control.h"
 #include "scene_control.h"
+#include "address_translator.h"
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
@@ -13,25 +14,9 @@ neuro_window_t g_a59e[3] = {
 	{ 0, },{ 0, },{ 0, }
 };
 
-neuro_window_wrapper_t g_a59e_wrapper[3] = {
-	{
-		{ NULL, }, &g_a59e[0]
-	},
-	{
-		{ NULL, }, &g_a59e[1]
-	},
-	{
-		{ NULL, }, &g_a59e[2]
-	}
-};
-
 /* 0xC91E */
 neuro_window_t g_neuro_window = {
 	{ 0, }
-};
-
-neuro_window_wrapper_t g_neuro_window_wrapper = {
-	{ NULL, }, &g_neuro_window
 };
 
 int setup_ui_buttons();
@@ -40,25 +25,15 @@ int setup_ui_buttons();
 void store_window()
 {
 	memmove(&g_a59e[2], &g_a59e[1], sizeof(neuro_window_t));
-	memmove(&g_a59e_wrapper[2], &g_a59e_wrapper[1], sizeof(neuro_window_wrapper_t));
-
 	memmove(&g_a59e[1], &g_a59e[0], sizeof(neuro_window_t));
-	memmove(&g_a59e_wrapper[1], &g_a59e_wrapper[0], sizeof(neuro_window_wrapper_t));
-
 	memmove(&g_a59e[0], &g_neuro_window, sizeof(neuro_window_t));
-	memmove(&g_a59e_wrapper[0], &g_neuro_window_wrapper, sizeof(neuro_window_wrapper_t));
 }
 
 void restore_window()
 {
 	memmove(&g_neuro_window, &g_a59e[0], sizeof(neuro_window_t));
-	memmove(&g_neuro_window_wrapper, &g_a59e_wrapper[0], sizeof(neuro_window_wrapper_t));
-
 	memmove(&g_a59e[0], &g_a59e[1], sizeof(neuro_window_t));
-	memmove(&g_a59e_wrapper[0], &g_a59e_wrapper[1], sizeof(neuro_window_wrapper_t));
-
 	memmove(&g_a59e[1], &g_a59e[2], sizeof(neuro_window_t));
-	memmove(&g_a59e_wrapper[1], &g_a59e_wrapper[2], sizeof(neuro_window_wrapper_t));
 }
 
 /* Setup "Window" - sub_147EE */
@@ -245,7 +220,8 @@ int neuro_window_add_button(neuro_button_t *button)
 	case NWM_PAX:
 	case NWM_INVENTORY:
 	case 4:
-		g_neuro_window_wrapper.window_item[g_neuro_window.total_items++] = (uint8_t*)button;
+		translate_x64_to_x16((uint8_t*)button, NULL,
+			&g_neuro_window.item[g_neuro_window.total_items++]);
 		break;
 
 	default:
@@ -396,7 +372,9 @@ static neuro_button_t* window_button_kboard_hit_test()
 {
 	for (uint16_t u = 0; u < g_neuro_window.total_items; u++)
 	{
-		neuro_button_t *hit = (neuro_button_t*)g_neuro_window_wrapper.window_item[u];
+		neuro_button_t *hit =
+			(neuro_button_t*)translate_x16_to_x64(DSEG, g_neuro_window.item[u]);
+
 		sfKeyCode key = ascii_toSfKeyCode(hit->label);
 
 		if (key == sfKeyUnknown)
@@ -468,7 +446,7 @@ static neuro_button_t* window_button_mouse_hit_test()
 	for (uint16_t u = 0; u < g_neuro_window.total_items; u++)
 	{
 		neuro_button_t *hit =
-			(neuro_button_t*)g_neuro_window_wrapper.window_item[u];
+			(neuro_button_t*)translate_x16_to_x64(DSEG, g_neuro_window.item[u]);
 
 		if (cursor->left > hit->left && cursor->left < hit->right &&
 			cursor->top > hit->top && cursor->top < hit->bottom)

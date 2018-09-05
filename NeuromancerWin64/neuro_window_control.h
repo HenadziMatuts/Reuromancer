@@ -28,15 +28,8 @@ typedef struct neuro_window_t {
 	uint16_t c944;
 } neuro_window_t;
 
-/* Wraps 16-bit addresses of the button area structs */
-typedef struct neuro_window_wrapper_t {
-	uint8_t *window_item[10];
-	neuro_window_t *window;
-} neuro_window_wrapper_t;
-
 /* 0xC91E */
 extern neuro_window_t g_neuro_window;
-extern neuro_window_wrapper_t g_neuro_window_wrapper;
 
 void store_window();
 void restore_window();

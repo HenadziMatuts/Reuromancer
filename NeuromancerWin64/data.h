@@ -70,15 +70,16 @@ typedef struct seg016_layout_t {
 	uint8_t anh[22808];
 } seg016_layout_t;
 
-extern seg004_layout_t g_seg004; // seg004: 0x1277 : 0000 - 06BF
-extern seg009_layout_t g_seg009; // seg009: 0x1B0E : 0000 - 018F
-extern seg010_layout_t g_seg010; // seg010: 0x1B27 : 0000 - 7D3F
-extern seg011_layout_t g_seg011; // seg011: 0x22FB : 0000 - A40F
-extern seg012_layout_t g_seg012; // seg012: 0x2D3C : 0000 - 160F
-extern seg013_layout_t g_seg013; // seg013: 0x2E9D : 0000 - F22F
-extern seg014_layout_t g_seg014; // seg014: 0x3DC0 : 0000 - 025F
-extern seg015_layout_t g_seg015; // seg015: 0x3DE6 : 0000 - 329F
-extern seg016_layout_t g_seg016; // seg016: 0x4210 : 0000 - 5DA0
+extern seg004_layout_t g_seg004; // seg004: 0000 - 06BF
+extern seg009_layout_t g_seg009; // seg009: 0000 - 018F
+extern seg010_layout_t g_seg010; // seg010: 0000 - 7D3F
+extern seg011_layout_t g_seg011; // seg011: 0000 - A40F
+extern seg012_layout_t g_seg012; // seg012: 0000 - 160F
+extern seg013_layout_t g_seg013; // seg013: 0000 - F22F
+extern seg014_layout_t g_seg014; // seg014: 0000 - 025F
+extern seg015_layout_t g_seg015; // seg015: 0000 - 329F
+extern seg016_layout_t g_seg016; // seg016: 0000 - 5D9F
+extern uint8_t g_ss[2048];       //     ss: 0000 - 2047
 
 /* 0x004C */
 extern int g_level_n;

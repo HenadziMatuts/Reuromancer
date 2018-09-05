@@ -3,24 +3,7 @@
 #include <assert.h>
 
 #define SEGMENTS_TOTAL 18
-#define SEG_000 0x020E
-#define SEG_001 0x11DE
-#define SEG_002 0x1203
-#define SEG_003 0x1245
-#define SEG_004 0x1277
-#define SEG_005 0x12E3
-#define SEG_006 0x1323
-#define SEG_007 0x1900
-#define SEG_008 0x1AC3
-#define SEG_009 0x1B0E
-#define SEG_010 0x1B27
-#define SEG_011 0x22FB
-#define SEG_012 0x2D3C
-#define SEG_013 0x2E9D
-#define SEG_014 0x3DC0
-#define SEG_015 0x3DE6
-#define SEG_016 0x4210
-#define DSEG    0x47EA
+#define SS      0xCC10
 
 typedef struct adderss_translator_helper_t {
 	uint16_t segment;
@@ -51,7 +34,7 @@ static adderss_translator_helper_t g_helper[SEGMENTS_TOTAL] = {
 };
 
 typedef struct dseg_map_t {
-	int16_t offt;
+	uint16_t offt;
 	uint16_t size;
 	void *obj_ptr;
 } dseg_map_t;
@@ -97,29 +80,73 @@ static dseg_map_t g_dseg_map[] = {
 	{ 0x2236, 0x0C, &g_inv_disc_buttons.yes },
 	{ 0x2242, 0x0C, &g_inv_disc_buttons.no },
 
-	{ -1, 0, NULL },
+	/* stack */
+	{ SS, 0x800, g_ss },
+	{ 0xFFFF, 0, NULL },
 };
+
+static uint8_t* dseg_x16_to_x64(uint16_t offt)
+{
+	int i = 0;
+
+	while (g_dseg_map[i].offt != 0xFFFF)
+	{
+		if (offt >= g_dseg_map[i].offt &&
+			offt < g_dseg_map[i].offt + g_dseg_map[i].size)
+		{
+			return (uint8_t*)g_dseg_map[i].obj_ptr + (offt - g_dseg_map[i].offt);
+		}
+
+		i++;
+	}
+
+	assert(0);
+	return NULL;
+}
 
 uint8_t* translate_x16_to_x64(uint16_t seg, uint16_t offt)
 {
-	int i;
-
 	switch (seg) {
-	case SEG_004: i = 4;  break;
-	case SEG_009: i = 9;  break;
-	case SEG_010: i = 10; break;
-	case SEG_011: i = 11; break;
-	case SEG_012: i = 12; break;
-	case SEG_013: i = 13; break;
-	case SEG_014: i = 14; break;
-	case SEG_015: i = 15; break;
-	case SEG_016: i = 16; break;
+	case SEG_004:
+	case SEG_009:
+	case SEG_010:
+	case SEG_011:
+	case SEG_012:
+	case SEG_013:
+	case SEG_014:
+	case SEG_015:
+	case SEG_016:
+		return (g_helper[seg].data_ptr + offt) - g_helper[seg].offset;
+
+	case DSEG:
+		return dseg_x16_to_x64(offt);
 
 	default:
 		assert(0);
 	}
 
-	return (g_helper[i].data_ptr + offt) - g_helper[i].offset;
+	return NULL;
+}
+
+static uint16_t dseg_x64_to_x16(uint8_t *src)
+{
+	int i = 0;
+
+	while (g_dseg_map[i].offt != -1)
+	{
+		uint8_t *ptr = (uint8_t*)g_dseg_map[i].obj_ptr;
+
+		if (src >= ptr &&
+			src < ptr + g_dseg_map[i].size)
+		{
+			return g_dseg_map[i].offt + (uint16_t)(src - ptr);
+		}
+
+		i++;
+	}
+
+	assert(0);
+	return -1;
 }
 
 void translate_x64_to_x16(uint8_t *src, uint16_t *seg, uint16_t *offt)
@@ -128,6 +155,21 @@ void translate_x64_to_x16(uint8_t *src, uint16_t *seg, uint16_t *offt)
 
 	for (i = 0; i < SEGMENTS_TOTAL; i++)
 	{
+		if (i == DSEG)
+		{
+			if (seg)
+			{
+				*seg = DSEG;
+			}
+
+			if (offt)
+			{
+				*offt = dseg_x64_to_x16(src);
+			}
+			
+			return;
+		}
+
 		if (!g_helper[i].data_ptr)
 		{
 			continue;
@@ -142,6 +184,13 @@ void translate_x64_to_x16(uint8_t *src, uint16_t *seg, uint16_t *offt)
 
 	assert(i != SEGMENTS_TOTAL);
 
-	*seg = g_helper[i].segment;
-	*offt = (uint16_t)(src - g_helper[i].data_ptr) + g_helper[i].offset;
+	if (seg)
+	{
+		*seg = g_helper[i].segment;
+	}
+
+	if (offt)
+	{
+		*offt = (uint16_t)(src - g_helper[i].data_ptr) + g_helper[i].offset;
+	}
 }
