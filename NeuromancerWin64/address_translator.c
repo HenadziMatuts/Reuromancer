@@ -80,6 +80,12 @@ static dseg_map_t g_dseg_map[] = {
 	{ 0x2236, 0x0C, &g_inv_disc_buttons.yes },
 	{ 0x2242, 0x0C, &g_inv_disc_buttons.no },
 
+	/* 3f85 struct */
+	{ 0x3F85, 0x4E4, &g_3f85 },
+
+	/* a8e0 struct */
+	{ 0xA8E0, 0x2034, &g_a8e0 },
+
 	/* stack */
 	{ SS, 0x800, g_ss },
 	{ 0xFFFF, 0, NULL },

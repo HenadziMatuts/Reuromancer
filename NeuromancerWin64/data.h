@@ -191,14 +191,7 @@ typedef struct x3f85_t {
 	uint8_t x42e7[386]; 
 } x3f85_t;
 
-/* wraps 16-bit operation addresses */
-typedef struct x3f85_wrapper_t {
-	uint8_t *vm_next_op_addr[35];
-	x3f85_t *x3f85;
-} x3f85_wrapper_t;
-
 extern x3f85_t g_3f85;
-extern x3f85_wrapper_t g_3f85_wrapper;
 
 typedef enum jumps_t {
 	JE, JNE, JL, JGE
@@ -323,7 +316,7 @@ extern uint8_t g_a8ae[4];
 
 typedef struct a8e0_t {
 	uint16_t a8e0[4];
-	uint8_t bih[12288]; // 0xA8E8
+	uint8_t bih[8240]; // 0xA8E8
 } a8e0_t;
 
 extern a8e0_t g_a8e0;

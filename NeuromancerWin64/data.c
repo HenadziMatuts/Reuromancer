@@ -357,10 +357,6 @@ x3f85_t g_3f85 = {
 	}
 };
 
-x3f85_wrapper_t g_3f85_wrapper = {
-	{ NULL, }, &g_3f85,
-};
-
 /* 0x475B */
 uint8_t g_inventory_item_operations[128] = {
 	0x25, 0x27, 0x23, 0x01, 0x29, 0x22, 0x22, 0x10,
