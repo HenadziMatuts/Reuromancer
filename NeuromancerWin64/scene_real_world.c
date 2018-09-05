@@ -84,7 +84,7 @@ void sub_1342E(char *str, uint16_t mode)
 
 static real_world_state_t sub_10A5B(uint16_t line_n, uint16_t mode, uint16_t l, uint16_t t)
 {
-	char *text = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
+	char *text = g_a8e0.bih.bytes + g_a8e0.bih.hdr.text_offset;
 
 	for (int i = 0; i < line_n; i++)
 	{
@@ -292,7 +292,7 @@ static int setup_intro()
 {
 	uint16_t x = 0x80 >> (g_level_n & 7);
 	uint16_t y = g_level_n >> 3;
-	char *text = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
+	char *text = g_a8e0.bih.bytes + g_a8e0.bih.hdr.text_offset;
 
 	if ((x & g_004e[y]) == 0) {
 		/* setup long intro */
@@ -309,7 +309,7 @@ static int setup_intro()
 	return 0;
 }
 
-/* 0xBCF */
+/* 0x0BCF */
 void init_deinit_neuro_cb(int cmd)
 {
 	switch (cmd) {
@@ -341,9 +341,10 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		va_end(args);
 
 		g_a642 = &g_3f85.level_info[level_n];
-		g_bih_wrapper.bih = (bih_hdr_t*)g_a8e0.bih;
-		g_bih_wrapper.ctrl_struct_addr = (uint8_t*)&g_4bae;
-		g_bih_wrapper.init_deinit_cb = init_deinit_neuro_cb;
+		bih_hdr_t *bih = &g_a8e0.bih.hdr;
+		translate_x64_to_x16((uint8_t*)&g_4bae, NULL, &bih->ctrl_struct_addr);
+		translate_x64_to_x16((uint8_t*)init_deinit_neuro_cb, &bih->cb_segt, &bih->cb_offt);
+
 		break;
 	}
 
@@ -351,7 +352,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		bg_animation_control_update();
 	case SUB_105F6_OP_INIT_LEVEL: /* enter/exit level bih call */
 	case SUB_105F6_OP_DEINIT_LEVEL: {
-		uint16_t offt = g_bih_wrapper.bih->init_obj_code_offt[opcode - 1];
+		uint16_t offt = g_a8e0.bih.hdr.init_obj_code_offt[opcode - 1];
 		sub105F6_bih_call(offt);
 		break;
 	}
@@ -363,9 +364,9 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		uint16_t y = va_arg(args, uint16_t);
 		va_end(args);
 
-		uint16_t array_offt = g_bih_wrapper.bih->bytecode_array_offt[x - 1];
-		uint8_t *array = g_a8e0.bih + array_offt;
-		uint8_t *program = g_a8e0.bih + array[y * 2];
+		uint16_t array_offt = g_a8e0.bih.hdr.bytecode_array_offt[x - 1];
+		uint8_t *array = g_a8e0.bih.bytes + array_offt;
+		uint8_t *program = g_a8e0.bih.bytes + array[y * 2];
 		return (uint64_t)program;
 	}
 
@@ -387,7 +388,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 
 int sub_1152B()
 {
-	uint8_t *p = g_a8e0.bih + sizeof(bih_hdr_t); // 0xA910
+	uint8_t *p = g_a8e0.bih.bytes + sizeof(bih_hdr_t); // 0xA910
 
 	while ((*p != 0) && (*p != 1))
 	{
@@ -399,7 +400,7 @@ int sub_1152B()
 
 int is_jack_on_level()
 {
-	uint8_t *p = g_a8e0.bih + sizeof(bih_hdr_t); // 0xA910
+	uint8_t *p = g_a8e0.bih.bytes + sizeof(bih_hdr_t); // 0xA910
 
 	while ((*p != 0) && (*p != 2))
 	{
@@ -599,7 +600,7 @@ static void init()
 	g_level_n = g_4bae.level_n;
 
 	sprintf(resource, "R%d.BIH", g_level_n + 1);
-	assert(resource_manager_load_resource(resource, g_a8e0.bih));
+	assert(resource_manager_load_resource(resource, g_a8e0.bih.bytes));
 
 	sprintf(resource, "R%d.PIC", g_level_n + 1);
 	assert(resource_manager_load_resource(resource, g_seg015.pixels));

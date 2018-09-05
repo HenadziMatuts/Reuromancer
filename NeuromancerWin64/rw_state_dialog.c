@@ -27,7 +27,7 @@ static uint8_t g_current_reply = 0;
 
 static void dialog_first_reply()
 {
-	char *reply = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
+	char *reply = g_a8e0.bih.bytes + g_a8e0.bih.hdr.text_offset;
 	uint8_t first_reply = g_a642->first_dialog_reply;
 
 	for (int i = 0; i < first_reply; i++)
@@ -41,7 +41,7 @@ static void dialog_first_reply()
 
 static void dialog_next_reply()
 {
-	char *reply = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
+	char *reply = g_a8e0.bih.bytes + g_a8e0.bih.hdr.text_offset;
 	uint8_t first_reply = g_a642->first_dialog_reply;
 	uint8_t total_replies = g_a642->total_dialog_replies;
 
@@ -60,7 +60,7 @@ static void dialog_next_reply()
 
 static void dialog_accept_reply()
 {
-	char *reply = g_a8e0.bih + g_bih_wrapper.bih->text_offset;
+	char *reply = g_a8e0.bih.bytes + g_a8e0.bih.hdr.text_offset;
 	uint8_t first_reply = g_a642->first_dialog_reply;
 
 	for (int i = 0; i < first_reply + g_current_reply; i++)

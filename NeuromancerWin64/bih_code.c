@@ -1,4 +1,5 @@
 #include "data.h"
+#include "address_translator.h"
 
 /* this should be replaced with the 8086 emulator */
 
@@ -6,7 +7,7 @@ static void vm_bih_call_level_0(uint16_t offt)
 {
 	switch (offt) {
 	case 0xDB: {
-		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
+		x4bae_t *ctl = (x4bae_t*)translate_x16_to_x64(DSEG, g_a8e0.bih.hdr.ctrl_struct_addr);
 		ctl->cash += ctl->cash_withdrawal;
 		break;
 	}
@@ -32,7 +33,7 @@ static void sub105F6_bih_call_level_2(uint16_t offt)
 {
 	switch (offt) {
 	case 0x16F: { /* init */
-		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
+		x4bae_t *ctl = (x4bae_t*)translate_x16_to_x64(DSEG, g_a8e0.bih.hdr.ctrl_struct_addr);
 		int enough_cash = ((int32_t)ctl->cash - 250 < 0) ? 0 : 1;
 
 		ctl->x4c7c = enough_cash;
@@ -52,10 +53,12 @@ static void sub105F6_bih_call_level_2(uint16_t offt)
 	}
 
 	case 0x1AF: { /* deinit */
-		x4bae_t *ctl = (x4bae_t*)g_bih_wrapper.ctrl_struct_addr;
-		ctl->x4bcd[30] = 1;
+		x4bae_t *ctl = (x4bae_t*)translate_x16_to_x64(DSEG, g_a8e0.bih.hdr.ctrl_struct_addr);
+		pfn_bih_cb cb = (pfn_bih_cb)translate_x16_to_x64(g_a8e0.bih.hdr.cb_segt, g_a8e0.bih.hdr.cb_offt);
 
-		g_bih_wrapper.init_deinit_cb(0);
+		ctl->x4bcd[30] = 1;
+		cb(0);
+
 		break;
 	}
 
@@ -67,9 +70,12 @@ static void sub105F6_bih_call_level_2(uint16_t offt)
 static void sub105F6_bih_call_level_1(uint16_t offt)
 {
 	switch (offt) {
-	case 0x40: /* deinit */
-		g_bih_wrapper.init_deinit_cb(0);
+	case 0x40: { /* deinit */
+		pfn_bih_cb cb = (pfn_bih_cb)translate_x16_to_x64(g_a8e0.bih.hdr.cb_segt, g_a8e0.bih.hdr.cb_offt);
+		cb(0);
+
 		return;
+	}
 
 	default:
 		break;

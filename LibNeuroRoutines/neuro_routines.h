@@ -106,14 +106,6 @@ typedef struct bih_hdr_t {
 	/* the rest of bih file */
 } bih_hdr_t;
 
-/* wraps bih_hdr_t addresses */
-typedef void(*init_deinit)(int cmd);
-typedef struct bih_hdr_wrapper_t {
-	init_deinit init_deinit_cb;
-	uint8_t *ctrl_struct_addr;
-	bih_hdr_t *bih;
-} bih_hdr_wrapper_t;
-
 typedef struct bg_animation_control_table_t {
 	uint16_t total_frames;
 	uint8_t *first_frame_data;

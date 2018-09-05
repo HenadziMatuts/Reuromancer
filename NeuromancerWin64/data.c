@@ -498,8 +498,4 @@ a8e0_t g_a8e0 = {
 	{ 0, }, { 0, }
 };
 
-bih_hdr_wrapper_t g_bih_wrapper = {
-	NULL, NULL, (bih_hdr_t*)g_a8e0.bih
-};
-
 uint8_t g_c946 = 0;

@@ -6,6 +6,10 @@
 
 #pragma pack(push, 1)
 
+typedef void(*pfn_bih_cb)(int);
+/* seg000:0BCF */
+void init_deinit_neuro_cb(int cmd);
+
 typedef struct pax_news_hdr_t {
 	uint16_t addr;
 	uint8_t val;
@@ -316,11 +320,13 @@ extern uint8_t g_a8ae[4];
 
 typedef struct a8e0_t {
 	uint16_t a8e0[4];
-	uint8_t bih[8240]; // 0xA8E8
+	union {
+		bih_hdr_t hdr;
+		uint8_t bytes[8240];
+	} bih; // 0xA8E8
 } a8e0_t;
 
 extern a8e0_t g_a8e0;
-extern bih_hdr_wrapper_t g_bih_wrapper;
 
 extern uint8_t g_c946;
 
