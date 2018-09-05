@@ -42,6 +42,7 @@ void handle_rom_input(sfEvent *event);
 real_world_state_t update_rom();
 
 /* Disk Options handlers */
+extern uint8_t g_load_game;
 void handle_disk_options_input(sfEvent *event);
 real_world_state_t update_disk_options();
 

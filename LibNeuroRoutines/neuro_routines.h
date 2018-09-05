@@ -149,17 +149,6 @@ typedef struct roompos_t {
 	roompos_level_t roompos_level[58];
 } roompos_t;
 
-typedef struct neuro_savegame_t {
-	uint8_t unknown_area_1[1252];
-	uint8_t unknown_area_2[291];
-	uint8_t unknown_area_3[8];
-	uint8_t spritechain_area[374];
-	uint8_t unknown_area_4[678];
-	uint8_t dialog_area[226];
-	uint8_t unknown_area_5[120];
-	uint8_t unknown_area_6[40];
-} neuro_savegame_t;
-
 typedef enum ui_panel_mode_t {
 	UI_PM_CASH = 0,
 	UI_PM_CON,

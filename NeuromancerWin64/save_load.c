@@ -2,9 +2,25 @@
 #include "save_load.h"
 #include "resource_manager.h"
 #include "neuro_menu_control.h"
+#include "neuro_window_control.h"
 #include "drawing_control.h"
 #include <assert.h>
 #include <string.h>
+
+static uint16_t g_4c6b = 0;
+static uint8_t g_savegames[12000];
+
+#pragma pack(push, 1)
+typedef struct neuro_savegame_t {
+	x3f85_t x3f85;
+	x4bae_t x4bae;
+	uint8_t x004e[8];
+	uint8_t x3b94[374];
+	neuro_menu_t x66dc[3];
+	neuro_menu_t x65fa;
+	neuro_window_t xa59e[3];
+	neuro_window_t xc91e;
+} neuro_savegame_t;
 
 static void add_slots()
 {
@@ -19,13 +35,32 @@ static void add_slots()
 	}
 }
 
-void save_menu()
+static void save_game(int slot)
 {
+	char text[17];
+	assert(resource_manager_load_resource("SAVEGAME.SAV", g_savegames));
+	neuro_savegame_t *savegame = (neuro_savegame_t*)(g_savegames + (slot * 3000));
+
+	memmove(&savegame->x3f85, &g_3f85, sizeof(x3f85_t));
+	memmove(&savegame->x4bae, &g_4bae, sizeof(x4bae_t));
+	memmove(savegame->x004e, g_004e, 8);
+
+	memmove(savegame->x3b94, g_3b94, 64);
+	memmove(savegame->x3b94 + 64, g_sprite_chain, 310);
+
+	memmove(savegame->x66dc, g_66dc, 3 * sizeof(neuro_menu_t));
+	memmove(&savegame->x65fa, &g_neuro_menu, sizeof(neuro_menu_t));
+
+	memmove(savegame->xa59e, g_a59e, 3 * sizeof(neuro_window_t));
+	memmove(&savegame->xc91e, &g_neuro_window, sizeof(neuro_window_t));
+
+	assert(resource_manager_write_resource("SAVEGAME.SAV", g_savegames));
+
 	neuro_menu_flush();
 	neuro_menu_flush_items();
 
-	neuro_menu_draw_text("Save Game", 4, 0);
-	add_slots();
+	sprintf(text, "Saved to slot %d.", slot + 1);
+	neuro_menu_draw_text(text, 0, 2);
 }
 
 int on_save_menu_button(neuro_button_t *button)
@@ -35,9 +70,70 @@ int on_save_menu_button(neuro_button_t *button)
 	case 1:
 	case 2:
 	case 3: /* slots */
-		return -1;
+		g_4bae.x4c6b = g_4c6b;
+		save_game(button->code);
+		return 1;
 
 	case 0x0A: /* exit */
+		g_4bae.x4c6b = g_4c6b;
+		return 0;
+	}
+
+	return -1;
+}
+
+void save_menu()
+{
+	neuro_menu_flush();
+	neuro_menu_flush_items();
+
+	neuro_menu_draw_text("Save Game", 4, 0);
+	add_slots();
+
+	g_4c6b = g_4bae.x4c6b;
+	g_4bae.x4c6b = 0;
+}
+
+static void load_game(int slot)
+{
+	neuro_menu_destroy();
+	assert(resource_manager_load_resource("SAVEGAME.SAV", g_savegames));
+	neuro_savegame_t *savegame = (neuro_savegame_t*)(g_savegames + (slot * 3000));
+
+	memmove(&g_3f85, &savegame->x3f85, sizeof(x3f85_t));
+	memmove(&g_4bae, &savegame->x4bae, sizeof(x4bae_t));
+	memmove(g_004e, savegame->x004e, 8);
+
+	memmove(g_3b94, savegame->x3b94, 64);
+	memmove(g_sprite_chain, savegame->x3b94 + 64, 310);
+
+	memmove(g_66dc, savegame->x66dc, 3 * sizeof(neuro_menu_t));
+	memmove(&g_neuro_menu, &savegame->x65fa, sizeof(neuro_menu_t));
+
+	memmove(g_a59e, savegame->xa59e, 3 * sizeof(neuro_window_t));
+	memmove(&g_neuro_window, &savegame->xc91e, sizeof(neuro_window_t));
+
+	drawing_control_flush_sprite_chain();
+	drawing_control_add_sprite_to_chain(SCI_CURSOR, 160, 100, g_seg009.cursors, 0);
+	neuro_menu_destroy();
+
+	// seg005[0] = 0xFF
+	g_4bae.x4ccd = 0;
+	g_4bae.x4bcc = 1;
+}
+
+int on_load_menu_button(neuro_button_t *button)
+{
+	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3: /* slots */
+		load_game(button->code);
+		return 1;
+
+	case 0x0A: /* exit */
+		g_4bae.x4c6b = g_4c6b;
 		return 0;
 	}
 
@@ -52,25 +148,6 @@ void load_menu()
 	neuro_menu_draw_text("Load Game", 4, 0);
 	add_slots();
 
-	for (int i = 0; i < 4; i++)
-	{
-		neuro_menu_add_item((3 * i) + 3, 2, 1, i, i + '1');
-	}
+	g_4c6b = g_4bae.x4c6b;
+	g_4bae.x4c6b = 0;
 }
-
-int on_load_menu_button(neuro_button_t *button)
-{
-	switch (button->code) {
-	case 0:
-	case 1:
-	case 2:
-	case 3: /* slots */
-		return -1;
-
-	case 0x0A: /* exit */
-		return 0;
-	}
-
-	return -1;
-}
-

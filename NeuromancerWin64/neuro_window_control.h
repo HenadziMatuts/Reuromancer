@@ -28,6 +28,7 @@ typedef struct neuro_window_t {
 	uint16_t c944;
 } neuro_window_t;
 
+extern neuro_window_t g_a59e[3];
 /* 0xC91E */
 extern neuro_window_t g_neuro_window;
 

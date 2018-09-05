@@ -960,7 +960,19 @@ static neuro_scene_id_t update()
 		if (window_animation_update() == WA_EVENT_COMPLETED)
 		{
 			deinit();
-			level_transition_prepare_anim(0);
+
+			if (g_load_game)
+			{
+				g_load_game = 0;
+				g_screen_fading_data.direction = FADE_IN;
+				window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
+				g_screen_fading_data.direction = FADE_OUT;
+			}
+			else
+			{
+				level_transition_prepare_anim(0);
+			}
+
 			init();
 			g_state = RWS_FADE_IN;
 		}

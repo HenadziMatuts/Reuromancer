@@ -10,6 +10,7 @@ typedef enum disk_options_state_t {
 	DOS_OPEN = 0,
 	DOS_MAIN_MENU,
 	DOS_LOAD,
+	  DOS_RELOAD_LEVEL,
 	DOS_SAVE,
 	DOS_PAUSE_WFI,
 	DOS_QUIT,
@@ -17,6 +18,7 @@ typedef enum disk_options_state_t {
 } disk_options_state_t;
 
 static disk_options_state_t g_state = DOS_OPEN;
+uint8_t g_load_game = 0;
 
 static disk_options_quit()
 {
@@ -107,8 +109,6 @@ static disk_options_state_t on_disk_options_main_menu_button(neuro_button_t *but
 
 void disk_menu_handle_button_press(int *state, neuro_button_t *button)
 {
-	int ret = -1;
-
 	switch (*state) {
 	case DOS_MAIN_MENU:
 		*state = on_disk_options_main_menu_button(button);
@@ -118,20 +118,35 @@ void disk_menu_handle_button_press(int *state, neuro_button_t *button)
 		*state = on_disk_options_quit_button(button);
 		break;
 
-	case DOS_LOAD:
-		ret = on_load_menu_button(button);
-		if (ret == 0)
+	case DOS_LOAD: {
+		int loaded = on_load_menu_button(button);
+		if (loaded == 0)
 		{
 			*state = disk_options_main_menu();
+		}
+		else if (loaded == 1)
+		{
+			g_load_game = 1;
+			*state = DOS_RELOAD_LEVEL;
 		}
 		break;
+	}
 
-	case DOS_SAVE:
-		ret = on_save_menu_button(button);
-		if (ret == 0)
+	case DOS_SAVE: {
+		int saved = on_save_menu_button(button);
+		if (saved == 0)
 		{
 			*state = disk_options_main_menu();
 		}
+		else if (saved == 1)
+		{
+			g_paused = 1;
+			*state = DOS_PAUSE_WFI;
+		}
+		break;
+	}
+
+	default:
 		break;
 	}
 }
@@ -166,6 +181,12 @@ void handle_disk_options_input(sfEvent *event)
 		break;
 	}
 }
+
+static screen_fading_data_t g_screen_fading_data = {
+	.direction = FADE_OUT,
+	.step = 32,
+	.frame_cap = 15,
+};
 
 static window_folding_frame_data_t g_close_frame_data[12] = {
 	{ 144, 64, 48, 120 }, { 144, 62, 48, 121 }, { 144, 58,  48, 123 },
@@ -218,6 +239,11 @@ real_world_state_t update_disk_options()
 			}
 		}
 		break;
+
+	case DOS_RELOAD_LEVEL:
+		window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
+		g_state = DOS_OPEN;
+		return RWS_RELOAD_LEVEL;
 	}
 
 	return RWS_DISK_OPTIONS;

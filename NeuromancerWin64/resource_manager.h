@@ -3,10 +3,9 @@
 
 #include <stdint.h>
 
-extern uint8_t g_savegame[12000];
-
 void resource_manager_init();
 void resource_manager_deinit();
-int  resource_manager_load_resource(char *name, uint8_t *dst);
+int resource_manager_load_resource(char *name, uint8_t *dst);
+int resource_manager_write_resource(char *name, uint8_t *src);
 
 #endif

@@ -3,8 +3,10 @@
 #include "scene_control.h"
 #include "drawing_control.h"
 #include "neuro_menu_control.h"
+#include "scene_control.h"
 #include "resource_manager.h"
 #include "window_animation.h"
+#include "save_load.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -15,7 +17,6 @@ typedef enum main_menu_state_t {
 	MMS_NEW,
 	MMS_LOAD,
 	MMS_TO_LEVEL_SCENE,
-	MMS_TO_NOT_IMPLEMENTED_SCENE,
 } main_menu_state_t;
 
 static main_menu_state_t g_state = MMS_INITIAL;
@@ -72,39 +73,31 @@ void main_menu_handle_button_press(int *state, neuro_button_t *button)
 		case 1: /* load */
 			neuro_menu_destroy();
 			neuro_menu_create(6, 7, 16, 16, 6, NULL);
-			neuro_menu_draw_text("Load Game", 4, 0);
-			neuro_menu_draw_text("1  2  3  4", 3, 2);
-			neuro_menu_draw_text("exit", 6, 5);
-			neuro_menu_add_item(3, 2, 1, 0, '1');
-			neuro_menu_add_item(6, 2, 1, 1, '2');
-			neuro_menu_add_item(9, 2, 1, 2, '3');
-			neuro_menu_add_item(12, 2, 1, 3, '4');
-			neuro_menu_add_item(6, 5, 4, 10, 'x');
+			load_menu();
 			*state = MMS_LOAD;
 			break;
 		}
 		break;
 
-	case MMS_LOAD:
-		switch (button->code) {
-		case 10: /* exit */
+	case MMS_LOAD: {
+		int load = on_load_menu_button(button);
+		if (load == 0)
+		{
 			neuro_menu_destroy();
 			neuro_menu_create(6, 5, 20, 10, 1, NULL);
 			neuro_menu_draw_text("New/Load", 1, 0);
 			neuro_menu_add_item(1, 0, 3, 0, 'n');
 			neuro_menu_add_item(5, 0, 4, 1, 'l');
 			*state = MMS_INITIAL;
-			break;
-
-		case 0: /* savegame slots */
-		case 1:
-		case 2:
-		case 3:
-			neuro_menu_destroy();
-			*state = MMS_TO_NOT_IMPLEMENTED_SCENE;
-			break;
 		}
+		else if (load == 1)
+		{
+			window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
+			*state = MMS_TO_LEVEL_SCENE;
+		}
+
 		break;
+	}
 
 	default:
 		break;
@@ -144,9 +137,6 @@ static neuro_scene_id_t update()
 			return NSID_REAL_WORLD;
 		}
 		break;
-
-	case MMS_TO_NOT_IMPLEMENTED_SCENE:
-		return NSID_NOT_IMPLEMENTED;
 
 	default:
 		break;
