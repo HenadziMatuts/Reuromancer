@@ -107,7 +107,7 @@ uint8_t g_ss[2048];
 /* 0x004C */
 int g_level_n = -1;
 
-uint8_t g_004e[8] = {
+uint8_t g_visited_levels_bitstring[8] = {
 	0x00,
 };
 

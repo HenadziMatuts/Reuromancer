@@ -282,7 +282,7 @@ static void neuro_vm(real_world_state_t *state)
 			return;
 
 		default:
-			break;
+			assert(0);
 		}
 	}
 }
@@ -290,13 +290,13 @@ static void neuro_vm(real_world_state_t *state)
 /* sub_106BD */
 static int setup_intro()
 {
-	uint16_t x = 0x80 >> (g_level_n & 7);
-	uint16_t y = g_level_n >> 3;
+	uint16_t bit = 0x80 >> (g_level_n & 7);
+	uint16_t index = g_level_n >> 3;
 	char *text = g_a8e0.bih.bytes + g_a8e0.bih.hdr.text_offset;
 
-	if ((x & g_004e[y]) == 0) {
+	if ((bit & g_visited_levels_bitstring[index]) == 0) {
 		/* setup long intro */
-		g_004e[y] |= x;
+		g_visited_levels_bitstring[index] |= bit;
 	}
 	else {
 		/* setup short intro */
@@ -380,13 +380,13 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		break;
 
 	default:
-		break;
+		assert(0);
 	}
 
 	return 0;
 }
 
-int sub_1152B()
+int is_pax_on_level()
 {
 	uint8_t *p = g_a8e0.bih.bytes + sizeof(bih_hdr_t); // 0xA910
 
@@ -420,7 +420,7 @@ int setup_ui_buttons()
 	neuro_window_add_button(&g_ui_buttons.inventory);
 	neuro_window_add_button(&g_ui_buttons.dialog);
 
-	if (sub_1152B())
+	if (is_pax_on_level())
 	{
 		neuro_window_add_button(&g_ui_buttons.pax);
 	}

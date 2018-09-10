@@ -88,7 +88,8 @@ extern uint8_t g_ss[2048];       //     ss: 0000 - 2047
 /* 0x004C */
 extern int g_level_n;
 
-extern uint8_t g_004e[8];
+/* 0x004E */
+extern uint8_t g_visited_levels_bitstring[8];
 
 /* 0x1516 */
 extern uint16_t g_paused;

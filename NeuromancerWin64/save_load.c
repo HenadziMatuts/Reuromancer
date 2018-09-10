@@ -14,12 +14,10 @@ static uint8_t g_savegames[12000];
 typedef struct neuro_savegame_t {
 	x3f85_t x3f85;
 	x4bae_t x4bae;
-	uint8_t x004e[8];
+	uint8_t visited_levels[8];
 	uint8_t x3b94[374];
-	neuro_menu_t x66dc[3];
-	neuro_menu_t x65fa;
-	neuro_window_t xa59e[3];
-	neuro_window_t xc91e;
+	neuro_menu_t neuro_menus[4];
+	neuro_window_t neuro_windows[4];
 } neuro_savegame_t;
 
 static void add_slots()
@@ -43,16 +41,16 @@ static void save_game(int slot)
 
 	memmove(&savegame->x3f85, &g_3f85, sizeof(x3f85_t));
 	memmove(&savegame->x4bae, &g_4bae, sizeof(x4bae_t));
-	memmove(savegame->x004e, g_004e, 8);
+	memmove(savegame->visited_levels, g_visited_levels_bitstring, 8);
 
 	memmove(savegame->x3b94, g_3b94, 64);
 	memmove(savegame->x3b94 + 64, g_sprite_chain, 310);
 
-	memmove(savegame->x66dc, g_66dc, 3 * sizeof(neuro_menu_t));
-	memmove(&savegame->x65fa, &g_neuro_menu, sizeof(neuro_menu_t));
+	memmove(savegame->neuro_menus, g_neuro_menus_pool, 3 * sizeof(neuro_menu_t));
+	memmove(&savegame->neuro_menus[3], &g_neuro_menu, sizeof(neuro_menu_t));
 
-	memmove(savegame->xa59e, g_a59e, 3 * sizeof(neuro_window_t));
-	memmove(&savegame->xc91e, &g_neuro_window, sizeof(neuro_window_t));
+	memmove(savegame->neuro_windows, g_neuro_windows_pool, 3 * sizeof(neuro_window_t));
+	memmove(&savegame->neuro_windows[3], &g_neuro_window, sizeof(neuro_window_t));
 
 	assert(resource_manager_write_resource("SAVEGAME.SAV", g_savegames));
 
@@ -102,16 +100,16 @@ static void load_game(int slot)
 
 	memmove(&g_3f85, &savegame->x3f85, sizeof(x3f85_t));
 	memmove(&g_4bae, &savegame->x4bae, sizeof(x4bae_t));
-	memmove(g_004e, savegame->x004e, 8);
+	memmove(g_visited_levels_bitstring, savegame->visited_levels, 8);
 
 	memmove(g_3b94, savegame->x3b94, 64);
 	memmove(g_sprite_chain, savegame->x3b94 + 64, 310);
 
-	memmove(g_66dc, savegame->x66dc, 3 * sizeof(neuro_menu_t));
-	memmove(&g_neuro_menu, &savegame->x65fa, sizeof(neuro_menu_t));
+	memmove(g_neuro_menus_pool, savegame->neuro_menus, 3 * sizeof(neuro_menu_t));
+	memmove(&g_neuro_menu, &savegame->neuro_menus[3], sizeof(neuro_menu_t));
 
-	memmove(g_a59e, savegame->xa59e, 3 * sizeof(neuro_window_t));
-	memmove(&g_neuro_window, &savegame->xc91e, sizeof(neuro_window_t));
+	memmove(g_neuro_windows_pool, savegame->neuro_windows, 3 * sizeof(neuro_window_t));
+	memmove(&g_neuro_window, &savegame->neuro_windows[3], sizeof(neuro_window_t));
 
 	drawing_control_flush_sprite_chain();
 	drawing_control_add_sprite_to_chain(SCI_CURSOR, 160, 100, g_seg009.cursors, 0);

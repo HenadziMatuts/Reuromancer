@@ -9,11 +9,10 @@
 #include <string.h>
 #include <assert.h>
 
-/* 0xA59E, 0xA5C6, 0xA5EE */
-neuro_window_t g_a59e[3] = {
+/* 0xA59E */
+neuro_window_t g_neuro_windows_pool[3] = {
 	{ 0, },{ 0, },{ 0, }
 };
-
 /* 0xC91E */
 neuro_window_t g_neuro_window = {
 	{ 0, }
@@ -24,16 +23,16 @@ int setup_ui_buttons();
 
 void store_window()
 {
-	memmove(&g_a59e[2], &g_a59e[1], sizeof(neuro_window_t));
-	memmove(&g_a59e[1], &g_a59e[0], sizeof(neuro_window_t));
-	memmove(&g_a59e[0], &g_neuro_window, sizeof(neuro_window_t));
+	memmove(&g_neuro_windows_pool[2], &g_neuro_windows_pool[1], sizeof(neuro_window_t));
+	memmove(&g_neuro_windows_pool[1], &g_neuro_windows_pool[0], sizeof(neuro_window_t));
+	memmove(&g_neuro_windows_pool[0], &g_neuro_window, sizeof(neuro_window_t));
 }
 
 void restore_window()
 {
-	memmove(&g_neuro_window, &g_a59e[0], sizeof(neuro_window_t));
-	memmove(&g_a59e[0], &g_a59e[1], sizeof(neuro_window_t));
-	memmove(&g_a59e[1], &g_a59e[2], sizeof(neuro_window_t));
+	memmove(&g_neuro_window, &g_neuro_windows_pool[0], sizeof(neuro_window_t));
+	memmove(&g_neuro_windows_pool[0], &g_neuro_windows_pool[1], sizeof(neuro_window_t));
+	memmove(&g_neuro_windows_pool[1], &g_neuro_windows_pool[2], sizeof(neuro_window_t));
 }
 
 /* Setup "Window" - sub_147EE */

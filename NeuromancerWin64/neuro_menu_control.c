@@ -9,9 +9,8 @@
 
 /* 0x65FA */
 neuro_menu_t g_neuro_menu;
-
 /* 0x66DC */
-neuro_menu_t g_66dc[3];
+neuro_menu_t g_neuro_menus_pool[3];
 
 static void build_neuro_menu(neuro_menu_t *menu,
 	uint16_t left, uint16_t top, uint16_t w, uint16_t h,
@@ -77,16 +76,16 @@ static void build_neuro_menu_item(neuro_menu_t *menu,
 
 void neuro_menu_store()
 {
-	memmove(&g_66dc[2], &g_66dc[1], sizeof(neuro_menu_t));
-	memmove(&g_66dc[1], &g_66dc[0], sizeof(neuro_menu_t));
-	memmove(&g_66dc[0], &g_neuro_menu, sizeof(neuro_menu_t));
+	memmove(&g_neuro_menus_pool[2], &g_neuro_menus_pool[1], sizeof(neuro_menu_t));
+	memmove(&g_neuro_menus_pool[1], &g_neuro_menus_pool[0], sizeof(neuro_menu_t));
+	memmove(&g_neuro_menus_pool[0], &g_neuro_menu, sizeof(neuro_menu_t));
 }
 
 void neuro_menu_restore()
 {
-	memmove(&g_neuro_menu, &g_66dc[0], sizeof(neuro_menu_t));
-	memmove(&g_66dc[0], &g_66dc[1], sizeof(neuro_menu_t));
-	memmove(&g_66dc[1], &g_66dc[2], sizeof(neuro_menu_t));
+	memmove(&g_neuro_menu, &g_neuro_menus_pool[0], sizeof(neuro_menu_t));
+	memmove(&g_neuro_menus_pool[0], &g_neuro_menus_pool[1], sizeof(neuro_menu_t));
+	memmove(&g_neuro_menus_pool[1], &g_neuro_menus_pool[2], sizeof(neuro_menu_t));
 }
 
 void neuro_menu_create(uint16_t mode,
