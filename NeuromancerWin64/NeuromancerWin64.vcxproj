@@ -126,6 +126,7 @@
     <ClCompile Include="bih_code.c" />
     <ClCompile Include="data.c" />
     <ClCompile Include="items.c" />
+    <ClCompile Include="neuro86.c" />
     <ClCompile Include="rw_disk_options.c" />
     <ClCompile Include="rw_state_dialog.c" />
     <ClCompile Include="drawing_control.c" />
@@ -154,8 +155,10 @@
     <ClInclude Include="drawing_control.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="items.h" />
+    <ClInclude Include="neuro86.h" />
     <ClInclude Include="neuro_menu_control.h" />
     <ClInclude Include="neuro_window_control.h" />
+    <ClInclude Include="opcodes.h" />
     <ClInclude Include="resource_manager.h" />
     <ClInclude Include="save_load.h" />
     <ClInclude Include="scene_control.h" />
