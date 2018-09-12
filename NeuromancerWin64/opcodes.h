@@ -120,6 +120,21 @@ uint16_t cmp_u16(cpu_t *cpu, uint16_t dst, uint16_t src)
 	return (uint16_t)dst;
 }
 
+void test_u16(cpu_t *cpu, uint16_t dst, uint16_t src)
+{
+	register uint16_t res;
+
+	res = dst & src;
+
+	clear_flag(cpu, F_CF);
+	clear_flag(cpu, F_OF);
+	set_zf_u16(cpu, res);
+	set_sf_u16(cpu, res);
+	set_pf(cpu, (res & 0xff));
+
+	return res;
+}
+
 static uint16_t (*tbl_ops_u16[8])(cpu_t *cpu, uint16_t dst, uint16_t src) = {
 		add_u16, or_u16, adc_u16, sbb_u16, and_u16, sub_u16, xor_u16, cmp_u16
 };
@@ -241,6 +256,21 @@ uint8_t cmp_u8(cpu_t *cpu, uint8_t dst, uint8_t src)
 	sub_u16(cpu, dst, src);
 
 	return (uint8_t)dst;
+}
+
+void test_u8(cpu_t *cpu, uint8_t dst, uint8_t src)
+{
+	register uint8_t res;
+
+	res = dst & src;
+
+	clear_flag(cpu, F_CF);
+	clear_flag(cpu, F_OF);
+	set_zf_u8(cpu, res);
+	set_sf_u8(cpu, res);
+	set_pf(cpu, (res & 0xff));
+
+	return res;
 }
 
 static uint8_t (*tbl_ops_u8[8])(cpu_t *cpu, uint8_t dst, uint8_t src) = {
@@ -389,6 +419,32 @@ static void opcode_83_cpuops_rm16_imm8(cpu_t *cpu, uint8_t opcode)
 		set_reg_u16(cpu, modrm.rm, (tbl_ops_u16[modrm.reg])(cpu, get_reg_u16(cpu, modrm.rm), imm8));
 	else
 		set_mem_u16(cpu, addr, (tbl_ops_u16[modrm.reg])(cpu, get_mem_u16(cpu, addr), imm8));
+}
+
+static void opcode_84_test_rm8_r8(cpu_t *cpu, uint8_t opcode)
+{
+	uint16_t addr;
+	modrm_t modrm = fetch_modrm(cpu);
+
+	if(modrm.mod == 3) {
+		test_u8(cpu, get_reg_u8(cpu, modrm.rm), get_reg_u8(cpu, modrm.reg));
+	} else {
+		addr = decode_rm_addr(cpu, &modrm);
+		test_u8(cpu, get_mem_u8(cpu, addr), get_reg_u8(cpu, modrm.reg));
+	}
+}
+
+static void opcode_85_test_rm16_r16(cpu_t *cpu, uint8_t opcode)
+{
+	uint16_t addr;
+	modrm_t modrm = fetch_modrm(cpu);
+
+	if(modrm.mod == 3) {
+		test_u16(cpu, get_reg_u16(cpu, modrm.rm), get_reg_u16(cpu, modrm.reg));
+	} else {
+		addr = decode_rm_addr(cpu, &modrm);
+		test_u16(cpu, get_mem_u16(cpu, addr), get_reg_u16(cpu, modrm.reg));
+	}
 }
 
 static void opcode_88(cpu_t *cpu, uint8_t opcode)
@@ -679,8 +735,8 @@ void (*tbl_opcodes[256])(cpu_t *cpu, uint8_t opcode) =
 	/* 0x81 */ &opcode_81_cpuops_rm16_imm16,
 	/* 0x82 */ NULL,
 	/* 0x83 */ &opcode_83_cpuops_rm16_imm8,
-	/* 0x84 */ NULL,
-	/* 0x85 */ NULL,
+	/* 0x84 */ &opcode_84_test_rm8_r8,
+	/* 0x85 */ &opcode_85_test_rm16_r16,
 	/* 0x86 */ NULL,
 	/* 0x87 */ NULL,
 	/* 0x88 */ &opcode_88,
