@@ -63,7 +63,7 @@ typedef enum inventory_type_t {
 	IT_SOFTWARE,
 } inventory_type_t;
 
-static neuro_button_t *g_inventory_item_button = (neuro_button_t*)(g_ss + 0x7D0);
+static neuro_button_t *g_inventory_item_button = (neuro_button_t*)(g_stack + 0x7D0);
 static uint8_t g_inventory_item_code[4];
 static uint8_t g_inventory_item_index[4];
 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "address_translator.h"
 #include "neuro86.h"
 
 static const uint8_t tbl_pf[0x100] = {
@@ -150,12 +151,13 @@ static inline void set_af_u16(cpu_t *cpu, uint16_t dst, uint16_t src, uint32_t r
 
 static inline uint8_t get_mem_u8(cpu_t *cpu, uint16_t offt)
 {
-	return cpu->mem[offt];
+	return *(translate_x16_to_x64(DSEG, offt));
 }
 
 static inline void set_mem_u8(cpu_t *cpu, uint16_t offt, uint8_t val)
 {
-	cpu->mem[offt] = val;
+	uint8_t *dst = translate_x16_to_x64(DSEG, offt);
+	*dst = val;
 }
 
 static inline uint16_t get_mem_u16(cpu_t *cpu, uint16_t offt)
@@ -177,17 +179,17 @@ static inline void push_u16(cpu_t *cpu, uint16_t val)
 	register uint16_t sp = (uint16_t)(get_reg_u16(cpu, REG_SP) - 2);
 	set_reg_u16(cpu, REG_SP, sp);
 
-	cpu->stack[sp] = (uint8_t)(val & 0xff);
-	cpu->stack[sp + 1] = (uint8_t)(val >> 8);
+	uint16_t *dst = (uint16_t*)translate_x16_to_x64(DSEG, STACK_OFFT + sp);
+	*dst = val;
 }
 
 static inline uint16_t pop_u16(cpu_t *cpu)
 {
 	register uint16_t sp = get_reg_u16(cpu, REG_SP);
-
 	set_reg_u16(cpu, REG_SP, (uint16_t)(sp + 2));
 
-	return cpu->stack[sp] + (cpu->stack[sp + 1] << 8);
+	uint16_t *val = (uint16_t*)translate_x16_to_x64(DSEG, STACK_OFFT + sp);
+	return *val;
 }
 
 // fetch
@@ -257,11 +259,6 @@ cpu_t *cpu_new(uint16_t addr, void (*callback)(cpu_t *cpu, uint16_t sp))
 	if(cpu == NULL)
 		goto fail;
 
-	cpu->mem = calloc(MEM_SIZE, 1);
-	cpu->stack = calloc(STACK_SIZE, 1);
-	if(cpu->mem == NULL || cpu->stack == NULL)
-		goto fail;
-
 	cpu_reset(cpu, addr);
 	cpu->callback = callback;
 
@@ -287,7 +284,10 @@ void cpu_run(cpu_t *cpu)
 		assert(tbl_opcodes[opcode] != NULL);
 
 		(tbl_opcodes[opcode])(cpu, opcode);
-		//printf("op: %x; ax: %x; bx: %x; cx: %x; dx: %x; sp: %x; flags: %x\n", opcode, get_reg_u16(cpu, REG_AX), get_reg_u16(cpu, REG_BX), get_reg_u16(cpu, REG_CX), get_reg_u16(cpu, REG_DX), get_reg_u16(cpu, REG_SP), cpu->flags);
+		/* printf("op: %x; ax: %x; bx: %x; cx: %x; dx: %x; sp: %x; flags: %x\n",
+			opcode, get_reg_u16(cpu, REG_AX), get_reg_u16(cpu, REG_BX), get_reg_u16(cpu, REG_CX),
+			get_reg_u16(cpu, REG_DX), get_reg_u16(cpu, REG_SP), cpu->flags);
+		*/
 	}
 }
 
@@ -295,10 +295,6 @@ void cpu_destroy(cpu_t **cpu)
 {
 	cpu_t *p = *cpu;
 
-	if(p->mem)
-		free(p->mem);
-	if(p->stack)
-		free(p->stack);
 	if(p)
 		free(p);
 

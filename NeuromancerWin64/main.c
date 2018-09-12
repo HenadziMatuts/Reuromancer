@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "data.h"
 #include "resource_manager.h"
 #include "scene_control.h"
 #include "drawing_control.h"
@@ -44,6 +45,11 @@ sfClock *g_timer = NULL;
  * Exit mark.
  */
 uint8_t g_exit_game = 0;
+
+/*
+ * x86 emulator.
+ */
+cpu_t *g_cpu = NULL;
 
 void update_cursor()
 {
@@ -190,6 +196,7 @@ int main(int argc, char *argv[])
 	resource_manager_init();
 	scene_control_setup_scene(NSID_MAIN_MENU);
 	srand((uint32_t)time(NULL));
+	g_cpu = cpu_new(0, neuro_cb);
 
 	while (sfRenderWindow_isOpen(g_window) && !g_exit_game)
 	{
@@ -216,7 +223,8 @@ int main(int argc, char *argv[])
 
 	g_scene.deinit();
 	resource_manager_deinit();
-	
+	cpu_destroy(&g_cpu);
+
 	sfClock_destroy(g_timer);
 	sfRenderWindow_destroy(g_window);
 	sfTexture_destroy(g_texture);

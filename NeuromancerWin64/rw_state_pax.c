@@ -206,7 +206,7 @@ static int pax_info_menu_prepare_list(uint16_t *infos_list, int type)
 	return entries;
 }
 
-static neuro_button_t *g_info_menu_items = (neuro_button_t*)(g_ss + 0x7C4);
+static neuro_button_t *g_info_menu_items = (neuro_button_t*)(g_stack + 0x7C4);
 static uint16_t g_info_menu_entries[5];
 
 static pax_state_t pax_info_menu(int type, int next_page)

@@ -60,9 +60,6 @@
     <ClCompile Include="rw_state_dialog.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bih_code.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rw_state_pax.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -120,9 +117,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scene_real_world.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bih_code.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="window_animation.h">

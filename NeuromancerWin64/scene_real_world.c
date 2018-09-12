@@ -7,9 +7,9 @@
 #include "resource_manager.h"
 #include "neuro_window_control.h"
 #include "scene_real_world.h"
-#include "bih_code.h"
 #include "window_animation.h"
 #include "address_translator.h"
+#include "neuro86.h"
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -267,7 +267,10 @@ static void neuro_vm(real_world_state_t *state)
 		/* exec */
 		case 0x16: {
 			uint16_t offt = *(uint16_t*)(opcode_addr + 1);
-			vm_bih_call(offt);
+			
+			cpu_reset(g_cpu, offt + 0xA8E8);
+			cpu_run(g_cpu);
+			
 			g_3f85.vm_state[n].vm_next_op_addr += 3;
 			break;
 		}
@@ -309,9 +312,18 @@ static int setup_intro()
 	return 0;
 }
 
-/* 0x0BCF */
-void init_deinit_neuro_cb(int cmd)
+/* seg000:0BCF */
+void neuro_cb(cpu_t *cpu, uint16_t sp)
 {
+	union {
+		uint16_t *ss16;
+		uint8_t *ss8;
+	} ss;
+
+	ss.ss8 = g_stack + sp + 4;
+
+	uint16_t cmd = *ss.ss16;
+
 	switch (cmd) {
 	case 0: { /* reset vm state */
 		for (int i = 0; i < 4; i++)
@@ -327,7 +339,7 @@ void init_deinit_neuro_cb(int cmd)
 	}
 
 	default:
-		break;
+		assert(0);
 	}
 }
 
@@ -343,17 +355,18 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		g_a642 = &g_3f85.level_info[level_n];
 		bih_hdr_t *bih = &g_a8e0.bih.hdr;
 		translate_x64_to_x16((uint8_t*)&g_4bae, NULL, &bih->ctrl_struct_addr);
-		translate_x64_to_x16((uint8_t*)init_deinit_neuro_cb, &bih->cb_segt, &bih->cb_offt);
+		translate_x64_to_x16((uint8_t*)neuro_cb, &bih->cb_segt, &bih->cb_offt);
 
 		break;
 	}
 
-	case SUB_105F6_OP_UPDATE_LEVEL:
+	case SUB_105F6_OP_UPDATE_LEVEL: /* update level bih call */
 		bg_animation_control_update();
 	case SUB_105F6_OP_INIT_LEVEL: /* enter/exit level bih call */
 	case SUB_105F6_OP_DEINIT_LEVEL: {
 		uint16_t offt = g_a8e0.bih.hdr.init_obj_code_offt[opcode - 1];
-		sub105F6_bih_call(offt);
+		cpu_reset(g_cpu, offt + 0xA8E8);
+		cpu_run(g_cpu);
 		break;
 	}
 

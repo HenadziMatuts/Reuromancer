@@ -1,6 +1,7 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
+#include "neuro86.h"
 #include <neuro_routines.h>
 #include <SFML\Window\Event.h>
 #include <SFML\System\Clock.h>
@@ -9,6 +10,8 @@
 extern uint8_t g_exit_game;
 
 extern sfClock *g_timer;
+
+extern cpu_t *g_cpu;
 
 void update_cursor();
 

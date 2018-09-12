@@ -3,7 +3,6 @@
 #include <assert.h>
 
 #define SEGMENTS_TOTAL 18
-#define SS      0xCC10
 
 typedef struct adderss_translator_helper_t {
 	uint16_t segment;
@@ -40,7 +39,7 @@ typedef struct seg_map_t {
 } seg_map_t;
 
 static seg_map_t g_seg000_map[] = {
-	{ 0x0BCF, 0, init_deinit_neuro_cb },
+	{ 0x0BCF, 0, neuro_cb },
 	{ 0xFFFF, 0, NULL }
 };
 
@@ -90,7 +89,7 @@ static seg_map_t g_dseg_map[] = {
 	{ 0xA8E0, 8244, &g_a8e0 },
 
 	/* stack */
-	{ SS, 0x800, g_ss },
+	{ STACK_OFFT, 0x800, g_stack },
 	{ 0xFFFF, 0, NULL },
 };
 

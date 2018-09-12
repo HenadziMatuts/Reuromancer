@@ -2,13 +2,13 @@
 #define _DATA_H
 
 #include "drawing_control.h"
+#include "neuro86.h"
 #include <neuro_routines.h>
 
 #pragma pack(push, 1)
 
-typedef void(*pfn_bih_cb)(int);
 /* seg000:0BCF */
-void init_deinit_neuro_cb(int cmd);
+void neuro_cb(cpu_t *cpu, uint16_t sp);
 
 typedef struct pax_news_hdr_t {
 	uint16_t addr;
@@ -83,7 +83,7 @@ extern seg013_layout_t g_seg013; // seg013: 0000 - F22F
 extern seg014_layout_t g_seg014; // seg014: 0000 - 025F
 extern seg015_layout_t g_seg015; // seg015: 0000 - 329F
 extern seg016_layout_t g_seg016; // seg016: 0000 - 5D9F
-extern uint8_t g_ss[2048];       //     ss: 0000 - 2047
+extern uint8_t g_stack[2048];       //     ss: 0000 - 2047
 
 /* 0x004C */
 extern int g_level_n;

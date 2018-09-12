@@ -102,7 +102,7 @@ seg016_layout_t g_seg016 = {
 };
 
 /* ss: 0000 - 2047 */
-uint8_t g_ss[2048];
+uint8_t g_stack[2048];
 
 /* 0x004C */
 int g_level_n = -1;

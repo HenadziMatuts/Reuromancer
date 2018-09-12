@@ -29,8 +29,6 @@ typedef struct cpu_s
 	uint8_t regs[REG_COUNT * 2];
 	uint16_t flags;
 	uint16_t ip;
-	uint8_t *mem;
-	uint8_t *stack;
 	void (*callback)(struct cpu_s *cpu, uint16_t sp);
 } cpu_t;
 
@@ -41,7 +39,7 @@ typedef struct modrm_s
 	uint8_t mod: 2;
 } modrm_t;
 
-cpu_t *cpu_new(uint16_t addr, void (*callback)(cpu_t *cpu, uint16_t sp));
+cpu_t *cpu_new(uint16_t addr, void(*callback)(cpu_t *cpu, uint16_t sp));
 void cpu_reset(cpu_t *cpu, uint16_t addr);
 void cpu_run(cpu_t *cpu);
 void cpu_destroy(cpu_t **cpu);
