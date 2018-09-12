@@ -528,6 +528,7 @@ static void opcode_ff(cpu_t *cpu, uint8_t opcode)
 			assert(modrm.mod != 3);
 
 			addr = decode_rm_addr(cpu, &modrm);
+			push_u16(cpu, 0);
 			push_u16(cpu, cpu->ip);
 			(cpu->callback)(cpu, get_reg_u16(cpu, REG_SP));
 			break;
