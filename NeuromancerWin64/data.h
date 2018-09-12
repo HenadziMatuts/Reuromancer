@@ -285,7 +285,7 @@ typedef struct x4bae_t {
 	uint16_t x4c7c;
 	uint8_t x4c7e[4];
 	uint16_t x4c82;
-	uint8_t x4c84[3];
+	uint8_t sold_body_parts_bitstring[3];
 	uint16_t x4c87;
 	uint32_t bank_account; // 0x4C89
 	uint8_t bank_last_transacton_record_index; // 0x4C8D

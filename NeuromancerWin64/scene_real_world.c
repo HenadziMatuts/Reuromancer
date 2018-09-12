@@ -285,7 +285,7 @@ static void neuro_vm(real_world_state_t *state)
 			return;
 
 		default:
-			assert(0);
+			assert(opcode == 0);
 		}
 	}
 }
@@ -312,6 +312,24 @@ static int setup_intro()
 	return 0;
 }
 
+static void reset_vm()
+{
+	for (int i = 0; i < 4; i++)
+	{
+		uint16_t n = g_a8e0.a8e0[i];
+		if (n == 0xffff) {
+			continue;
+		}
+
+		g_3f85.vm_state[n].mark = 0xFF;
+	}
+}
+
+typedef enum neuro_cb_cmd_t {
+	CB_CMD_RESET_VM = 0,
+	CB_CMD_SELL_BODY_PART = 8,
+} neuro_cb_cmd_t;
+
 /* seg000:0BCF */
 void neuro_cb(cpu_t *cpu, uint16_t sp)
 {
@@ -325,21 +343,17 @@ void neuro_cb(cpu_t *cpu, uint16_t sp)
 	uint16_t cmd = *ss.ss16;
 
 	switch (cmd) {
-	case 0: { /* reset vm state */
-		for (int i = 0; i < 4; i++)
-		{
-			uint16_t n = g_a8e0.a8e0[i];
-			if (n == 0xffff) {
-				continue;
-			}
-
-			g_3f85.vm_state[n].mark = 0xFF;
-		}
+	case CB_CMD_RESET_VM:
+		reset_vm();
 		break;
-	}
+
+	case CB_CMD_SELL_BODY_PART:
+		g_state = RWS_SELL_BODY_PART;
+		break;
 
 	default:
-		assert(0);
+		fprintf(stderr, "neuro_cb: cmd: %d\n", cmd);
+		assert(cmd == 0);
 	}
 }
 
@@ -393,7 +407,7 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
 		break;
 
 	default:
-		assert(0);
+		assert(opcode == 0);
 	}
 
 	return 0;
@@ -800,6 +814,10 @@ static void handle_input(sfEvent *event)
 		handle_disk_options_input(event);
 		break;
 
+	case RWS_SELL_BODY_PART:
+		handle_sell_parts_input(event);
+		break;
+
 	case RWS_WAIT_FOR_INPUT:
 		handle_wait_for_input(event);
 		break;
@@ -869,13 +887,13 @@ int roompos_hit_exit_zone()
 
 static real_world_state_t update_normal()
 {
-	real_world_state_t state = RWS_NORMAL;
+	//real_world_state_t state = RWS_NORMAL;
 	character_dir_t dir = CD_NULL;
 
 	dir = character_control_update();
 	
 	sub_105F6(NULL, SUB_105F6_OP_UPDATE_LEVEL);
-	sub_105F6(&state, SUB_105F6_OP_NEURO_VM_CYCLE);
+	sub_105F6(&g_state, SUB_105F6_OP_NEURO_VM_CYCLE);
 
 	if (!g_update_hold)
 	{
@@ -893,12 +911,12 @@ static real_world_state_t update_normal()
 				/* reload level */
 				g_4bae.level_n = level;
 				level_transition_prepare_anim(1);
-				state = RWS_RELOAD_LEVEL;
+				g_state = RWS_RELOAD_LEVEL;
 			}
 		}
 	}
 
-	return state;
+	return g_state;
 }
 
 static real_world_state_t update_text_output()
@@ -967,6 +985,10 @@ static neuro_scene_id_t update()
 
 	case RWS_DISK_OPTIONS:
 		g_state = update_disk_options();
+		break;
+
+	case RWS_SELL_BODY_PART:
+		g_state = update_sell_parts();
 		break;
 
 	case RWS_RELOAD_LEVEL:

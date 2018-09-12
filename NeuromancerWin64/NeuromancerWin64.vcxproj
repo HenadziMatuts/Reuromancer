@@ -126,12 +126,13 @@
     <ClCompile Include="data.c" />
     <ClCompile Include="items.c" />
     <ClCompile Include="neuro86.c" />
-    <ClCompile Include="rw_disk_options.c" />
+    <ClCompile Include="rw_state_disk_options.c" />
     <ClCompile Include="rw_state_dialog.c" />
     <ClCompile Include="drawing_control.c" />
     <ClCompile Include="rw_state_inventory.c" />
     <ClCompile Include="rw_state_pax.c" />
     <ClCompile Include="rw_state_rom.c" />
+    <ClCompile Include="rw_state_sell_body_parts.c" />
     <ClCompile Include="rw_state_skills.c" />
     <ClCompile Include="save_load.c" />
     <ClCompile Include="scene_real_world.c" />
