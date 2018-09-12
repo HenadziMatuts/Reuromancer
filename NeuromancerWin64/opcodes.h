@@ -480,6 +480,16 @@ static void opcode_d7(cpu_t *cpu, uint8_t opcode)
 	set_reg_u8(cpu, REG_AL, get_mem_u8(cpu, get_reg_u16(cpu, REG_BX) + get_reg_u8(cpu, REG_AL)));
 }
 
+static void opcode_e2(cpu_t *cpu, uint8_t opcode)
+{
+	int8_t offt = fetch_u8(cpu);
+	uint16_t cnt = get_reg_u16(cpu, REG_CX);
+
+	set_reg_u16(cpu, REG_CX, --cnt);
+	if(cnt)
+		cpu->ip += offt;
+}
+
 static void opcode_e8(cpu_t *cpu, uint8_t opcode)
 {
 	int16_t offt = fetch_u16(cpu);
@@ -763,7 +773,7 @@ void (*tbl_opcodes[256])(cpu_t *cpu, uint8_t opcode) =
 	/* 0xdf */ NULL,
 	/* 0xe0 */ NULL,
 	/* 0xe1 */ NULL,
-	/* 0xe2 */ NULL,
+	/* 0xe2 */ &opcode_e2,
 	/* 0xe3 */ NULL,
 	/* 0xe4 */ NULL,
 	/* 0xe5 */ NULL,
