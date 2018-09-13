@@ -594,6 +594,14 @@ static void opcode_ff(cpu_t *cpu, uint8_t opcode)
 			push_u16(cpu, cpu->ip);
 			(cpu->callback)(cpu, get_reg_u16(cpu, REG_SP));
 			break;
+		case 6:
+			if(modrm.mod == 3) {
+				push_u16(cpu, get_reg_u16(cpu, modrm.rm));
+			} else {
+				addr = decode_rm_addr(cpu, &modrm);
+				push_u16(cpu, get_mem_u16(cpu, addr));
+			}
+			break;
 	}
 }
 
