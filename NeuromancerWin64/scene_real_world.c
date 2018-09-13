@@ -328,18 +328,18 @@ static void reset_vm()
 typedef enum neuro_cb_cmd_t {
 	CB_CMD_RESET_VM = 0,
 	CB_CMD_SELL_BODY_PART = 8,
+	CB_CMD_BUY_BODY_PART = 9,
 } neuro_cb_cmd_t;
 
 /* seg000:0BCF */
-void neuro_cb(cpu_t *cpu, uint16_t sp)
+uint8_t neuro_cb(uint16_t sp)
 {
 	union {
 		uint16_t *ss16;
 		uint8_t *ss8;
 	} ss;
 
-	ss.ss8 = g_stack + sp + 4;
-
+	ss.ss8 = translate_x16_to_x64(DSEG, sp + 4);
 	uint16_t cmd = *ss.ss16;
 
 	switch (cmd) {
@@ -348,13 +348,22 @@ void neuro_cb(cpu_t *cpu, uint16_t sp)
 		break;
 
 	case CB_CMD_SELL_BODY_PART:
-		g_state = RWS_SELL_BODY_PART;
+		g_body_shop_op = 1;
+		g_state = RWS_BODY_PARTS_SHOP;
+		break;
+
+	case CB_CMD_BUY_BODY_PART:
+		g_body_shop_discount = *(ss.ss16 + 1);
+		g_body_shop_op = 0;
+		g_state = RWS_BODY_PARTS_SHOP;
 		break;
 
 	default:
 		fprintf(stderr, "neuro_cb: cmd: %d\n", cmd);
 		assert(cmd == 0);
 	}
+
+	return CPU_STOPPED;
 }
 
 static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)
@@ -814,8 +823,8 @@ static void handle_input(sfEvent *event)
 		handle_disk_options_input(event);
 		break;
 
-	case RWS_SELL_BODY_PART:
-		handle_sell_parts_input(event);
+	case RWS_BODY_PARTS_SHOP:
+		handle_parts_shop_input(event);
 		break;
 
 	case RWS_WAIT_FOR_INPUT:
@@ -887,7 +896,6 @@ int roompos_hit_exit_zone()
 
 static real_world_state_t update_normal()
 {
-	//real_world_state_t state = RWS_NORMAL;
 	character_dir_t dir = CD_NULL;
 
 	dir = character_control_update();
@@ -897,12 +905,7 @@ static real_world_state_t update_normal()
 
 	if (!g_update_hold)
 	{
-		if (g_load_level_vm)
-		{
-			roompos_init();
-			g_load_level_vm = 0;
-		}
-		else if (dir != CD_NULL)
+		if (dir != CD_NULL)
 		{
 			g_exit_point = (int16_t)dir;
 			int level = roompos_hit_exit_zone();
@@ -987,13 +990,19 @@ static neuro_scene_id_t update()
 		g_state = update_disk_options();
 		break;
 
-	case RWS_SELL_BODY_PART:
-		g_state = update_sell_parts();
+	case RWS_BODY_PARTS_SHOP:
+		g_state = update_parts_shop();
 		break;
 
 	case RWS_RELOAD_LEVEL:
 		if (window_animation_update() == WA_EVENT_COMPLETED)
 		{
+			if (g_load_level_vm)
+			{
+				roompos_init();
+				g_load_level_vm = 0;
+			}
+
 			deinit();
 
 			if (g_load_game)

@@ -527,6 +527,11 @@ static void opcode_c7_mov_rm16_imm16(cpu_t *cpu, uint8_t opcode)
 		set_mem_u16(cpu, addr, imm16);
 }
 
+static void opcode_cb(cpu_t *cpu, uint8_t opcode)
+{
+	cpu->state = CPU_HALTED;
+}
+
 static void opcode_d7(cpu_t *cpu, uint8_t opcode)
 {
 	set_reg_u8(cpu, REG_AL, get_mem_u8(cpu, get_reg_u16(cpu, REG_BX) + get_reg_u8(cpu, REG_AL)));
@@ -592,7 +597,15 @@ static void opcode_ff(cpu_t *cpu, uint8_t opcode)
 			addr = decode_rm_addr(cpu, &modrm);
 			push_u16(cpu, 0);
 			push_u16(cpu, cpu->ip);
-			(cpu->callback)(cpu, get_reg_u16(cpu, REG_SP));
+			cpu->state = (cpu->callback)(get_reg_u16(cpu, REG_SP));
+			break;
+		case 6:
+			if(modrm.mod == 3) {
+				push_u16(cpu, get_reg_u16(cpu, modrm.rm));
+			} else {
+				addr = decode_rm_addr(cpu, &modrm);
+				push_u16(cpu, get_mem_u16(cpu, addr));
+			}
 			break;
 	}
 }
@@ -802,7 +815,7 @@ void (*tbl_opcodes[256])(cpu_t *cpu, uint8_t opcode) =
 	/* 0xc8 */ NULL,
 	/* 0xc9 */ NULL,
 	/* 0xca */ NULL,
-	/* 0xcb */ NULL,
+	/* 0xcb */ &opcode_cb,
 	/* 0xcc */ NULL,
 	/* 0xcd */ NULL,
 	/* 0xce */ NULL,
