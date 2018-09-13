@@ -280,8 +280,11 @@ void cpu_run(cpu_t *cpu)
 {
 	uint8_t opcode;
 
-	while(opcode = fetch_u8(cpu), opcode != 0xcb) {
-		assert(tbl_opcodes[opcode] != NULL);
+	while (opcode = fetch_u8(cpu), opcode != 0xcb) {
+		if (tbl_opcodes[opcode] == NULL) {
+			fprintf(stderr, "unknown opcode: %02x\n", opcode);
+			assert(tbl_opcodes[opcode] != NULL);
+		}
 
 		(tbl_opcodes[opcode])(cpu, opcode);
 		/* printf("op: %x; ax: %x; bx: %x; cx: %x; dx: %x; sp: %x; flags: %x\n",
@@ -295,7 +298,7 @@ void cpu_destroy(cpu_t **cpu)
 {
 	cpu_t *p = *cpu;
 
-	if(p)
+	if (p)
 		free(p);
 
 	p = NULL;
