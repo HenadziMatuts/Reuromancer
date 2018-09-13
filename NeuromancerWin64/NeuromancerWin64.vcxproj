@@ -132,7 +132,7 @@
     <ClCompile Include="rw_state_inventory.c" />
     <ClCompile Include="rw_state_pax.c" />
     <ClCompile Include="rw_state_rom.c" />
-    <ClCompile Include="rw_state_sell_body_parts.c" />
+    <ClCompile Include="rw_state_body_parts_shop.c" />
     <ClCompile Include="rw_state_skills.c" />
     <ClCompile Include="save_load.c" />
     <ClCompile Include="scene_real_world.c" />

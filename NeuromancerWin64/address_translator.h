@@ -20,6 +20,7 @@
 #define DSEG    17
 
 #define STACK_OFFT 0xCC10
+#define STACK_SIZE 0x800
 
 uint8_t* translate_x16_to_x64(uint16_t seg, uint16_t offt);
 void translate_x64_to_x16(uint8_t *src, uint16_t *seg, uint16_t *offt);

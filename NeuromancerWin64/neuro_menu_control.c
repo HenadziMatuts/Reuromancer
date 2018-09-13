@@ -215,8 +215,8 @@ static void menu_handle_button_press(neuro_menu_id_t id, int *state, neuro_butto
 		disk_menu_handle_button_press(state, button);
 		break;
 
-	case NMID_SELL_PARTS_MENU:
-		sell_parts_menu_handle_button_press(state, button);
+	case NMID_PARTS_SHOP_MENU:
+		parts_shop_menu_handle_button_press(state, button);
 		break;
 	}
 }

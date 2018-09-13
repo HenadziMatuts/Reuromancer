@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 	resource_manager_init();
 	scene_control_setup_scene(NSID_MAIN_MENU);
 	srand((uint32_t)time(NULL));
-	g_cpu = cpu_new(0, neuro_cb);
+	g_cpu = cpu_new(neuro_cb);
 
 	while (sfRenderWindow_isOpen(g_window) && !g_exit_game)
 	{
@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 
 	g_scene.deinit();
 	resource_manager_deinit();
-	cpu_destroy(&g_cpu);
+	cpu_destroy(g_cpu);
 
 	sfClock_destroy(g_timer);
 	sfRenderWindow_destroy(g_window);

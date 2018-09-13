@@ -87,7 +87,7 @@
     <ClCompile Include="rw_state_disk_options.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rw_state_sell_body_parts.c">
+    <ClCompile Include="rw_state_body_parts_shop.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
