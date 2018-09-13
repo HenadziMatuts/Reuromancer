@@ -350,20 +350,20 @@ uint8_t neuro_cb(uint16_t sp)
 	case CB_CMD_SELL_BODY_PART:
 		g_body_shop_op = 1;
 		g_state = RWS_BODY_PARTS_SHOP;
-		break;
+		return CPU_STOPPED;
 
 	case CB_CMD_BUY_BODY_PART:
 		g_body_shop_discount = *(ss.ss16 + 1);
 		g_body_shop_op = 0;
 		g_state = RWS_BODY_PARTS_SHOP;
-		break;
+		return CPU_STOPPED;
 
 	default:
 		fprintf(stderr, "neuro_cb: cmd: %d\n", cmd);
 		assert(cmd == 0);
 	}
 
-	return CPU_STOPPED;
+	return CPU_RUNNING;
 }
 
 static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...)

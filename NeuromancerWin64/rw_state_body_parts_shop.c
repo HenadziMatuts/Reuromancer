@@ -1,4 +1,6 @@
 #include "data.h"
+#include "neuro86.h"
+#include "globals.h"
 #include "window_animation.h"
 #include "neuro_menu_control.h"
 #include "scene_real_world.h"
@@ -333,6 +335,8 @@ real_world_state_t update_parts_shop()
 			{
 				g_state = PSS_OPEN;
 				neuro_menu_destroy();
+				cpu_set_state(g_cpu, CPU_RUNNING);
+				cpu_run(g_cpu);
 				return RWS_NORMAL;
 			}
 		}

@@ -8,7 +8,7 @@
 #pragma pack(push, 1)
 
 /* seg000:0BCF */
-void neuro_cb(uint16_t sp);
+uint8_t neuro_cb(uint16_t sp);
 
 typedef struct pax_news_hdr_t {
 	uint16_t addr;
