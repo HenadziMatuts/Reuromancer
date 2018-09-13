@@ -131,8 +131,6 @@ void test_u16(cpu_t *cpu, uint16_t dst, uint16_t src)
 	set_zf_u16(cpu, res);
 	set_sf_u16(cpu, res);
 	set_pf(cpu, (res & 0xff));
-
-	return res;
 }
 
 static uint16_t (*tbl_ops_u16[8])(cpu_t *cpu, uint16_t dst, uint16_t src) = {
@@ -269,8 +267,6 @@ void test_u8(cpu_t *cpu, uint8_t dst, uint8_t src)
 	set_zf_u8(cpu, res);
 	set_sf_u8(cpu, res);
 	set_pf(cpu, (res & 0xff));
-
-	return res;
 }
 
 static uint8_t (*tbl_ops_u8[8])(cpu_t *cpu, uint8_t dst, uint8_t src) = {
