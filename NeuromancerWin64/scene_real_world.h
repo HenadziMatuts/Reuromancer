@@ -48,7 +48,7 @@ void handle_disk_options_input(sfEvent *event);
 real_world_state_t update_disk_options();
 
 /* Sell Body Parts handlers */
-extern int g_body_shop_op;
+extern int g_body_shop_op, g_body_shop_discount;
 void handle_parts_shop_input(sfEvent *event);
 real_world_state_t update_parts_shop();
 

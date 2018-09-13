@@ -179,7 +179,7 @@ static inline void push_u16(cpu_t *cpu, uint16_t val)
 	register uint16_t sp = (uint16_t)(get_reg_u16(cpu, REG_SP) - 2);
 	set_reg_u16(cpu, REG_SP, sp);
 
-	uint16_t *dst = (uint16_t*)translate_x16_to_x64(DSEG, STACK_OFFT + sp);
+	uint16_t *dst = (uint16_t*)translate_x16_to_x64(DSEG, sp);
 	*dst = val;
 }
 
@@ -188,7 +188,7 @@ static inline uint16_t pop_u16(cpu_t *cpu)
 	register uint16_t sp = get_reg_u16(cpu, REG_SP);
 	set_reg_u16(cpu, REG_SP, (uint16_t)(sp + 2));
 
-	uint16_t *val = (uint16_t*)translate_x16_to_x64(DSEG, STACK_OFFT + sp);
+	uint16_t *val = (uint16_t*)translate_x16_to_x64(DSEG, sp);
 	return *val;
 }
 
@@ -253,27 +253,23 @@ static uint16_t decode_rm_addr(cpu_t *cpu, modrm_t *modrm)
 
 #include "opcodes.h"
 
-cpu_t *cpu_new(uint16_t addr, void (*callback)(cpu_t *cpu, uint16_t sp))
+cpu_t *cpu_new(pfn_far_call_cb callback)
 {
 	cpu_t *cpu = calloc(1, sizeof(cpu_t));
-	if(cpu == NULL)
-		goto fail;
+	if (cpu == NULL)
+		goto exit;
 
-	cpu_reset(cpu, addr);
 	cpu->callback = callback;
 
+exit:
 	return cpu;
-
-fail:
-	cpu_destroy(&cpu);
-	return NULL;
 }
 
 void cpu_reset(cpu_t *cpu, uint16_t addr)
 {
 	cpu->ip = addr;
 	cpu->flags = 0x7202;
-	set_reg_u16(cpu, REG_SP, STACK_SIZE - 1);
+	set_reg_u16(cpu, REG_SP, STACK_OFFT + STACK_SIZE);
 }
 
 void cpu_run(cpu_t *cpu)
@@ -294,12 +290,8 @@ void cpu_run(cpu_t *cpu)
 	}
 }
 
-void cpu_destroy(cpu_t **cpu)
+void cpu_destroy(cpu_t *cpu)
 {
-	cpu_t *p = *cpu;
-
-	if (p)
-		free(p);
-
-	p = NULL;
+	if (cpu)
+		free(cpu);
 }

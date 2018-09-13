@@ -328,18 +328,18 @@ static void reset_vm()
 typedef enum neuro_cb_cmd_t {
 	CB_CMD_RESET_VM = 0,
 	CB_CMD_SELL_BODY_PART = 8,
+	CB_CMD_BUY_BODY_PART = 9,
 } neuro_cb_cmd_t;
 
 /* seg000:0BCF */
-void neuro_cb(cpu_t *cpu, uint16_t sp)
+void neuro_cb(uint16_t sp)
 {
 	union {
 		uint16_t *ss16;
 		uint8_t *ss8;
 	} ss;
 
-	ss.ss8 = g_stack + sp + 4;
-
+	ss.ss8 = translate_x16_to_x64(DSEG, sp + 4);
 	uint16_t cmd = *ss.ss16;
 
 	switch (cmd) {
@@ -349,6 +349,12 @@ void neuro_cb(cpu_t *cpu, uint16_t sp)
 
 	case CB_CMD_SELL_BODY_PART:
 		g_body_shop_op = 1;
+		g_state = RWS_BODY_PARTS_SHOP;
+		break;
+
+	case CB_CMD_BUY_BODY_PART:
+		g_body_shop_discount = *(ss.ss16 + 1);
+		g_body_shop_op = 0;
 		g_state = RWS_BODY_PARTS_SHOP;
 		break;
 

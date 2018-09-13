@@ -17,6 +17,7 @@ static int g_first_listed = 0;
 
 /* 1 - sell, 0 - buy */
 int g_body_shop_op = 1;
+int g_body_shop_discount = 0;
 
 /* 0x224E */
 char *g_body_parts[20] = {
@@ -42,28 +43,29 @@ char *g_body_parts[20] = {
 	"Appendix"
 };
 
-uint16_t g_body_parts_buy_prices[20] = {
+uint16_t g_body_parts_buy_prices[20] = { /* 0x2314 */
 	12000, 10000, 6000, 3000,
 	2500, 2100, 2100, 1000,
 	600, 600, 300, 300, 300,
 	200, 100, 100, 90, 90, 60, 6
-};
-
-/* 0x233C */
-uint16_t g_body_parts_sell_prices[20] = {
+}, g_body_parts_sell_prices[20] = { /* 0x233C */
 	6000, 5000, 3000, 1500,
 	1250, 1050, 1050, 500,
 	300, 300, 150, 150, 150,
 	100, 50, 50, 45, 45, 30, 3
+}, g_body_parts_discounted_prices[20] = { /* 0x2364 */
+	6600, 6500, 3300, 1650,
+	1375, 1155, 1155, 550,
+	330, 330, 165, 165, 165,
+	110, 78, 78, 55, 55, 33, 3
+}, g_constitution_damage[20] = { /* 0x238C */
+	200, 150, 150, 100,
+	75, 75, 75, 75, 50, 50,
+	25, 25, 25, 25, 10, 10,
+	10, 10, 10, 10
 };
 
-/* 0x238C */
-uint16_t g_constitution_damage[20] = {
-	200, 150, 150, 100, 75, 75, 75, 75,
-	50, 50, 25, 25, 25, 25, 10, 10, 10, 10, 10, 10
-};
-
-static int is_body_part_not_sold(int part)
+static int body_part_is_not_sold(int part)
 {
 	uint16_t bit = 0x80 >> (part & 7);
 	uint16_t index = part >> 3;
@@ -96,7 +98,8 @@ static parts_shop_state_t body_parts_menu_page(int sell, int page)
 	neuro_menu_flush();
 	neuro_menu_flush_items();
 
-	neuro_menu_draw_text("SELL PARTS  credits-", 0, 0);
+	neuro_menu_draw_text(sell ? "SELL PARTS  credits-" :
+		"BUY PARTS   credits - ", 0, 0);
 	neuro_menu_draw_text("more", 14, 5);
 	neuro_menu_draw_text("exit", 9, 5);
 
@@ -112,9 +115,12 @@ static parts_shop_state_t body_parts_menu_page(int sell, int page)
 		
 		sprintf(item_string, "%c %c%-19s%5d",
 			'1' + i,
-			is_body_part_not_sold(items_listed) ? ' ' : '-',
+			body_part_is_not_sold(items_listed) ? ' ' : '-',
 			g_body_parts[items_listed],
-			sell ? g_body_parts_sell_prices[items_listed] : g_body_parts_buy_prices[items_listed]
+			sell ? g_body_parts_sell_prices[items_listed] :
+				(g_body_shop_discount ?
+					g_body_parts_discounted_prices[items_listed] :
+					g_body_parts_buy_prices[items_listed])
 		);
 
 		neuro_menu_draw_text(item_string, 0, i + 1);
@@ -134,6 +140,65 @@ static parts_shop_state_t body_parts_menu(int sell)
 	return body_parts_menu_page(sell, FIRST);
 }
 
+static parts_shop_state_t on_buy_parts_menu_button(neuro_button_t *button)
+{
+	static int bought_something = 0;
+
+	switch (button->code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3: { /* items */
+		uint16_t body_part = g_first_listed + button->code;
+
+		if (body_part_is_not_sold(body_part))
+		{
+			/* play track 6 */
+		}
+		else
+		{
+			uint16_t *prices = g_body_shop_discount ?
+				g_body_parts_discounted_prices :
+				g_body_parts_buy_prices;
+			uint16_t index = body_part >> 3;
+			uint8_t bit = 0x80 >> (body_part & 7);
+		
+			if (g_4bae.cash < prices[body_part])
+			{
+				/* play track 6 */
+			}
+			else
+			{
+				bit = ~bit;
+				g_4bae.sold_body_parts_bitstring[index] &= bit;
+				g_4bae.constitution += g_constitution_damage[body_part];
+				g_4bae.cash -= prices[body_part];
+
+				bought_something = 1;
+				/* play track 11 */
+			}
+		}
+
+		body_parts_menu_page(0, CURRENT);
+		break;
+	}
+
+	case 0x0B: /* exit */
+		g_4bae.x4c82 = bought_something;
+		bought_something = 0;
+		return PSS_CLOSE;
+
+	case 0x0A: /* more */
+		body_parts_menu_page(0, NEXT);
+		break;
+
+	default:
+		break;
+	}
+
+	return PSS_BUY_MENU;
+}
+
 static parts_shop_state_t on_sell_parts_menu_button(neuro_button_t *button)
 {
 	static int sold_something = 0;
@@ -145,14 +210,14 @@ static parts_shop_state_t on_sell_parts_menu_button(neuro_button_t *button)
 	case 3: { /* items */
 		uint16_t body_part = g_first_listed + button->code;
 
-		if (is_body_part_not_sold(body_part) == 0)
+		if (body_part_is_not_sold(body_part) == 0)
 		{
 			/* play track 6 */
 		}
 		else
 		{
-			uint16_t bit = 0x80 >> (body_part & 7);
 			uint16_t index = body_part >> 3;
+			uint8_t bit = 0x80 >> (body_part & 7);
 
 			g_4bae.sold_body_parts_bitstring[index] |= bit;
 			g_4bae.constitution -= g_constitution_damage[body_part];
@@ -168,6 +233,7 @@ static parts_shop_state_t on_sell_parts_menu_button(neuro_button_t *button)
 
 	case 0x0B: /* exit */
 		g_4bae.x4c82 = sold_something;
+		sold_something = 0;
 		return PSS_CLOSE;
 
 	case 0x0A: /* more */
@@ -186,6 +252,10 @@ void parts_shop_menu_handle_button_press(int *state, neuro_button_t *button)
 	switch (*state) {
 	case PSS_SELL_MENU:
 		*state = on_sell_parts_menu_button(button);
+		break;
+
+	case PSS_BUY_MENU:
+		*state = on_buy_parts_menu_button(button);
 		break;
 	}
 }
@@ -212,6 +282,7 @@ void handle_parts_shop_input(sfEvent *event)
 		break;
 
 	case PSS_SELL_MENU:
+	case PSS_BUY_MENU:
 		neuro_menu_handle_input(NMID_PARTS_SHOP_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 	}
