@@ -348,7 +348,8 @@ void neuro_cb(cpu_t *cpu, uint16_t sp)
 		break;
 
 	case CB_CMD_SELL_BODY_PART:
-		g_state = RWS_SELL_BODY_PART;
+		g_body_shop_op = 1;
+		g_state = RWS_BODY_PARTS_SHOP;
 		break;
 
 	default:
@@ -814,8 +815,8 @@ static void handle_input(sfEvent *event)
 		handle_disk_options_input(event);
 		break;
 
-	case RWS_SELL_BODY_PART:
-		handle_sell_parts_input(event);
+	case RWS_BODY_PARTS_SHOP:
+		handle_parts_shop_input(event);
 		break;
 
 	case RWS_WAIT_FOR_INPUT:
@@ -987,8 +988,8 @@ static neuro_scene_id_t update()
 		g_state = update_disk_options();
 		break;
 
-	case RWS_SELL_BODY_PART:
-		g_state = update_sell_parts();
+	case RWS_BODY_PARTS_SHOP:
+		g_state = update_parts_shop();
 		break;
 
 	case RWS_RELOAD_LEVEL:

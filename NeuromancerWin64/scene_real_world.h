@@ -14,7 +14,7 @@ typedef enum real_world_state_t {
 	RWS_SKILLS,
 	RWS_ROM,
 	RWS_DISK_OPTIONS,
-	RWS_SELL_BODY_PART,
+	RWS_BODY_PARTS_SHOP,
 	RWS_WAIT_FOR_INPUT,
 	RWS_RELOAD_LEVEL
 } real_world_state_t;
@@ -48,7 +48,8 @@ void handle_disk_options_input(sfEvent *event);
 real_world_state_t update_disk_options();
 
 /* Sell Body Parts handlers */
-void handle_sell_parts_input(sfEvent *event);
-real_world_state_t update_sell_parts();
+extern int g_body_shop_op;
+void handle_parts_shop_input(sfEvent *event);
+real_world_state_t update_parts_shop();
 
 #endif

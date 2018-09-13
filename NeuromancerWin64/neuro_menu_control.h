@@ -9,7 +9,7 @@ typedef enum neuro_menu_id_t {
 	NMID_NOT_IMPLEMENTED_MENU,
 	NMID_SKILLS_MENU,
 	NMID_DISK_OPTIONS_MENU,
-	NMID_SELL_PARTS_MENU,
+	NMID_PARTS_SHOP_MENU,
 } neuro_menu_id_t;
 
 /* 0x65FA */
@@ -45,6 +45,6 @@ void skills_menu_handle_button_press(int *state, neuro_button_t *button);
 void disk_menu_handle_button_press(int *state, neuro_button_t *button);
 
 /* Sell Parts Menu Handlers */
-void sell_parts_menu_handle_button_press(int *state, neuro_button_t *button);
+void parts_shop_menu_handle_button_press(int *state, neuro_button_t *button);
 
 #endif

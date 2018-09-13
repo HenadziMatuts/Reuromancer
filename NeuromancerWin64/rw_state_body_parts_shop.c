@@ -4,15 +4,19 @@
 #include "scene_real_world.h"
 #include <string.h>
 
-typedef enum sell_parts_state_t {
-	SPS_OPEN = 0,
-	SPS_SELL_MENU,
-	SPS_BUY_MENU,
-	SPS_WFI,
-	SPS_CLOSE,
-} sell_parts_state_t;
+typedef enum parts_shop_state_t {
+	PSS_OPEN = 0,
+	PSS_SELL_MENU,
+	PSS_BUY_MENU,
+	PSS_WFI,
+	PSS_CLOSE,
+} parts_shop_state_t;
 
-static sell_parts_state_t g_state = SPS_OPEN;
+static parts_shop_state_t g_state = PSS_OPEN;
+static int g_first_listed = 0;
+
+/* 1 - sell, 0 - buy */
+int g_body_shop_op = 1;
 
 /* 0x224E */
 char *g_body_parts[20] = {
@@ -53,23 +57,41 @@ uint16_t g_body_parts_sell_prices[20] = {
 	100, 50, 50, 45, 45, 30, 3
 };
 
+/* 0x238C */
+uint16_t g_constitution_damage[20] = {
+	200, 150, 150, 100, 75, 75, 75, 75,
+	50, 50, 25, 25, 25, 25, 10, 10, 10, 10, 10, 10
+};
+
 static int is_body_part_not_sold(int part)
 {
-	uint16_t bit = 0x80 >> (g_level_n & 7);
+	uint16_t bit = 0x80 >> (part & 7);
 	uint16_t index = part >> 3;
 
 	return ((bit & g_4bae.sold_body_parts_bitstring[index]) == 0) ? 1 : 0;
 }
 
-static sell_parts_state_t body_parts_menu_page(int sell, int next)
+typedef enum body_parts_menu_page_t {
+	FIRST,
+	NEXT,
+	CURRENT
+} body_parts_menu_page_t;
+
+static parts_shop_state_t body_parts_menu_page(int sell, int page)
 {
 	char credits[9] = { 0 };
 	static int items_listed = 0;
 
-	if (next == 0)
+	if (page == FIRST)
 	{
 		items_listed = 0;
 	}
+	else if (page == CURRENT)
+	{
+		items_listed = g_first_listed;
+	}
+
+	g_first_listed = items_listed;
 
 	neuro_menu_flush();
 	neuro_menu_flush_items();
@@ -103,70 +125,94 @@ static sell_parts_state_t body_parts_menu_page(int sell, int next)
 
 	items_listed %= 20;
 
-	return sell ? SPS_SELL_MENU : SPS_BUY_MENU;
+	return sell ? PSS_SELL_MENU : PSS_BUY_MENU;
 }
 
-static sell_parts_state_t body_parts_menu(int sell)
+static parts_shop_state_t body_parts_menu(int sell)
 {
 	neuro_menu_create(6, 1, 17, 28, 6, NULL);
-	return body_parts_menu_page(sell, 0);
+	return body_parts_menu_page(sell, FIRST);
 }
 
-static sell_parts_state_t on_sell_parts_menu_button(neuro_button_t *button)
+static parts_shop_state_t on_sell_parts_menu_button(neuro_button_t *button)
 {
+	static int sold_something = 0;
+
 	switch (button->code) {
 	case 0:
 	case 1:
 	case 2:
-	case 3: /* items */
+	case 3: { /* items */
+		uint16_t body_part = g_first_listed + button->code;
+
+		if (is_body_part_not_sold(body_part) == 0)
+		{
+			/* play track 6 */
+		}
+		else
+		{
+			uint16_t bit = 0x80 >> (body_part & 7);
+			uint16_t index = body_part >> 3;
+
+			g_4bae.sold_body_parts_bitstring[index] |= bit;
+			g_4bae.constitution -= g_constitution_damage[body_part];
+			g_4bae.cash += g_body_parts_sell_prices[body_part];
+
+			sold_something = 1;
+			/* play track 11 */
+		}
+
+		body_parts_menu_page(1, CURRENT);
 		break;
+	}
 
 	case 0x0B: /* exit */
-		return SPS_CLOSE;
+		g_4bae.x4c82 = sold_something;
+		return PSS_CLOSE;
 
 	case 0x0A: /* more */
-		body_parts_menu_page(1, 1);
+		body_parts_menu_page(1, NEXT);
 		break;
 
 	default:
 		break;
 	}
 
-	return SPS_SELL_MENU;
+	return PSS_SELL_MENU;
 }
 
-void sell_parts_menu_handle_button_press(int *state, neuro_button_t *button)
+void parts_shop_menu_handle_button_press(int *state, neuro_button_t *button)
 {
 	switch (*state) {
-	case SPS_SELL_MENU:
+	case PSS_SELL_MENU:
 		*state = on_sell_parts_menu_button(button);
 		break;
 	}
 }
 
-static sell_parts_state_t sell_parts_wfi(sell_parts_state_t state, sfEvent *event)
+static parts_shop_state_t parts_shop_wfi(parts_shop_state_t state, sfEvent *event)
 {
 	if (event->type == sfEvtMouseButtonReleased ||
 		event->type == sfEvtKeyReleased)
 	{
 		switch (state) {
-		case SPS_WFI:
-			return SPS_CLOSE;
+		case PSS_WFI:
+			return PSS_CLOSE;
 		}
 	}
 
 	return state;
 }
 
-void handle_sell_parts_input(sfEvent *event)
+void handle_parts_shop_input(sfEvent *event)
 {
 	switch (g_state) {
-	case SPS_WFI:
-		g_state = sell_parts_wfi(g_state, event);
+	case PSS_WFI:
+		g_state = parts_shop_wfi(g_state, event);
 		break;
 
-	case SPS_SELL_MENU:
-		neuro_menu_handle_input(NMID_SELL_PARTS_MENU, &g_neuro_menu, (int*)&g_state, event);
+	case PSS_SELL_MENU:
+		neuro_menu_handle_input(NMID_PARTS_SHOP_MENU, &g_neuro_menu, (int*)&g_state, event);
 		break;
 	}
 }
@@ -183,45 +229,44 @@ static window_folding_frame_data_t g_close_frame_data[12] = {
 	{ 240, 16,   0, 152 }, { 240, 32,   0, 144 }, { 240, 64,   0, 128 }
 };
 
-static window_folding_data_t g_sell_parts_anim_data = {
+static window_folding_data_t g_parts_shop_anim_data = {
 	.total_frames = 12,
 	.frame_cap = 28,
 	.pixels = g_seg011.data,
 };
 
-real_world_state_t update_sell_parts()
+real_world_state_t update_parts_shop()
 {
 	static int anim = 0;
 
 	switch (g_state) {
-	case SPS_OPEN:
-	case SPS_CLOSE:
+	case PSS_OPEN:
+	case PSS_CLOSE:
 		if (!anim)
 		{
 			anim = 1;
-			g_sell_parts_anim_data.frame_data = (g_state == SPS_OPEN) ?
+			g_parts_shop_anim_data.frame_data = (g_state == PSS_OPEN) ?
 				g_open_frame_data : g_close_frame_data;
-			g_sell_parts_anim_data.sprite_chain_index = (g_state == SPS_OPEN) ?
+			g_parts_shop_anim_data.sprite_chain_index = (g_state == PSS_OPEN) ?
 				g_4bae.frame_sc_index : g_4bae.frame_sc_index + 1;
-			window_animation_setup(WA_TYPE_WINDOW_FOLDING, &g_sell_parts_anim_data);
+			window_animation_setup(WA_TYPE_WINDOW_FOLDING, &g_parts_shop_anim_data);
 		}
 		else if (window_animation_update() == WA_EVENT_COMPLETED)
 		{
 			anim = 0;
-			if (g_state == SPS_OPEN)
+			if (g_state == PSS_OPEN)
 			{
-				g_state = body_parts_menu(1);
+				g_state = body_parts_menu(g_body_shop_op);
 			}
 			else
 			{
-				g_state = SPS_OPEN;
+				g_state = PSS_OPEN;
 				neuro_menu_destroy();
-				g_4bae.x4c82 = 0;
 				return RWS_NORMAL;
 			}
 		}
 		break;
 	}
 
-	return RWS_SELL_BODY_PART;
+	return RWS_BODY_PARTS_SHOP;
 }
