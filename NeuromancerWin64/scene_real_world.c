@@ -888,7 +888,6 @@ int roompos_hit_exit_zone()
 
 static real_world_state_t update_normal()
 {
-	//real_world_state_t state = RWS_NORMAL;
 	character_dir_t dir = CD_NULL;
 
 	dir = character_control_update();
@@ -898,12 +897,7 @@ static real_world_state_t update_normal()
 
 	if (!g_update_hold)
 	{
-		if (g_load_level_vm)
-		{
-			roompos_init();
-			g_load_level_vm = 0;
-		}
-		else if (dir != CD_NULL)
+		if (dir != CD_NULL)
 		{
 			g_exit_point = (int16_t)dir;
 			int level = roompos_hit_exit_zone();
@@ -995,6 +989,12 @@ static neuro_scene_id_t update()
 	case RWS_RELOAD_LEVEL:
 		if (window_animation_update() == WA_EVENT_COMPLETED)
 		{
+			if (g_load_level_vm)
+			{
+				roompos_init();
+				g_load_level_vm = 0;
+			}
+
 			deinit();
 
 			if (g_load_game)
