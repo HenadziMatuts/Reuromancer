@@ -225,7 +225,7 @@ static uint16_t decode_rm_addr(cpu_t *cpu, modrm_t *modrm)
 
 	assert(modrm->mod != 3);
 
-	if(modrm->rm & 6) {
+	if(modrm->rm >> 1 == 3) {
 		if(modrm->rm & 1)
 			addr = get_reg_u16(cpu, REG_BX);
 		else
