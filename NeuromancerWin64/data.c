@@ -485,6 +485,11 @@ x4bae_t g_4bae = {
 	.frame_sc_index = 2
 };
 
+uint16_t g_6a40 = 0;
+uint16_t g_6a7a = 0;
+
+uint16_t g_dlg_with_user_input = 0;
+
 uint8_t g_8cee[4][4] = { 
 	{ 0, }, { 0, }, { 0, }, {0, }
 };

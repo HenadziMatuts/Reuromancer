@@ -27,6 +27,7 @@ real_world_state_t update_inventory();
 
 /* Dialog state handles */
 extern uint8_t g_dialog_escapable;
+extern char g_dialog_user_input[17];
 void handle_dialog_input(sfEvent *event);
 real_world_state_t update_dialog();
 

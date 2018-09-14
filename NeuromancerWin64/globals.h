@@ -20,8 +20,9 @@ sfKeyCode sfHandleTextInput(uint32_t u32_char,
 
 void sfSetKeyRepeat(int enabled);
 
-int extract_line(char **text, char *line, int length);
-
 sfKeyCode ascii_toSfKeyCode(char c);
+
+void extract_line_prepare(char *text, char *dst, uint16_t length);
+int extract_line();
 
 #endif

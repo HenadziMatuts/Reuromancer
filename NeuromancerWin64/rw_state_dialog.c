@@ -14,6 +14,7 @@ typedef enum dialog_state_t {
 	DS_CHOOSE_REPLY_WFI,
 	DS_NEXT_REPLY,
 	DS_ACCEPT_REPLY,
+	DS_ACCEPT_REPLY_TEXT_INPUT,
 	DS_ACCEPT_REPLY_WFI,
 	DS_CLOSE_DIALOG
 } dialog_state_t;
@@ -58,7 +59,7 @@ static void dialog_next_reply()
 	sub_1342E(reply, NWM_PLAYER_DIALOG_CHOICE);
 }
 
-static void dialog_accept_reply()
+static dialog_state_t dialog_accept_reply()
 {
 	char *reply = g_a8e0.bih.bytes + g_a8e0.bih.hdr.text_offset;
 	uint8_t first_reply = g_a642->first_dialog_reply;
@@ -68,9 +69,51 @@ static void dialog_accept_reply()
 		while (*reply++);
 	}
 
-	/* also has replies with user input */
-
 	sub_1342E(reply, NWM_PLAYER_DIALOG_REPLY);
+
+	if (g_dlg_with_user_input)
+	{
+		neuro_window_draw_string("<               ", g_6a40, g_6a7a, 1);
+		return DS_ACCEPT_REPLY_TEXT_INPUT;
+	}
+
+	return DS_ACCEPT_REPLY_WFI;
+}
+
+char g_dialog_user_input[17] = { 0, };
+
+static dialog_state_t on_dialog_accept_reply_text_input(sfTextEvent *event)
+{
+	static char input[17] = { 0, };
+
+	sfKeyCode key = sfHandleTextInput(event->unicode, input, 17, 0, 0);
+
+	if (key != sfKeyReturn)
+	{
+		char word[18] = { 0 };
+		sprintf(word, "%s<", input);
+		memset(word + strlen(word), 0x20, 17 - strlen(word));
+		neuro_window_draw_string(word, g_6a40, g_6a7a, 1);
+	}
+	else
+	{
+		strcpy(g_dialog_user_input, input);
+		memset(input, 0, 17);
+		g_4bae.active_dialog_reply = g_current_reply + g_a642->first_dialog_reply;
+		g_4bae.x4bae[0] = 0;
+		return DS_CLOSE_DIALOG;
+	}
+
+	return DS_ACCEPT_REPLY_TEXT_INPUT;
+}
+
+void rw_dialog_handle_text_enter(int *state, sfTextEvent *event)
+{
+	switch (*state) {
+	case DS_ACCEPT_REPLY_TEXT_INPUT:
+		*state = on_dialog_accept_reply_text_input(event);
+		break;
+	}
 }
 
 static dialog_state_t handle_dialog_wait_for_input(dialog_state_t state, sfEvent *event)
@@ -124,6 +167,10 @@ void handle_dialog_input(sfEvent *event)
 	case DS_CHOOSE_REPLY_WFI:
 	case DS_ACCEPT_REPLY_WFI:
 		g_state = handle_dialog_wait_for_input(g_state, event);
+
+	case DS_ACCEPT_REPLY_TEXT_INPUT:
+		neuro_window_handle_input((int*)&g_state, event);
+		break;
 	}
 }
 
@@ -152,12 +199,8 @@ static dialog_state_t update_dialog_reply(dialog_action_t act)
 		{
 			dialog_next_reply();
 		}
-		else
-		{
-			dialog_accept_reply();
-		}
 
-		return (act == DA_NEXT_REPLY) ? DS_CHOOSE_REPLY_WFI : DS_ACCEPT_REPLY_WFI;
+		return (act == DA_NEXT_REPLY) ? DS_CHOOSE_REPLY_WFI : dialog_accept_reply();
 	}
 
 	drawing_control_remove_sprite_from_chain(SCI_DIALOG_BUBBLE);
@@ -197,8 +240,7 @@ static dialog_state_t update_dialog_open_close(int open)
 			if (total_replies == 0)
 			{
 				g_current_reply = 0;
-				dialog_accept_reply();
-				return DS_ACCEPT_REPLY_WFI;
+				return dialog_accept_reply();
 			}
 			else
 			{

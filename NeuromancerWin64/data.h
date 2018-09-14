@@ -312,6 +312,12 @@ typedef struct x4bae_t {
 
 extern x4bae_t g_4bae;
 
+extern uint16_t g_6a40;
+extern uint16_t g_6a7a;
+
+/* 0x8CDC */
+extern uint16_t g_dlg_with_user_input;
+
 extern uint8_t g_8cee[4][4];
 
 extern uint8_t g_a61a;

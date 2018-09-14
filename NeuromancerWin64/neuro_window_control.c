@@ -187,14 +187,17 @@ void neuro_window_draw_string(char *text, ...)
 	case NWM_PLAYER_DIALOG_REPLY: {
 		va_list args;
 		va_start(args, text);
-		uint16_t arg_1 = va_arg(args, uint16_t);
-		uint16_t arg_2 = va_arg(args, uint16_t);
-		uint16_t arg_3 = va_arg(args, uint16_t);
+		uint16_t l = va_arg(args, uint16_t);
+		uint16_t t = va_arg(args, uint16_t);
+		uint16_t mode = va_arg(args, uint16_t);
 		va_end(args);
 
-		if (arg_3 != 0)
+		if (mode != 0)
 		{
-			/* loc_14D11 */
+			imh_hdr_t *imh = (imh_hdr_t*)g_seg011.data;
+			l = (l * 8) + 8;
+			t = (t * 8) + 8;
+			build_string(text, imh->width * 2, imh->height, l, t, g_seg011.data + sizeof(imh_hdr_t));
 			break;
 		}
 	}
@@ -292,12 +295,16 @@ static void window_handle_kboard(int *state, sfKeyEvent *event)
 static void window_handle_text_enter(int *state, sfTextEvent *event)
 {
 	switch (g_neuro_window.mode) {
+	case NWM_PAX:
+		rw_pax_handle_text_enter(state, event);
+		break;
+
 	case NWM_INVENTORY:
 		rw_inventory_handle_text_enter(state, event);
 		break;
 
-	case NWM_PAX:
-		rw_pax_handle_text_enter(state, event);
+	case NWM_PLAYER_DIALOG_REPLY:
+		rw_dialog_handle_text_enter(state, event);
 		break;
 
 	default:

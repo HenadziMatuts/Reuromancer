@@ -18,6 +18,7 @@ typedef struct _page_turning_data_t {
 
 typedef struct _text_scrolling_data_t {
 	text_scrolling_data_t user_data;
+	char line[64];
 	uint16_t line_length;
 	uint16_t max_lines;
 	uint16_t l, w, t, b;
@@ -119,13 +120,13 @@ static window_animation_event_t update_text_scrolling(_text_scrolling_data_t *_d
 
 	if (next_line)
 	{
-		char line[39] = { 0, };
-		int last = extract_line(&data->text, line, _data->line_length);
+		char *line = _data->line;
+		int has_more = extract_line();
 
-		neuro_window_draw_string(line, 0);
+		neuro_window_draw_string(has_more ? line : " ", 0);
 		next_line = 0;
 
-		if (last)
+		if (!has_more)
 		{
 			next_line = 1;
 			lines_on_screen = 0;
@@ -294,6 +295,9 @@ static void prepare_text_scrolling()
 		g_animation.data.scrolling.t = 134;
 		g_animation.data.scrolling.b = 191;
 		g_animation.data.scrolling.pixels = g_seg010.background;
+		memset(g_animation.data.scrolling.line, 0, 64);
+		extract_line_prepare(g_animation.data.scrolling.user_data.text,
+			g_animation.data.scrolling.line, 17);
 		break;
 
 	case NWM_PAX:
@@ -304,6 +308,9 @@ static void prepare_text_scrolling()
 		g_animation.data.scrolling.t = 16;
 		g_animation.data.scrolling.b = 97;
 		g_animation.data.scrolling.pixels = g_seg011.data;
+		memset(g_animation.data.scrolling.line, 0, 64);
+		extract_line_prepare(g_animation.data.scrolling.user_data.text,
+			g_animation.data.scrolling.line, 38);
 		break;
 
 	default:

@@ -59,19 +59,22 @@ static uint64_t sub_105F6(real_world_state_t *state, uint16_t opcode, ...);
 
 void sub_1342E(char *str, uint16_t mode)
 {
+	char line[39] = { 0, };
 	char text[256] = { 0, };
 	char *p = text;
 	int lines = 0;
 
-	while (!extract_line(&str, p, 38))
-	{
-		size_t l = strlen(p);
+	extract_line_prepare(str, line, 38);
 
+	while (extract_line())
+	{
+		size_t l = strlen(line);
 		if (l != 38)
 		{
-			memset(p + l, 0x20, 38 - l);
+			memset(line + l, 0x20, 38 - l);
 		}
 
+		memmove(p, line, 38);
 		p += 38;
 		*p++ = '\n';
 		lines++;
@@ -327,8 +330,10 @@ static void reset_vm()
 
 typedef enum neuro_cb_cmd_t {
 	CB_CMD_RESET_VM = 0,
+	CB_CMD_NPC_REPLY = 5,
 	CB_CMD_SELL_BODY_PART = 8,
 	CB_CMD_BUY_BODY_PART = 9,
+	CB_CMD_PREPARE_ANIM = 31,
 } neuro_cb_cmd_t;
 
 /* seg000:0BCF */
@@ -347,6 +352,23 @@ uint8_t neuro_cb(uint16_t sp)
 		reset_vm();
 		break;
 
+	case CB_CMD_NPC_REPLY: {
+		char *string = translate_x16_to_x64(DSEG, *(ss.ss16 + 1));
+		uint16_t num = *(ss.ss16 + 2), u;
+
+		for (u = 0; u < num; u++)
+		{
+			if (!_strcmpi(g_dialog_user_input, string))
+			{
+				break;
+			}
+			string += strlen(string) + 1;
+		}
+
+		g_4bae.x4c82 = u;
+		break;
+	}
+
 	case CB_CMD_SELL_BODY_PART:
 		g_body_shop_op = 1;
 		g_state = RWS_BODY_PARTS_SHOP;
@@ -357,6 +379,10 @@ uint8_t neuro_cb(uint16_t sp)
 		g_body_shop_op = 0;
 		g_state = RWS_BODY_PARTS_SHOP;
 		return CPU_STOPPED;
+
+	case CB_CMD_PREPARE_ANIM:
+		bg_animation_control_prepare(*(ss.ss16 + 1), *(ss.ss16 + 2));
+		break;
 
 	default:
 		fprintf(stderr, "neuro_cb: cmd: %d\n", cmd);

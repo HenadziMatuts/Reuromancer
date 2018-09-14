@@ -1,5 +1,6 @@
 #include "address_translator.h"
 #include "data.h"
+#include <stdio.h>
 #include <assert.h>
 
 #define SEGMENTS_TOTAL 18
@@ -108,6 +109,7 @@ static uint8_t* dseg_x16_to_x64(uint16_t offt)
 		i++;
 	}
 
+	fprintf(stderr, "offt: %d\n", offt);
 	assert(0);
 	return NULL;
 }
