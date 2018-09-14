@@ -287,7 +287,25 @@ static void neuro_vm(real_world_state_t *state)
 			thread--;
 			return;
 
+		case 0x18: {
+			uint16_t *string_num_addr = &g_4bae.x4c7c;
+			string_num_addr += *(opcode_addr + 1);
+
+			*state = sub_10A5B(*string_num_addr, 0,
+				g_3f85.vm_state[n].var_1,
+				g_3f85.vm_state[n].var_2);
+
+			sfSetKeyRepeat(0);
+
+			g_3f85.vm_state[n].vm_next_op_addr += 2;
+			g_4bae.active_dialog_reply = 0xFF;
+
+			thread--;
+			return;
+		}
+
 		default:
+			fprintf(stderr, "opcode: %d\n", opcode);
 			assert(opcode == 0);
 		}
 	}
