@@ -612,6 +612,8 @@ static void opcode_ff(cpu_t *cpu, uint8_t opcode)
 			push_u16(cpu, 0);
 			push_u16(cpu, cpu->ip);
 			cpu->state = (cpu->callback)(get_reg_u16(cpu, REG_SP));
+			pop_u16(cpu);
+			pop_u16(cpu);
 			break;
 		case 6:
 			if(modrm.mod == 3) {
