@@ -305,7 +305,7 @@ static void neuro_vm(real_world_state_t *state)
 		}
 
 		default:
-			fprintf(stderr, "opcode: %d\n", opcode);
+			fprintf(stderr, "neuro_vm: opcode: %d\n", opcode);
 			assert(opcode == 0);
 		}
 	}
@@ -348,6 +348,7 @@ static void reset_vm()
 
 typedef enum neuro_cb_cmd_t {
 	CB_CMD_RESET_VM = 0,
+	CB_CMD_HAS_ITEM = 2,
 	CB_CMD_NPC_REPLY = 5,
 	CB_CMD_SELL_BODY_PART = 8,
 	CB_CMD_BUY_BODY_PART = 9,
@@ -369,6 +370,26 @@ uint8_t neuro_cb(uint16_t sp)
 	case CB_CMD_RESET_VM:
 		reset_vm();
 		break;
+
+	case CB_CMD_HAS_ITEM: {
+		uint16_t item_code = *(ss.ss16 + 1);
+		uint8_t *inventory = (g_inventory_item_operations[item_code] & 0xC0) ?
+			g_3f85.inventory.items : g_3f85.inventory.software;
+
+		for (int i = 0; i < 32; i++, inventory += 4)
+		{
+			uint8_t item = inventory[0];
+			
+			if (item == item_code)
+			{
+				g_4bae.x4c82 = 1;
+				break;
+			}
+		}
+
+		g_4bae.x4c82 = 0;
+		break;
+	}
 
 	case CB_CMD_NPC_REPLY: {
 		char *string = translate_x16_to_x64(DSEG, *(ss.ss16 + 1));
