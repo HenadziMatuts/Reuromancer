@@ -608,20 +608,12 @@ static inventory_state_t on_inventory_item_list_button(neuro_button_t *button)
 	return IS_ITEM_LIST;
 }
 
-static inventory_state_t on_inventory_give_credits_kboard(sfTextEvent *event)
+static inventory_state_t on_inventory_give_credits_text_input(sfTextEvent *event, int ret)
 {
 	static char input[9] = { 0 };
+	char printable[10] = { 0 };
 
-	sfKeyCode key = sfHandleTextInput(event->unicode, input, 8, 1, 0);
-
-	if (key != sfKeyReturn)
-	{
-		char credits[10] = { 0 };
-		sprintf(credits, "%s<", input);
-		memset(credits + strlen(credits), 0x20, 8 - strlen(credits));
-		neuro_window_draw_string(credits, 8, 24);
-	}
-	else
+	if (ret)
 	{
 		uint32_t val = strlen(input) ? (uint32_t)atoi(input) : 0;
 		memset(input, 0, 9);
@@ -637,12 +629,39 @@ static inventory_state_t on_inventory_give_credits_kboard(sfTextEvent *event)
 		}
 
 		neuro_window_draw_string("<        ", 8, 24);
+
+		return IS_GIVE_CREDITS;
 	}
+
+	sfHandleTextInput(event->unicode, input, 8, 1, 0);
+	sprintf(printable, "%s<", input);
+	memset(printable + strlen(printable), 0x20, 8 - strlen(printable));
+	neuro_window_draw_string(printable, 8, 24);
 
 	return IS_GIVE_CREDITS;
 }
 
 void rw_inventory_handle_text_enter(int *state, sfTextEvent *event)
+{
+	switch (*state) {
+	case IS_GIVE_CREDITS:
+		*state = on_inventory_give_credits_text_input(event, 0);
+		break;
+	}
+}
+
+static inventory_state_t on_inventory_give_credits_kboard(sfKeyEvent *event)
+{
+	if (event->type == sfEvtKeyReleased &&
+		event->code == sfKeyReturn)
+	{
+		return on_inventory_give_credits_text_input(NULL, 1);
+	}
+
+	return IS_GIVE_CREDITS;
+}
+
+void rw_inventory_handle_kboard(int *state, sfKeyEvent *event)
 {
 	switch (*state) {
 	case IS_GIVE_CREDITS:

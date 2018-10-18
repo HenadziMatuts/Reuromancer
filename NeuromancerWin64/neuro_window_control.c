@@ -287,6 +287,14 @@ static void window_handle_kboard(int *state, sfKeyEvent *event)
 		rw_pax_handle_kboard(state, event);
 		break;
 
+	case NWM_INVENTORY:
+		rw_inventory_handle_kboard(state, event);
+		break;
+
+	case NWM_PLAYER_DIALOG_REPLY:
+		rw_dialog_handle_kboard(state, event);
+		break;
+
 	default:
 		break;
 	}

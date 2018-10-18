@@ -183,6 +183,15 @@ void neuro_menu_destroy()
 	}
 }
 
+static void menu_handle_kboard(neuro_menu_id_t id, int *state, sfKeyEvent *event)
+{
+	switch (id) {
+	case NMID_MAIN_MENU:
+		main_menu_handle_kboard(state, event);
+		break;
+	}
+}
+
 static void menu_handle_text_enter(neuro_menu_id_t id, int *state, sfTextEvent *event)
 {
 	switch (id) {
@@ -286,6 +295,10 @@ static void neuro_menu_handle_kboard_events(neuro_menu_id_t id, neuro_menu_t *me
 				*kboard_lock = 1;
 			}
 		}
+		else
+		{
+			menu_handle_kboard(id, state, &event->key);
+		}
 		break;
 
 	case sfEvtKeyReleased:
@@ -296,6 +309,10 @@ static void neuro_menu_handle_kboard_events(neuro_menu_id_t id, neuro_menu_t *me
 			selected = NULL;
 			_selected = sfKeyUnknown;
 			*kboard_lock = 0;
+		}
+		else
+		{
+			menu_handle_kboard(id, state, &event->key);
 		}
 		break;
 

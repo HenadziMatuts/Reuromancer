@@ -55,6 +55,7 @@ void rw_ui_handle_button_press(int *state, neuro_button_t *button);
 /* Inventory Window Handlers */
 void rw_inventory_handle_button_press(int *state, neuro_button_t *button);
 void rw_inventory_handle_text_enter(int *state, sfTextEvent *event);
+void rw_inventory_handle_kboard(int *state, sfKeyEvent *event);
 
 /* PAX Window Handlers */
 void rw_pax_handle_button_press(int *state, neuro_button_t *button);
@@ -63,5 +64,6 @@ void rw_pax_handle_kboard(int *state, sfKeyEvent *event);
 
 /* Dialog window handler */
 void rw_dialog_handle_text_enter(int *state, sfTextEvent *event);
+void rw_dialog_handle_kboard(int *state, sfKeyEvent *event);
 
 #endif

@@ -27,33 +27,58 @@ static screen_fading_data_t g_screen_fading_data = {
 	.frame_cap = 15,
 };
 
-void main_menu_handle_text_enter(int *state, sfTextEvent *event)
+static main_menu_state_t on_main_menu_new_game_text_input(sfTextEvent *event, int ret)
 {
 	static char name[11] = { 0, };
+	char printable[12] = { 0x00 };
 
-	if (*state == MMS_NEW)
+	if (ret)
 	{
-		char input[12] = { 0x00 };
-		sfKeyCode key = sfHandleTextInput(event->unicode, name, 11, 0, 0);
-
-		if (key == sfKeyReturn)
+		if (strlen(name))
 		{
-			if (strlen(name))
-			{
-				sprintf(g_4bae.name + 2, "%s", name);
-			}
-			memset(name, 0, 11);
+			sprintf(g_4bae.name + 2, "%s", name);
+		}
+		memset(name, 0, 11);
 
-			neuro_menu_destroy();
-			window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
-			*state = MMS_TO_LEVEL_SCENE;
-		}
-		else
-		{
-			sprintf(input, "%s%s", name, "<");
-			memset(input + strlen(input), 0x20, 11 - strlen(input));
-			neuro_menu_draw_text(input, 0, 2);
-		}
+		neuro_menu_destroy();
+		window_animation_setup(WA_TYPE_SCREEN_FADING, &g_screen_fading_data);
+		return MMS_TO_LEVEL_SCENE;
+	}
+
+	sfHandleTextInput(event->unicode, name, 11, 0, 0);
+	sprintf(printable, "%s%s", name, "<");
+	memset(printable + strlen(printable), 0x20, 11 - strlen(printable));
+	neuro_menu_draw_text(printable, 0, 2);
+
+	return MMS_NEW;
+}
+
+void main_menu_handle_text_enter(int *state, sfTextEvent *event)
+{
+	switch (*state) {
+	case MMS_NEW:
+		*state = on_main_menu_new_game_text_input(event, 0);
+		break;
+	}
+}
+
+static main_menu_state_t on_main_menu_new_game_kboard(sfKeyEvent *event)
+{
+	if (event->type == sfEvtKeyReleased &&
+		event->code == sfKeyReturn)
+	{
+		return on_main_menu_new_game_text_input(NULL, 1);
+	}
+
+	return MMS_NEW;
+}
+
+void main_menu_handle_kboard(int *state, sfKeyEvent *event)
+{
+	switch (*state) {
+	case MMS_NEW:
+		*state = on_main_menu_new_game_kboard(event);
+		break;
 	}
 }
 

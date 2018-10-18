@@ -33,6 +33,7 @@ void neuro_menu_handle_input(neuro_menu_id_t id, neuro_menu_t *menu,
 /* Main Menu Handlers */
 void main_menu_handle_text_enter(int *state, sfTextEvent *event);
 void main_menu_handle_button_press(int *state, neuro_button_t *button);
+void main_menu_handle_kboard(int *state, sfKeyEvent *event);
 
 /* Not Implemented Screen Handlers */
 void not_implemented_menu_handle_button_press(int *state, neuro_button_t *button);

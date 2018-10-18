@@ -82,20 +82,12 @@ static dialog_state_t dialog_accept_reply()
 
 char g_dialog_user_input[17] = { 0, };
 
-static dialog_state_t on_dialog_accept_reply_text_input(sfTextEvent *event)
+static dialog_state_t on_dialog_accept_reply_text_input(sfTextEvent *event, int ret)
 {
 	static char input[17] = { 0, };
+	char printable[18] = { 0 };
 
-	sfKeyCode key = sfHandleTextInput(event->unicode, input, 17, 0, 0);
-
-	if (key != sfKeyReturn)
-	{
-		char word[18] = { 0 };
-		sprintf(word, "%s<", input);
-		memset(word + strlen(word), 0x20, 17 - strlen(word));
-		neuro_window_draw_string(word, g_6a40, g_6a7a, 1);
-	}
-	else
+	if (ret)
 	{
 		strcpy(g_dialog_user_input, input);
 		memset(input, 0, 17);
@@ -104,6 +96,11 @@ static dialog_state_t on_dialog_accept_reply_text_input(sfTextEvent *event)
 		return DS_CLOSE_DIALOG;
 	}
 
+	sfHandleTextInput(event->unicode, input, 17, 0, 0);
+	sprintf(printable, "%s<", input);
+	memset(printable + strlen(printable), 0x20, 17 - strlen(printable));
+	neuro_window_draw_string(printable, g_6a40, g_6a7a, 1);
+
 	return DS_ACCEPT_REPLY_TEXT_INPUT;
 }
 
@@ -111,7 +108,27 @@ void rw_dialog_handle_text_enter(int *state, sfTextEvent *event)
 {
 	switch (*state) {
 	case DS_ACCEPT_REPLY_TEXT_INPUT:
-		*state = on_dialog_accept_reply_text_input(event);
+		*state = on_dialog_accept_reply_text_input(event, 0);
+		break;
+	}
+}
+
+static dialog_state_t on_dialog_accept_reply_kboard(sfKeyEvent *event)
+{
+	if (event->type == sfEvtKeyReleased &&
+		event->code == sfKeyReturn)
+	{
+		return on_dialog_accept_reply_text_input(NULL, 1);
+	}
+
+	return DS_ACCEPT_REPLY_TEXT_INPUT;
+}
+
+void rw_dialog_handle_kboard(int *state, sfKeyEvent *event)
+{
+	switch (*state) {
+	case DS_ACCEPT_REPLY_TEXT_INPUT:
+		*state = on_dialog_accept_reply_kboard(event);
 		break;
 	}
 }
